@@ -1,4 +1,4 @@
-﻿name: Build
+name: Build
 on:
   push:
     branches:
@@ -29,10 +29,12 @@ jobs:
           dotnet-version: '3.1.101'
       - name: Build .NET Assemblies
         run: dotnet build -c Release
+      - name: Publish Distribution
+        run: dotnet publish --configuration Release --output publish ./Fenrir/Fenrir.fsproj
 
       - name: Upload Distribution
         if: matrix.image == 'ubuntu-18.04'
         uses: actions/upload-artifact@v1.0.0
         with:
           name: distribution
-          path: Fenrir/bin/Release/netcoreapp3.1
+          path: publish
