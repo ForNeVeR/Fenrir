@@ -22,4 +22,10 @@ $ dotnet build
 $ dotnet run --project Fenrir
 ```
 
+### Test
+
+```console
+$ dotnet test
+```
+
 [dotnet-core-sdk]: https://dot.net/

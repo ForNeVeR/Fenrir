@@ -1,4 +1,4 @@
-name: Build
+﻿name: Build
 on:
   push:
     branches:
@@ -27,8 +27,11 @@ jobs:
         uses: actions/setup-dotnet@v1.4.0
         with:
           dotnet-version: '3.1.101'
+
       - name: Build .NET Assemblies
-        run: dotnet build -c Release
+        run: dotnet build --configuration Release
+      - name: Test
+        run: dotnet test --configuration Release
       - name: Publish Distribution
         run: dotnet publish --configuration Release --output publish ./Fenrir/Fenrir.fsproj
 
