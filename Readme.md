@@ -19,7 +19,7 @@ $ dotnet build
 ### Run
 
 ```console
-$ dotnet run
+$ dotnet run --project Fenrir
 ```
 
 [dotnet-core-sdk]: https://dot.net/
