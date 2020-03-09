@@ -1,4 +1,6 @@
-﻿open System
+﻿module Fenrir.Commands
+
+open System
 open System.IO
 open System.Text.RegularExpressions
 
@@ -7,16 +9,16 @@ type GitObjectType =
     | GitTree = 1
     | GitBlob = 2
 
-let (|TypeRegex|_|) regex str = 
+let (|TypeRegex|_|) regex str =
     let m = Regex(regex).Match(str)
     if m.Success
     then Some m.Groups.[1].Value
     else None
 
-type GitObjectOpen(path:string) =
+type GitObjectOpen(input: Stream) =
     member x.TypeChecker() =
-        use stream = new StreamReader(path)
-             
+        use stream = new StreamReader(input)
+
         let line = stream.ReadLine()
 
         match line with
@@ -25,13 +27,9 @@ type GitObjectOpen(path:string) =
             | TypeRegex "blob (\d{1,})\0" _   -> Some GitObjectType.GitBlob
             | _                               -> None
 
-[<EntryPoint>]
-let main argv =
-    Console.WriteLine("Print path to unpacked git object file:")
-    let line = Console.ReadLine()
-    let obj = GitObjectOpen(line)
+let printObjectPath(input: Stream): unit =
+    let obj = GitObjectOpen(input)
     Console.WriteLine ("The type of the object:")
-    match obj.TypeChecker() with 
+    match obj.TypeChecker() with
             | Some x -> Console.WriteLine x
-            | None   -> Console.WriteLine "ERROR: probably, it's not git object file" 
-    0 // return an integer exit code
+            | None   -> Console.WriteLine "ERROR: probably, it's not git object file"

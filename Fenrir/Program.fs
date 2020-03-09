@@ -1,5 +1,8 @@
 ﻿open System
+open System.IO
 open System.Reflection
+
+open Fenrir
 
 let private printVersion() =
     let version = Assembly.GetExecutingAssembly().GetName().Version
@@ -8,6 +11,11 @@ let private printVersion() =
 let private printUsage() =
     printf @"
 Usage:
+
+  object-type [<path>]
+    Prints the type of the Git raw object read from the file system.
+
+    If <path> isn't passed, then accepts raw object contents from the standard input.
 
   version
   --version
@@ -28,6 +36,15 @@ module ExitCodes =
 [<EntryPoint>]
 let main (argv: string[]): int =
     match argv with
+    | [|"object-type"|] ->
+        use input = Console.OpenStandardInput()
+        Commands.printObjectPath input
+        ExitCodes.Success
+    | [|"object-type"; inputFilePath|] ->
+        use input = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        Commands.printObjectPath input
+        ExitCodes.Success
+
     | [|"version"|] | [|"--version"|] ->
         printVersion()
         ExitCodes.Success
