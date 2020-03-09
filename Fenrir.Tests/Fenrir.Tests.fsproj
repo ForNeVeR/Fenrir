@@ -8,7 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Tests.fs" />
+        <Content Include="Data\524acfffa760fd0b8c1de7cf001f8dd348b399d8" CopyToOutputDirectory="PreserveNewest" />
+        <Compile Include="TestUtils.fs" />
+        <Compile Include="CommandTests.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
