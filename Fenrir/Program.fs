@@ -9,13 +9,11 @@ let private printUsage() =
     printf @"
 Usage:
 
-  version
-  --version
-    Print the program version.
-
-  help
-  --help
+  (help | --help)
     Print this message.
+
+  (version | --version)
+    Print the program version.
 "
 
 let private printUnrecognizedArguments argv =

@@ -19,7 +19,7 @@ $ dotnet build
 ### Run
 
 ```console
-$ dotnet run --project Fenrir
+$ dotnet run --project Fenrir -- [arguments...]
 ```
 
 ### Test
