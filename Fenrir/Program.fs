@@ -4,6 +4,8 @@ open System
 open System.IO
 open System.Reflection
 
+open Fenrir
+
 let private printVersion() =
     let version = Assembly.GetExecutingAssembly().GetName().Version
     printfn "v%A" version
@@ -14,6 +16,11 @@ Usage:
 
   (help | --help)
     Print this message.
+    
+  object-type [<path>]
+    Prints the type of the Git raw object read from the file system.
+
+    If <path> isn't passed, then accepts raw object contents from the standard input.
 
   unpack [<input> [<output>]]
     Unpacks the object file passed as <input> and writes the results to the <output>.
@@ -38,6 +45,15 @@ let main (argv: string[]): int =
         printUsage()
         ExitCodes.Success
 
+    | [|"object-type"|] ->
+        use input = Console.OpenStandardInput()
+        Commands.printObjectPath input
+        ExitCodes.Success
+    | [|"object-type"; inputFilePath|] ->
+        use input = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        Commands.printObjectPath input
+        ExitCodes.Success
+        
     | [|"unpack"|] ->
         use input = Console.OpenStandardInput()
         use output = Console.OpenStandardOutput()
