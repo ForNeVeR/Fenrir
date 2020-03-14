@@ -12,8 +12,8 @@ let unpackObject (input: Stream) (output: Stream): unit =
 
 type GitObjectType =
     | GitCommit = 0
-    | GitTree = 1
-    | GitBlob = 2
+    | GitTree   = 1
+    | GitBlob   = 2
 
 type GitHeader = {tp:GitObjectType; sz:UInt64}
 
