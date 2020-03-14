@@ -14,6 +14,7 @@ let private printUsage() =
     printf @"
 Usage:
 
+<<<<<<< HEAD
   (help | --help)
     Print this message.
 
