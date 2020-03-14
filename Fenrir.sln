@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fenrir", "Fenrir\Fenrir.fsproj", "{A5DE250A-86FD-49A4-B6BA-AFE9D9109949}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fenrir.Tests", "Fenrir.Tests\Fenrir.Tests.fsproj", "{DD7316D0-C99B-458F-BA38-73A66A28F07B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,17 @@ Global
 		{A5DE250A-86FD-49A4-B6BA-AFE9D9109949}.Release|x64.Build.0 = Release|Any CPU
 		{A5DE250A-86FD-49A4-B6BA-AFE9D9109949}.Release|x86.ActiveCfg = Release|Any CPU
 		{A5DE250A-86FD-49A4-B6BA-AFE9D9109949}.Release|x86.Build.0 = Release|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Debug|x64.Build.0 = Debug|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Debug|x86.Build.0 = Debug|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Release|x64.ActiveCfg = Release|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Release|x64.Build.0 = Release|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Release|x86.ActiveCfg = Release|Any CPU
+		{DD7316D0-C99B-458F-BA38-73A66A28F07B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

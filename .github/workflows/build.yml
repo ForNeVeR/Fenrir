@@ -1,0 +1,43 @@
+﻿name: Build
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ${{ matrix.image }}
+    strategy:
+      matrix:
+        image: [macos-latest, ubuntu-18.04, windows-latest]
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.github/nuget-packages
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: NuGet Cache
+        uses: actions/cache@v1.1.0
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: ${{ runner.os }}.nuget.${{ hashFiles('**/*.fsproj') }}
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v1.4.0
+        with:
+          dotnet-version: '3.1.101'
+
+      - name: Build .NET Assemblies
+        run: dotnet build --configuration Release
+      - name: Test
+        run: dotnet test --configuration Release
+      - name: Publish Distribution
+        run: dotnet publish --configuration Release --output publish ./Fenrir/Fenrir.fsproj
+
+      - name: Upload Distribution
+        if: matrix.image == 'ubuntu-18.04'
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: distribution
+          path: publish
