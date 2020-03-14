@@ -43,11 +43,13 @@ let main (argv: string[]): int =
     match argv with
     | [|"object-type"|] ->
         use input = Console.OpenStandardInput()
-        Commands.printObjectPath input
+        let header = Commands.printObjectPath input
+        printfn "%A" header
         ExitCodes.Success
     | [|"object-type"; inputFilePath|] ->
         use input = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-        Commands.printObjectPath input
+        let header = Commands.printObjectPath input
+        printfn "%A" header
         ExitCodes.Success
 
     | [|"help"|] | [|"--help"|] | [||] ->
