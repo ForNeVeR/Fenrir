@@ -16,3 +16,14 @@ let ``Deflate decompression should read the file properly``(): unit =
     Commands.unpackObject input output
 
     Assert.Equal(actualObjectContents, Encoding.UTF8.GetString(output.ToArray()))
+
+[<Fact>]
+let ``Check blob content``(): unit =
+    let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
+    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use output = new MemoryStream()
+    Commands.unpackObject input output
+
+    let header = Commands.checkTypeAndSize output
+    let actualHeader = {Commands.GitHeader.tp = Commands.GitObjectType.GitBlob; Commands.GitHeader.sz = 10UL}
+    Assert.Equal(header, actualHeader)
