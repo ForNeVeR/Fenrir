@@ -41,14 +41,15 @@ module ExitCodes =
 [<EntryPoint>]
 let main (argv: string[]): int =
     match argv with
+
     | [|"object-type"|] ->
         use input = Console.OpenStandardInput()
-        let header = Commands.printObjectPath input
+        let header = Commands.checkTypeAndSize input
         printfn "%A" header
         ExitCodes.Success
     | [|"object-type"; inputFilePath|] ->
         use input = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-        let header = Commands.printObjectPath input
+        let header = Commands.checkTypeAndSize input
         printfn "%A" header
         ExitCodes.Success
 
