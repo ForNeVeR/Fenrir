@@ -18,12 +18,37 @@ let ``Deflate decompression should read the file properly``(): unit =
     Assert.Equal(actualObjectContents, Encoding.UTF8.GetString(output.ToArray()))
 
 [<Fact>]
-let ``Check blob content``(): unit =
-    let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
-    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = new MemoryStream()
-    Commands.unpackObject input output
+let ``Check headers``(): unit =
+    // blob test:
+    let objectFilePathBlob = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
+    use inputBlob = new FileStream(objectFilePathBlob, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use outputBlob = new MemoryStream()
+    Commands.unpackObject inputBlob outputBlob
+    outputBlob.Position <- 0L
 
-    let header = Commands.checkTypeAndSize output
-    let actualHeader = {Commands.GitHeader.tp = Commands.GitObjectType.GitBlob; Commands.GitHeader.sz = 10UL}
-    Assert.Equal(header, actualHeader)
+    let headerBlob = Commands.checkTypeAndSize outputBlob
+    let actualHeaderBlob = {Commands.GitHeader.tp = Commands.GitObjectType.GitBlob; Commands.GitHeader.sz = 10UL}
+    Assert.Equal(headerBlob, actualHeaderBlob)
+
+    // tree test:
+    let objectFilePathTree = Path.Combine(testDataRoot, "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
+    use inputTree = new FileStream(objectFilePathTree, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use outputTree = new MemoryStream()
+    Commands.unpackObject inputTree outputTree
+    outputTree.Position <- 0L
+
+    let headerTree = Commands.checkTypeAndSize outputTree
+    let actualHeaderTree = {Commands.GitHeader.tp = Commands.GitObjectType.GitTree; Commands.GitHeader.sz = 63UL}
+    Assert.Equal(headerTree, actualHeaderTree)
+
+    // commit test:
+
+    let objectFilePathCommit = Path.Combine(testDataRoot, "cc07136d669554cf46ca4e9ef1eab7361336e1c8")
+    use inputCommit = new FileStream(objectFilePathCommit, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use outputCommit = new MemoryStream()
+    Commands.unpackObject inputCommit outputCommit
+    outputCommit.Position <- 0L
+
+    let headerCommit = Commands.checkTypeAndSize outputCommit
+    let actualHeaderCommit = {Commands.GitHeader.tp = Commands.GitObjectType.GitCommit; Commands.GitHeader.sz = 242UL}
+    Assert.Equal(headerCommit, actualHeaderCommit)

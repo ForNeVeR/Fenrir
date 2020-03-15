@@ -22,7 +22,7 @@ let checkTypeAndSize(input: Stream): GitHeader =
         let newByte = bF.ReadByte()
         match x with
             | _ when y > 7 || bF.PeekChar() = -1  -> invalidArg "notGitObject" "It's not a git object"
-            | [|116uy; 114uy; 101uy; 101uy|]      -> GitObjectType.GitTree
+            | [|116uy; 114uy; 101uy; 101uy|]     -> GitObjectType.GitTree
             | [|99uy; 111uy; 109uy;
                 109uy; 105uy; 116uy|]             -> GitObjectType.GitCommit
             | [|98uy; 108uy; 111uy; 98uy|]        -> GitObjectType.GitBlob
