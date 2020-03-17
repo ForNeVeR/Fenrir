@@ -16,7 +16,7 @@ Usage:
 
   (help | --help)
     Print this message.
-    
+
   object-type [<path>]
     Prints the type of the Git raw object read from the file system.
 
@@ -47,15 +47,15 @@ let main (argv: string[]): int =
 
     | [|"object-type"|] ->
         use input = Console.OpenStandardInput()
-        let header = Commands.checkTypeAndSize input
+        let header = Commands.readHeader input
         printfn "%A" header
         ExitCodes.Success
     | [|"object-type"; inputFilePath|] ->
         use input = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-        let header = Commands.checkTypeAndSize input
+        let header = Commands.readHeader input
         printfn "%A" header
         ExitCodes.Success
-        
+
     | [|"unpack"|] ->
         use input = Console.OpenStandardInput()
         use output = Console.OpenStandardOutput()

@@ -26,8 +26,8 @@ let ``Check headers``(): unit =
     Commands.unpackObject inputBlob outputBlob
     outputBlob.Position <- 0L
 
-    let headerBlob = Commands.checkTypeAndSize outputBlob
-    let actualHeaderBlob = {Commands.GitHeader.tp = Commands.GitObjectType.GitBlob; Commands.GitHeader.sz = 10UL}
+    let headerBlob = Commands.readHeader outputBlob
+    let actualHeaderBlob = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitBlob; Commands.ObjectHeader.Size = 10UL}
     Assert.Equal(headerBlob, actualHeaderBlob)
 
     // tree test:
@@ -37,8 +37,8 @@ let ``Check headers``(): unit =
     Commands.unpackObject inputTree outputTree
     outputTree.Position <- 0L
 
-    let headerTree = Commands.checkTypeAndSize outputTree
-    let actualHeaderTree = {Commands.GitHeader.tp = Commands.GitObjectType.GitTree; Commands.GitHeader.sz = 63UL}
+    let headerTree = Commands.readHeader outputTree
+    let actualHeaderTree = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitTree; Commands.ObjectHeader.Size = 63UL}
     Assert.Equal(headerTree, actualHeaderTree)
 
     // commit test:
@@ -49,6 +49,6 @@ let ``Check headers``(): unit =
     Commands.unpackObject inputCommit outputCommit
     outputCommit.Position <- 0L
 
-    let headerCommit = Commands.checkTypeAndSize outputCommit
-    let actualHeaderCommit = {Commands.GitHeader.tp = Commands.GitObjectType.GitCommit; Commands.GitHeader.sz = 242UL}
+    let headerCommit = Commands.readHeader outputCommit
+    let actualHeaderCommit = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitCommit; Commands.ObjectHeader.Size = 242UL}
     Assert.Equal(headerCommit, actualHeaderCommit)
