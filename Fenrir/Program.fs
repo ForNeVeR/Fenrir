@@ -4,6 +4,7 @@ open System
 open System.IO
 open System.Reflection
 
+open System.Text
 open Fenrir
 
 let private printVersion() =

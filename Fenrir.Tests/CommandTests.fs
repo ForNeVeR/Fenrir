@@ -87,6 +87,19 @@ let ``The program should parse commits properly``(): unit =
     Assert.Equal(cmt.Parents.[1], "c0573616ea63dba6c4b13398058b0950c33a524c")
 
 [<Fact>]
+let ``The program should parse trees properly``(): unit =
+    let tr = Commands.parseTreeBody testDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let hashFile = "e2af08e76b2408a88f13d2c64ca89f2d03c98385" |> Commands.stringToByte
+    let hashTree = "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05" |> Commands.stringToByte
+    Assert.Equal(tr.Length, 2)
+    Assert.Equal(tr.[0].Mode, 100644UL)
+    Assert.Equal(tr.[0].Name, "README")
+    Assert.Equal<byte>(tr.[0].Hash, hashFile)
+    Assert.Equal(tr.[1].Mode, 40000UL)
+    Assert.Equal(tr.[1].Name, "ex")
+    Assert.Equal<byte>(tr.[1].Hash, hashTree)
+
+[<Fact>]
 let ``Hasher should calculate file name properly``(): unit =
     let actualObjectContents = "blob 10\x00Test file\n"B
     let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"

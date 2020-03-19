@@ -1,9 +1,9 @@
 ﻿module Fenrir.Commands
 
 open System
+open System.Text
 open System.Globalization
 open System.IO
-
 open ICSharpCode.SharpZipLib.Zip.Compression.Streams
 open System.Security.Cryptography
 
@@ -31,6 +31,14 @@ type CommitBody = {
     Rest : String[]
 }
 
+type TreeAtom = {
+    Mode: uint64
+    Name: String
+    Hash: byte array
+}
+
+type TreeBody = TreeAtom[]
+
 let readWhile (condition: byte -> bool) (maxSize: uint64) (stream: BinaryReader): byte array =
     let rec makeList (n: uint64): byte list =
         let newByte = stream.ReadByte()
@@ -41,7 +49,7 @@ let readWhile (condition: byte -> bool) (maxSize: uint64) (stream: BinaryReader)
     makeList(0UL) |> List.toArray
 
 let readHeader(input: Stream): ObjectHeader =
-    let bF = new BinaryReader(input)
+    let bF = new BinaryReader(input, Encoding.ASCII)
 
     let maxTypeNameLength = uint64 "commit".Length
     let typeArray = readWhile (fun b -> b <> byte ' ') maxTypeNameLength bF
@@ -95,6 +103,28 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             let (p, r) = parseParents sr []
             let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
             {Tree = tree; Parents = (Array.ofList p); Rest = rr}
+
+let parseTreeBody (path : String) (hash : String) : TreeBody =
+    let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+    use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use decodedInput = new MemoryStream()
+    unpackObject input decodedInput
+    decodedInput.Position <- 0L
+    let hd = readHeader decodedInput
+    match hd.Type with
+        | GitObjectType.GitCommit   -> failwithf "Found commit file instead of commit file"
+        | GitObjectType.GitBlob     -> failwithf "Found blob file instead of commit file"
+        | GitObjectType.GitTree     ->
+            let bF = new BinaryReader(decodedInput, Encoding.ASCII)
+            let rec makeList (n:int): TreeAtom list =
+                try
+                    {Mode = readWhile (fun b -> b <> byte ' ') hd.Size bF |> Encoding.ASCII.GetString |> Convert.ToUInt64;
+                    Name = readWhile (fun b -> b <> 0uy) hd.Size bF |> Encoding.ASCII.GetString;
+                    Hash = bF.ReadBytes(20)} :: makeList (n + 1)
+                with
+                    | :? EndOfStreamException -> []
+            makeList 0 |> Array.ofList
+
 
 let writeObjectHeader (tp: GitObjectType) (input: Stream) (output: Stream): unit =
     match tp with

@@ -13,6 +13,7 @@
         <Content Include="Data\cc07136d669554cf46ca4e9ef1eab7361336e1c8" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Data\refs\heads\master" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Data\objects\3c\b4a57f644f322c852201a68d2211026912a228" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Data\objects\0b\a2ef789f6245b6b6604f54706b1dce1d84907f" CopyToOutputDirectory="PreserveNewest" />
         <Compile Include="TestUtils.fs" />
         <Compile Include="CommandTests.fs" />
         <Compile Include="Program.fs" />
