@@ -32,7 +32,7 @@ let readHeader(input: Stream): ObjectHeader =
     let bF = new BinaryReader(input)
 
     let maxTypeNameLength = uint64 "commit".Length
-    let typeArray = readWhile (fun b -> not (b.Equals(32uy))) maxTypeNameLength bF
+    let typeArray = readWhile (fun b -> b <> byte ' ') maxTypeNameLength bF
     let tp =
         match typeArray with
         | "tree"B   -> GitObjectType.GitTree
@@ -41,7 +41,7 @@ let readHeader(input: Stream): ObjectHeader =
         | _         -> failwithf "Invalid Git object header"
 
     let maxLength = uint64 (string UInt64.MaxValue).Length
-    let sizeArray = readWhile (fun b -> not <| (b.Equals 0uy)) maxLength bF
+    let sizeArray = readWhile (fun b -> b <> 0uy) maxLength bF
     let sz = Convert.ToUInt64(System.Text.Encoding.UTF8.GetString(sizeArray))
 
     {Type = tp; Size = sz}
