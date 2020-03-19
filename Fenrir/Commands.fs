@@ -1,8 +1,9 @@
 ﻿module Fenrir.Commands
 
 open System
-open System
+open System.Globalization
 open System.IO
+
 open ICSharpCode.SharpZipLib.Zip.Compression.Streams
 
 let unpackObject (input: Stream) (output: Stream): unit =
@@ -42,6 +43,6 @@ let readHeader(input: Stream): ObjectHeader =
 
     let maxLength = uint64 (string UInt64.MaxValue).Length
     let sizeArray = readWhile (fun b -> b <> 0uy) maxLength bF
-    let sz = Convert.ToUInt64(System.Text.Encoding.UTF8.GetString(sizeArray))
+    let sz = Convert.ToUInt64(System.Text.Encoding.ASCII.GetString(sizeArray), CultureInfo.InvariantCulture)
 
     {Type = tp; Size = sz}
