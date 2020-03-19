@@ -18,37 +18,38 @@ let ``Deflate decompression should read the file properly``(): unit =
     Assert.Equal(actualObjectContents, Encoding.UTF8.GetString(output.ToArray()))
 
 [<Fact>]
-let ``Check headers``(): unit =
+let ``Blob object header should be read``(): unit =
     // blob test:
-    let objectFilePathBlob = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
-    use inputBlob = new FileStream(objectFilePathBlob, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use outputBlob = new MemoryStream()
-    Commands.unpackObject inputBlob outputBlob
-    outputBlob.Position <- 0L
+    let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
+    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use output = new MemoryStream()
+    Commands.unpackObject input output
+    output.Position <- 0L
 
-    let headerBlob = Commands.readHeader outputBlob
-    let actualHeaderBlob = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitBlob; Commands.ObjectHeader.Size = 10UL}
-    Assert.Equal(headerBlob, actualHeaderBlob)
+    let header = Commands.readHeader output
+    let actualHeader = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitBlob; Commands.ObjectHeader.Size = 10UL}
+    Assert.Equal(actualHeader, header)
 
-    // tree test:
-    let objectFilePathTree = Path.Combine(testDataRoot, "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
-    use inputTree = new FileStream(objectFilePathTree, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use outputTree = new MemoryStream()
-    Commands.unpackObject inputTree outputTree
-    outputTree.Position <- 0L
+[<Fact>]
+let ``Tree object header should be read``(): unit =
+    let objectFilePath = Path.Combine(testDataRoot, "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
+    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use output = new MemoryStream()
+    Commands.unpackObject input output
+    output.Position <- 0L
 
-    let headerTree = Commands.readHeader outputTree
-    let actualHeaderTree = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitTree; Commands.ObjectHeader.Size = 63UL}
-    Assert.Equal(headerTree, actualHeaderTree)
+    let header = Commands.readHeader output
+    let actualHeader = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitTree; Commands.ObjectHeader.Size = 63UL}
+    Assert.Equal(actualHeader, header)
 
-    // commit test:
+[<Fact>]
+let ``Commit object header should be read``(): unit =
+    let objectFilePath = Path.Combine(testDataRoot, "cc07136d669554cf46ca4e9ef1eab7361336e1c8")
+    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use output = new MemoryStream()
+    Commands.unpackObject input output
+    output.Position <- 0L
 
-    let objectFilePathCommit = Path.Combine(testDataRoot, "cc07136d669554cf46ca4e9ef1eab7361336e1c8")
-    use inputCommit = new FileStream(objectFilePathCommit, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use outputCommit = new MemoryStream()
-    Commands.unpackObject inputCommit outputCommit
-    outputCommit.Position <- 0L
-
-    let headerCommit = Commands.readHeader outputCommit
-    let actualHeaderCommit = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitCommit; Commands.ObjectHeader.Size = 242UL}
-    Assert.Equal(headerCommit, actualHeaderCommit)
+    let header = Commands.readHeader output
+    let actualHeader = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitCommit; Commands.ObjectHeader.Size = 242UL}
+    Assert.Equal(actualHeader, header)
