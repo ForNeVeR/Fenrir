@@ -24,9 +24,9 @@ let readWhile (condition: byte -> bool) (maxSize: uint64) (stream: BinaryReader)
     let rec makeList (n: uint64): byte list =
         let newByte = stream.ReadByte()
         match (condition newByte) with
-            | _ when n > (maxSize) || stream.PeekChar() = -1 -> failwithf "Invalid Git object header"
-            | true  -> newByte :: makeList (n + 1UL)
-            | false -> []
+            | _ when n > (maxSize) -> failwithf "Invalid Git object header"
+            | true                 -> newByte :: makeList (n + 1UL)
+            | false                -> []
     makeList(0UL) |> List.toArray
 
 let readHeader(input: Stream): ObjectHeader =
