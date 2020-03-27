@@ -19,7 +19,6 @@ let ``Deflate decompression should read the file properly``(): unit =
 
 [<Fact>]
 let ``Blob object header should be read``(): unit =
-    // blob test:
     let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
     use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
     use output = new MemoryStream()
@@ -53,3 +52,17 @@ let ``Commit object header should be read``(): unit =
     let header = Commands.readHeader output
     let actualHeader = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitCommit; Commands.ObjectHeader.Size = 242UL}
     Assert.Equal(actualHeader, header)
+
+[<Fact>]
+let ``Cutting off header should write file properly``(): unit =
+    let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
+    let actualObjectContents = "Test file\n"
+    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use decodedInput = new MemoryStream()
+    Commands.unpackObject input decodedInput
+    decodedInput.Position <- 0L
+    use output = new MemoryStream()
+    let n = Commands.guillotineObject decodedInput output
+
+    Assert.Equal(actualObjectContents, Encoding.UTF8.GetString(output.ToArray()))
+    Assert.Equal(n, actualObjectContents.Length)

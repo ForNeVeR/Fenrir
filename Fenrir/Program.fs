@@ -41,6 +41,17 @@ module ExitCodes =
 [<EntryPoint>]
 let main (argv: string[]): int =
     match argv with
+
+    | [|"guillotine"; inputPath; outputPath|] ->
+        use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use decodedInput = new MemoryStream()
+        Commands.unpackObject input decodedInput
+        decodedInput.Position <- 0L
+        use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
+        let n = Commands.guillotineObject decodedInput output
+        printfn "%A bytes have been written" n
+        ExitCodes.Success
+
     | [|"help"|] | [|"--help"|] | [||] ->
         printUsage()
         ExitCodes.Success

@@ -46,3 +46,15 @@ let readHeader(input: Stream): ObjectHeader =
     let sz = Convert.ToUInt64(System.Text.Encoding.ASCII.GetString(sizeArray), CultureInfo.InvariantCulture)
 
     {Type = tp; Size = sz}
+
+let guillotineObject (input: Stream) (output: Stream): int =
+    readHeader input |> ignore
+    let bR = new BinaryReader(input)
+    let bW = new BinaryWriter(output)
+    let rec rewrite n:int =
+        try
+            bW.Write(bR.ReadByte())
+            rewrite (n + 1)
+        with
+            | :? EndOfStreamException -> n
+    rewrite 0
