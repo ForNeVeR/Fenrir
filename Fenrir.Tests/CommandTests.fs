@@ -4,6 +4,9 @@ open System.IO
 open System.Text
 open Xunit
 
+open System.Linq
+
+open System
 open Fenrir
 open Fenrir.Tests.TestUtils
 
@@ -16,6 +19,31 @@ let ``Deflate decompression should read the file properly``(): unit =
     Commands.unpackObject input output
 
     Assert.Equal(actualObjectContents, Encoding.UTF8.GetString(output.ToArray()))
+
+[<Fact>]
+let ``Deflate compression should write the file properly``(): unit =
+    let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
+    let actualObjectContents = "blob 10\x00Test file\n"B
+    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use memInput = new MemoryStream()
+    input.CopyTo memInput
+    memInput.Position <- 0L
+    let byteArrayOne = memInput.ToArray()
+
+    use output = new MemoryStream(actualObjectContents)
+    output.Position <- 0L
+
+    let newObjectFilePath = Path.Combine(testDataRoot, "testBlob")
+    use codedOutput = new FileStream(newObjectFilePath, FileMode.Create, FileAccess.Write)
+    Commands.packObject output codedOutput
+
+    use newInput = new FileStream(newObjectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use newMemInput = new MemoryStream()
+    newInput.CopyTo newMemInput
+    newMemInput.Position <- 0L
+    let byteArrayTwo = memInput.ToArray()
+
+    Assert.True(byteArrayOne.SequenceEqual(byteArrayTwo))
 
 [<Fact>]
 let ``Blob object header should be read``(): unit =

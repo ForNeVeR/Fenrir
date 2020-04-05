@@ -10,6 +10,10 @@ let unpackObject (input: Stream) (output: Stream): unit =
     use deflate = new InflaterInputStream(input)
     deflate.CopyTo output
 
+let packObject (input: Stream) (output: Stream): unit =
+    use deflate = new DeflaterOutputStream(output)
+    input.CopyTo deflate
+
 type GitObjectType =
     | GitCommit = 0
     | GitTree   = 1

@@ -30,6 +30,11 @@ Usage:
 
     If <path> isn't passed, then accepts raw object contents from the standard input.
 
+  pack [<input> [<output>]]
+    Reads the object file passed as <input> and packs the results to the <output>.
+
+    If any of the <input> or <output> parameters isn't defined, then standard input and/or standard output are used instead.
+
   unpack [<input> [<output>]]
     Unpacks the object file passed as <input> and writes the results to the <output>.
 
@@ -85,6 +90,22 @@ let main (argv: string[]): int =
         use input = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
         let header = Commands.readHeader input
         printfn "%A" header
+        ExitCodes.Success
+
+    | [|"pack"|] ->
+        use input = Console.OpenStandardInput()
+        use output = Console.OpenStandardOutput()
+        Commands.packObject input output
+        ExitCodes.Success
+    | [|"pack"; inputPath|] ->
+        use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use output = Console.OpenStandardOutput()
+        Commands.packObject input output
+        ExitCodes.Success
+    | [|"pack"; inputPath; outputPath|] ->
+        use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
+        Commands.packObject input output
         ExitCodes.Success
 
     | [|"unpack"|] ->
