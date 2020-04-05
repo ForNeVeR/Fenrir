@@ -25,9 +25,7 @@ let ``Deflate compression should write the file properly``(): unit =
     let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
     let actualObjectContents = "blob 10\x00Test file\n"B
     use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use memInput = new MemoryStream()
-    input.CopyTo memInput
-    memInput.Position <- 0L
+    use memInput = input.CopyTo |> Commands.doAndRewind
     let byteArrayOne = memInput.ToArray()
 
     use output = new MemoryStream(actualObjectContents)
@@ -38,9 +36,7 @@ let ``Deflate compression should write the file properly``(): unit =
     Commands.packObject output codedOutput
 
     use newInput = new FileStream(newObjectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use newMemInput = new MemoryStream()
-    newInput.CopyTo newMemInput
-    newMemInput.Position <- 0L
+    use newMemInput = newInput.CopyTo |> Commands.doAndRewind
     let byteArrayTwo = memInput.ToArray()
 
     Assert.True(byteArrayOne.SequenceEqual(byteArrayTwo))
@@ -49,9 +45,7 @@ let ``Deflate compression should write the file properly``(): unit =
 let ``Blob object header should be read``(): unit =
     let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
     use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = new MemoryStream()
-    Commands.unpackObject input output
-    output.Position <- 0L
+    use output = Commands.unpackObject input |> Commands.doAndRewind
 
     let header = Commands.readHeader output
     let actualHeader = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitBlob; Commands.ObjectHeader.Size = 10UL}
@@ -61,9 +55,7 @@ let ``Blob object header should be read``(): unit =
 let ``Tree object header should be read``(): unit =
     let objectFilePath = Path.Combine(testDataRoot, "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
     use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = new MemoryStream()
-    Commands.unpackObject input output
-    output.Position <- 0L
+    use output = Commands.unpackObject input |> Commands.doAndRewind
 
     let header = Commands.readHeader output
     let actualHeader = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitTree; Commands.ObjectHeader.Size = 63UL}
@@ -73,9 +65,7 @@ let ``Tree object header should be read``(): unit =
 let ``Commit object header should be read``(): unit =
     let objectFilePath = Path.Combine(testDataRoot, "cc07136d669554cf46ca4e9ef1eab7361336e1c8")
     use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = new MemoryStream()
-    Commands.unpackObject input output
-    output.Position <- 0L
+    use output = Commands.unpackObject input |> Commands.doAndRewind
 
     let header = Commands.readHeader output
     let actualHeader = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitCommit; Commands.ObjectHeader.Size = 242UL}
@@ -86,9 +76,7 @@ let ``Cutting off header should write file properly``(): unit =
     let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
     let actualObjectContents = "Test file\n"
     use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use decodedInput = new MemoryStream()
-    Commands.unpackObject input decodedInput
-    decodedInput.Position <- 0L
+    use decodedInput = Commands.unpackObject input |> Commands.doAndRewind
     use output = new MemoryStream()
     let n = Commands.guillotineObject decodedInput output
 

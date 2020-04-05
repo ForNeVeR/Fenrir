@@ -94,3 +94,9 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             let (p, r) = parseParents sr []
             let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
             {Tree = tree; Parents = (Array.ofList p); Rest = rr}
+
+let doAndRewind (action: Stream -> unit): MemoryStream =
+    let output = new MemoryStream()
+    action output
+    output.Position <- 0L
+    output
