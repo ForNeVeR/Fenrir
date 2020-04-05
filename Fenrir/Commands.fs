@@ -5,6 +5,7 @@ open System.Globalization
 open System.IO
 
 open ICSharpCode.SharpZipLib.Zip.Compression.Streams
+open System.Security.Cryptography
 
 let unpackObject (input: Stream) (output: Stream): unit =
     use deflate = new InflaterInputStream(input)
@@ -100,3 +101,8 @@ let doAndRewind (action: Stream -> unit): MemoryStream =
     action output
     output.Position <- 0L
     output
+
+let SHA1 (input: Stream): byte[] =
+    use tempStream = input.CopyTo |> doAndRewind
+    use sha = new SHA1CryptoServiceProvider()
+    sha.ComputeHash(tempStream.ToArray())

@@ -96,3 +96,13 @@ let ``The program should parse commits properly``(): unit =
     Assert.Equal(cmt.Tree, "25e78c44e06b1e5c9c9e39a6a827734eee784066")
     Assert.Equal(cmt.Parents.[0], "62f4d4ce40041cd6295eb4a3d663724b4952e7b5")
     Assert.Equal(cmt.Parents.[1], "c0573616ea63dba6c4b13398058b0950c33a524c")
+
+[<Fact>]
+let ``Hasher should calculate file name properly``(): unit =
+    let actualObjectContents = "blob 10\x00Test file\n"B
+    let fileName = [|82uy; 74uy; 207uy; 255uy; 167uy; 96uy; 253uy; 11uy; 140uy; 29uy; 231uy; 207uy; 0uy; 31uy; 141uy; 211uy; 72uy; 179uy; 153uy; 216uy|]
+
+    use input = new MemoryStream(actualObjectContents)
+    input.Position <- 0L
+
+    Assert.True(fileName.SequenceEqual(Commands.SHA1 input))
