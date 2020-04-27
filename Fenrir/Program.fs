@@ -4,6 +4,8 @@ open System
 open System.IO
 open System.Reflection
 
+open System
+open Fenrir
 open Fenrir
 
 let private printVersion() =
@@ -13,6 +15,9 @@ let private printVersion() =
 let private printUsage() =
     printf @"
 Usage:
+
+  brlist <path to repository>
+    Shows branch list of repository.
 
   (help | --help)
     Print this message.
@@ -41,6 +46,13 @@ module ExitCodes =
 [<EntryPoint>]
 let main (argv: string[]): int =
     match argv with
+
+    | [|"brlist"; pathToRepo|] ->
+        let ff = Commands.readBranchList(pathToRepo)
+        let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
+        printfn "%A" ss
+
+        ExitCodes.Success
 
     | [|"guillotine"; inputPath; outputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)

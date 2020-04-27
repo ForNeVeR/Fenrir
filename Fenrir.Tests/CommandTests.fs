@@ -66,3 +66,9 @@ let ``Cutting off header should write file properly``(): unit =
 
     Assert.Equal(actualObjectContents, Encoding.UTF8.GetString(output.ToArray()))
     Assert.Equal(n, actualObjectContents.Length)
+
+[<Fact>]
+let ``The program should find branch list properly``(): unit =
+    let ff = Commands.readBranchList(testDataRoot + "/")
+    Assert.Equal(fst ff.[0], testDataRoot + "/.git/refs/heads/master")
+    Assert.Equal(snd ff.[0], "cc07136d669554cf46ca4e9ef1eab7361336e1c8")

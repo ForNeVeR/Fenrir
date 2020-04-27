@@ -4,6 +4,9 @@ open System
 open System.Globalization
 open System.IO
 
+open System
+open System
+open System.IO
 open ICSharpCode.SharpZipLib.Zip.Compression.Streams
 
 let unpackObject (input: Stream) (output: Stream): unit =
@@ -58,3 +61,7 @@ let guillotineObject (input: Stream) (output: Stream): int =
         with
             | :? EndOfStreamException -> n
     rewrite 0
+
+let readBranchList (path : String): (String*String)[] =
+    let sf = Directory.GetFiles (path + ".git/refs/heads/")
+    Array.collect (fun (cp:String) -> [|(cp, File.ReadAllLines(cp).[0])|]) sf
