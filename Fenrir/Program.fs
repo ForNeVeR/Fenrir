@@ -4,8 +4,6 @@ open System
 open System.IO
 open System.Reflection
 
-open System
-open Fenrir
 open Fenrir
 
 let private printVersion() =
@@ -51,7 +49,6 @@ let main (argv: string[]): int =
         let ff = Commands.readBranchList(pathToRepo)
         let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
         printfn "%A" ss
-
         ExitCodes.Success
 
     | [|"guillotine"; inputPath; outputPath|] ->

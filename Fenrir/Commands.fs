@@ -4,9 +4,6 @@ open System
 open System.Globalization
 open System.IO
 
-open System
-open System
-open System.IO
 open ICSharpCode.SharpZipLib.Zip.Compression.Streams
 
 let unpackObject (input: Stream) (output: Stream): unit =
@@ -21,6 +18,12 @@ type GitObjectType =
 type ObjectHeader = {
     Type: GitObjectType
     Size: UInt64
+}
+
+type CommitBody = {
+    Tree : String
+    Parents : String[]
+    Rest : String[]
 }
 
 let readWhile (condition: byte -> bool) (maxSize: uint64) (stream: BinaryReader): byte array =
@@ -65,3 +68,25 @@ let guillotineObject (input: Stream) (output: Stream): int =
 let readBranchList (path : String): (String*String)[] =
     let sf = Directory.GetFiles (path + ".git/refs/heads/")
     Array.collect (fun (cp:String) -> [|(cp, File.ReadAllLines(cp).[0])|]) sf
+
+let parseCommitBody (path : String) (hash : String) : CommitBody =
+    let pathToFile = path + "/.git/objects/" + hash.Substring(0, 2) + "/" + hash.Substring(2, 38)
+    use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use decodedInput = new MemoryStream()
+    unpackObject input decodedInput
+    decodedInput.Position <- 0L
+    match (readHeader decodedInput).Type with
+        | GitObjectType.GitTree   -> failwithf "Found tree file instead of commit file"
+        | GitObjectType.GitBlob   -> failwithf "Found blob file instead of commit file"
+        | GitObjectType.GitCommit ->
+            let enc = System.Text.Encoding.UTF8
+            use sr = new StreamReader(decodedInput, enc)
+            let tree = sr.ReadLine().Substring(5)
+            let rec parseParents (s : StreamReader) (P : String list) : (String list * String[]) =
+                let str = s.ReadLine()
+                match str.Substring(0, 7) with
+                    | "parent " -> parseParents s (str.Substring(7, 40) :: P)
+                    | _         -> (P, [|str|])
+            let (p, r) = parseParents sr []
+            let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
+            {Tree = tree; Parents = (Array.ofList p); Rest = rr}
