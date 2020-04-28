@@ -19,8 +19,10 @@ Usage:
 
     If <path to .git/ directory> isn't passed, then current directory are used instead.
 
-  guillotine [<inputPath>] [<outputPath>]
+  guillotine [<input> [<output>]]
     Read git file and write decoded content of the file without header.
+
+    If any of the <input> or <output> parameters isn't defined, then standard input and/or standard output are used instead.
 
   (help | --help)
     Print this message.
@@ -67,6 +69,24 @@ let main (argv: string[]): int =
         printfn "%A" ss
         ExitCodes.Success
 
+    | [|"guillotine"|] ->
+        use input = Console.OpenStandardInput()
+        use output = Console.OpenStandardOutput()
+        use decodedInput = new MemoryStream()
+        Commands.unpackObject input decodedInput
+        decodedInput.Position <- 0L
+        let n = Commands.guillotineObject decodedInput output
+        printfn "%A bytes have been written" n
+        ExitCodes.Success
+    | [|"guillotine"; inputPath|] ->
+        use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use decodedInput = new MemoryStream()
+        Commands.unpackObject input decodedInput
+        decodedInput.Position <- 0L
+        use output = Console.OpenStandardOutput()
+        let n = Commands.guillotineObject decodedInput output
+        printfn "%A bytes have been written" n
+        ExitCodes.Success
     | [|"guillotine"; inputPath; outputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use decodedInput = new MemoryStream()
