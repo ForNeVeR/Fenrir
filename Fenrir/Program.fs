@@ -17,6 +17,8 @@ Usage:
   brlist [<path to repository>]
     Shows branch list of repository.
 
+    If <path to repository> isn't passed, then current directory are used instead.
+
   guillotine [<inputPath>] [<outputPath>]
     Read git file and write decoded content of the file without header.
 
@@ -48,6 +50,12 @@ module ExitCodes =
 let main (argv: string[]): int =
     match argv with
 
+    | [|"brlist"|] ->
+        let pathToRepo = Directory.GetCurrentDirectory()
+        let ff = Commands.readBranchList(pathToRepo)
+        let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
+        printfn "%A" ss
+        ExitCodes.Success
     | [|"brlist"; pathToRepo|] ->
         let ff = Commands.readBranchList(pathToRepo)
         let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
