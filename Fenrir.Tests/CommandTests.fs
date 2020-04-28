@@ -100,9 +100,14 @@ let ``The program should parse commits properly``(): unit =
 [<Fact>]
 let ``Hasher should calculate file name properly``(): unit =
     let actualObjectContents = "blob 10\x00Test file\n"B
-    let fileName = [|82uy; 74uy; 207uy; 255uy; 167uy; 96uy; 253uy; 11uy; 140uy; 29uy; 231uy; 207uy; 0uy; 31uy; 141uy; 211uy; 72uy; 179uy; 153uy; 216uy|]
+    let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
 
     use input = new MemoryStream(actualObjectContents)
     input.Position <- 0L
+    Assert.Equal(fileName, Commands.SHA1 input |> Commands.byteToString)
 
-    Assert.True(fileName.SequenceEqual(Commands.SHA1 input))
+[<Fact>]
+let ``Converting String to byte[] and backward should not change the String``(): unit =
+    let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
+    Console.Write (fileName)
+    Assert.Equal(fileName, Commands.stringToByte fileName |> Commands.byteToString)

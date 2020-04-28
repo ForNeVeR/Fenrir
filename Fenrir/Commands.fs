@@ -106,3 +106,13 @@ let SHA1 (input: Stream): byte[] =
     use tempStream = input.CopyTo |> doAndRewind
     use sha = new SHA1CryptoServiceProvider()
     sha.ComputeHash(tempStream.ToArray())
+
+let byteToString (b : byte[]): String =
+    BitConverter.ToString(b).Replace("-", "").ToLower()
+
+let stringToByte (s : String): byte[] =
+    let rec twoCharsToByte (i : int): byte list =
+        match (i >= s.Length) with
+            | true  -> []
+            | false -> (Convert.ToByte(s.Substring(i, 2), 16)) :: (twoCharsToByte (i + 2))
+    twoCharsToByte 0 |> Array.ofList
