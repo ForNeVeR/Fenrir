@@ -67,7 +67,7 @@ let guillotineObject (input: Stream) (output: Stream): int =
 
 let readBranchList (path : String): (String*String)[] =
     let sf = Directory.GetFiles (path + ".git/refs/heads/")
-    Array.collect (fun (cp:String) -> [|(cp, File.ReadAllLines(cp).[0])|]) sf
+    Array.map (fun (cp:String) -> cp, File.ReadAllLines(cp).[0]) sf
 
 let parseCommitBody (path : String) (hash : String) : CommitBody =
     let pathToFile = path + "/.git/objects/" + hash.Substring(0, 2) + "/" + hash.Substring(2, 38)
