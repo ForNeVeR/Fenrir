@@ -14,8 +14,11 @@ let private printUsage() =
     printf @"
 Usage:
 
-  brlist <path to repository>
+  brlist [<path to repository>]
     Shows branch list of repository.
+
+  guillotine [<inputPath>] [<outputPath>]
+    Read git file and write decoded content of the file without header.
 
   (help | --help)
     Print this message.
