@@ -96,6 +96,12 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
             {Tree = tree; Parents = (Array.ofList p); Rest = rr}
 
+let hydraBlob (input: Stream) (output: Stream): unit =
+    let bW = new BinaryWriter(output)
+    bW.Write("blob "B)
+    bW.Write(input.Length.ToString() |> System.Text.Encoding.ASCII.GetBytes)
+    bW.Write(00uy)
+
 let doAndRewind (action: Stream -> unit): MemoryStream =
     let output = new MemoryStream()
     action output
@@ -116,3 +122,4 @@ let stringToByte (s : String): byte[] =
             | true  -> []
             | false -> (Convert.ToByte(s.Substring(i, 2), 16)) :: (twoCharsToByte (i + 2))
     twoCharsToByte 0 |> Array.ofList
+

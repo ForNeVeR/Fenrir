@@ -111,3 +111,18 @@ let ``Converting String to byte[] and backward should not change the String``():
     let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
     Console.Write (fileName)
     Assert.Equal(fileName, Commands.stringToByte fileName |> Commands.byteToString)
+
+[<Fact>]
+let ``Restoring head should work properly``(): unit =
+    let actualObjectContents = "blob 10\x00Test file\n"B
+    use input = new MemoryStream(actualObjectContents)
+    input.Position <- 0L
+    use cuttedInput = new MemoryStream()
+    Commands.guillotineObject input cuttedInput |> ignore
+    cuttedInput.Position <- 0L
+    use output = new MemoryStream()
+    Commands.hydraBlob cuttedInput output
+    cuttedInput.CopyTo output
+    output.Position <- 0L
+
+    Assert.True(actualObjectContents.SequenceEqual(output.ToArray()))
