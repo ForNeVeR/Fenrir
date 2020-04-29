@@ -37,6 +37,12 @@ Usage:
 
     If any of the <input> or <output> parameters isn't defined, then standard input and/or standard output are used instead.
 
+  save [<input> [<path to repository>]]
+    Read text file and save it as object file to repository.
+
+    If <path to repository> isn't passed, then current directory are used instead.
+    If the <input> isn't defined, then standard input are used instead.
+
   unpack [<input> [<output>]]
     Unpacks the object file passed as <input> and writes the results to the <output>.
 
@@ -126,6 +132,48 @@ let main (argv: string[]): int =
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
         Commands.packObject input output
+        ExitCodes.Success
+
+    | [|"save"|] ->
+        let pathToRepo = Directory.GetCurrentDirectory()
+        use input = Console.OpenStandardInput()
+        use headed = new MemoryStream()
+        Commands.hydraBlob input headed
+        input.CopyTo headed
+        headed.Position <- 0L
+        let hashName = Commands.SHA1 headed |> Commands.byteToString
+        headed.Position <- 0L
+        let pathToFile = pathToRepo + "/.git/objects/" + hashName.Substring(0, 2) + "/" + hashName.Substring(2, 38)
+        Directory.CreateDirectory(pathToRepo + "/.git/objects/" + hashName.Substring(0, 2)) |> ignore
+        use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
+        Commands.packObject headed output
+        ExitCodes.Success
+    | [|"save"; inputPath|] ->
+        let pathToRepo = Directory.GetCurrentDirectory()
+        use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use headed = new MemoryStream()
+        Commands.hydraBlob input headed
+        input.CopyTo headed
+        headed.Position <- 0L
+        let hashName = Commands.SHA1 headed |> Commands.byteToString
+        headed.Position <- 0L
+        let pathToFile = pathToRepo + "/.git/objects/" + hashName.Substring(0, 2) + "/" + hashName.Substring(2, 38)
+        Directory.CreateDirectory(pathToRepo + "/.git/objects/" + hashName.Substring(0, 2)) |> ignore
+        use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
+        Commands.packObject headed output
+        ExitCodes.Success
+    | [|"save"; inputPath; pathToRepo|] ->
+        use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use headed = new MemoryStream()
+        Commands.hydraBlob input headed
+        input.CopyTo headed
+        headed.Position <- 0L
+        let hashName = Commands.SHA1 headed |> Commands.byteToString
+        headed.Position <- 0L
+        let pathToFile = pathToRepo + "/.git/objects/" + hashName.Substring(0, 2) + "/" + hashName.Substring(2, 38)
+        Directory.CreateDirectory(pathToRepo + "/.git/objects/" + hashName.Substring(0, 2)) |> ignore
+        use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
+        Commands.packObject headed output
         ExitCodes.Success
 
     | [|"unpack"|] ->
