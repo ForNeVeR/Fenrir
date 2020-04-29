@@ -143,8 +143,8 @@ let main (argv: string[]): int =
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Commands.byteToString
         headed.Position <- 0L
-        let pathToFile = pathToRepo + "/.git/objects/" + hashName.Substring(0, 2) + "/" + hashName.Substring(2, 38)
-        Directory.CreateDirectory(pathToRepo + "/.git/objects/" + hashName.Substring(0, 2)) |> ignore
+        let pathToFile = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
+        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
         use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
         Commands.packObject headed output
         ExitCodes.Success
@@ -157,8 +157,8 @@ let main (argv: string[]): int =
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Commands.byteToString
         headed.Position <- 0L
-        let pathToFile = pathToRepo + "/.git/objects/" + hashName.Substring(0, 2) + "/" + hashName.Substring(2, 38)
-        Directory.CreateDirectory(pathToRepo + "/.git/objects/" + hashName.Substring(0, 2)) |> ignore
+        let pathToFile = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
+        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
         use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
         Commands.packObject headed output
         ExitCodes.Success
@@ -170,8 +170,8 @@ let main (argv: string[]): int =
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Commands.byteToString
         headed.Position <- 0L
-        let pathToFile = pathToRepo + "/.git/objects/" + hashName.Substring(0, 2) + "/" + hashName.Substring(2, 38)
-        Directory.CreateDirectory(pathToRepo + "/.git/objects/" + hashName.Substring(0, 2)) |> ignore
+        let pathToFile = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
+        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
         use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
         Commands.packObject headed output
         ExitCodes.Success
