@@ -138,7 +138,7 @@ let main (argv: string[]): int =
         let pathToRepo = Directory.GetCurrentDirectory()
         use input = Console.OpenStandardInput()
         use headed = new MemoryStream()
-        Commands.hydraBlob input headed
+        Commands.writeObjectHeader input headed
         input.CopyTo headed
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Commands.byteToString
@@ -152,7 +152,7 @@ let main (argv: string[]): int =
         let pathToRepo = Directory.GetCurrentDirectory()
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        Commands.hydraBlob input headed
+        Commands.writeObjectHeader input headed
         input.CopyTo headed
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Commands.byteToString
@@ -165,7 +165,7 @@ let main (argv: string[]): int =
     | [|"save"; inputPath; pathToRepo|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        Commands.hydraBlob input headed
+        Commands.writeObjectHeader input headed
         input.CopyTo headed
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Commands.byteToString

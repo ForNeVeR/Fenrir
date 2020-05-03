@@ -96,7 +96,7 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
             {Tree = tree; Parents = (Array.ofList p); Rest = rr}
 
-let hydraBlob (input: Stream) (output: Stream): unit =
+let writeObjectHeader (input: Stream) (output: Stream): unit =
     let bW = new BinaryWriter(output)
     bW.Write("blob "B)
     bW.Write(input.Length.ToString(CultureInfo.InvariantCulture) |> System.Text.Encoding.ASCII.GetBytes)
