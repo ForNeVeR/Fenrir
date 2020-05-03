@@ -97,10 +97,10 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             {Tree = tree; Parents = (Array.ofList p); Rest = rr}
 
 let writeObjectHeader (input: Stream) (output: Stream): unit =
-    let bW = new BinaryWriter(output)
-    bW.Write("blob "B)
-    bW.Write(input.Length.ToString(CultureInfo.InvariantCulture) |> System.Text.Encoding.ASCII.GetBytes)
-    bW.Write(00uy)
+    output.Write(ReadOnlySpan<byte>("blob "B))
+    output.Write(ReadOnlySpan<byte>(input.Length.ToString(CultureInfo.InvariantCulture)
+                                    |> System.Text.Encoding.ASCII.GetBytes))
+    output.WriteByte(00uy)
 
 let doAndRewind (action: Stream -> unit): MemoryStream =
     let output = new MemoryStream()
