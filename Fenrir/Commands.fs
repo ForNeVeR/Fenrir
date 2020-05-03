@@ -99,7 +99,7 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
 let hydraBlob (input: Stream) (output: Stream): unit =
     let bW = new BinaryWriter(output)
     bW.Write("blob "B)
-    bW.Write(input.Length.ToString() |> System.Text.Encoding.ASCII.GetBytes)
+    bW.Write(input.Length.ToString(CultureInfo.InvariantCulture) |> System.Text.Encoding.ASCII.GetBytes)
     bW.Write(00uy)
 
 let doAndRewind (action: Stream -> unit): MemoryStream =
