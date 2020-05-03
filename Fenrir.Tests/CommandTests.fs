@@ -69,18 +69,14 @@ let ``Cutting off header should write file properly``(): unit =
 
 [<Fact>]
 let ``The program should find branch list properly``(): unit =
-    Directory.Move(Path.Combine(testDataRoot, "gitRepoTest"), Path.Combine(testDataRoot, ".git"))
     let ff = Commands.readBranchList(testDataRoot)
-    Assert.Equal(fst ff.[0], Path.Combine(testDataRoot, ".git", "refs", "heads", "master"))
+    Assert.Equal(fst ff.[0], Path.Combine(testDataRoot, "refs", "heads", "master"))
     Assert.Equal(snd ff.[0], "cc07136d669554cf46ca4e9ef1eab7361336e1c8")
-    Directory.Move(Path.Combine(testDataRoot, ".git"), Path.Combine(testDataRoot, "gitRepoTest"))
 
 
 [<Fact>]
 let ``The program should parse commits properly``(): unit =
-    Directory.Move(Path.Combine(testDataRoot, "gitRepoTest"), Path.Combine(testDataRoot, ".git"))
     let cmt = Commands.parseCommitBody testDataRoot "3cb4a57f644f322c852201a68d2211026912a228"
     Assert.Equal(cmt.Tree, "25e78c44e06b1e5c9c9e39a6a827734eee784066")
     Assert.Equal(cmt.Parents.[0], "62f4d4ce40041cd6295eb4a3d663724b4952e7b5")
     Assert.Equal(cmt.Parents.[1], "c0573616ea63dba6c4b13398058b0950c33a524c")
-    Directory.Move(Path.Combine(testDataRoot, ".git"), Path.Combine(testDataRoot, "gitRepoTest"))

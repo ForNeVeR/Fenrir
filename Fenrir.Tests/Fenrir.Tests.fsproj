@@ -11,8 +11,8 @@
         <Content Include="Data\524acfffa760fd0b8c1de7cf001f8dd348b399d8" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Data\0ba2ef789f6245b6b6604f54706b1dce1d84907f" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Data\cc07136d669554cf46ca4e9ef1eab7361336e1c8" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="Data\gitRepoTest\refs\heads\master" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="Data\gitRepoTest\objects\3c\b4a57f644f322c852201a68d2211026912a228" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Data\refs\heads\master" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Data\objects\3c\b4a57f644f322c852201a68d2211026912a228" CopyToOutputDirectory="PreserveNewest" />
         <Compile Include="TestUtils.fs" />
         <Compile Include="CommandTests.fs" />
         <Compile Include="Program.fs" />

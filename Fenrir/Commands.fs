@@ -66,11 +66,11 @@ let guillotineObject (input: Stream) (output: Stream): int =
     rewrite 0
 
 let readBranchList (path : String): (String*String)[] =
-    let sf = Directory.GetFiles(Path.Combine(path, ".git", "refs", "heads"))
+    let sf = Directory.GetFiles(Path.Combine(path, "refs", "heads"))
     Array.map (fun (cp:String) -> cp, File.ReadAllLines(cp).[0]) sf
 
 let parseCommitBody (path : String) (hash : String) : CommitBody =
-    let pathToFile = Path.Combine(path, ".git", "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+    let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
     use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
     use decodedInput = new MemoryStream()
     unpackObject input decodedInput

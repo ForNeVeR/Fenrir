@@ -14,10 +14,10 @@ let private printUsage() =
     printf @"
 Usage:
 
-  brlist [<path to repository>]
+  brlist [<path to .git/ directory>]
     Shows branch list of repository.
 
-    If <path to repository> isn't passed, then current directory are used instead.
+    If <path to .git/ directory> isn't passed, then current directory are used instead.
 
   guillotine [<inputPath>] [<outputPath>]
     Read git file and write decoded content of the file without header.
