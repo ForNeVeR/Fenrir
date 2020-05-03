@@ -96,8 +96,12 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
             {Tree = tree; Parents = (Array.ofList p); Rest = rr}
 
-let writeObjectHeader (input: Stream) (output: Stream): unit =
-    output.Write(ReadOnlySpan<byte>("blob "B))
+let writeObjectHeader (tp: GitObjectType) (input: Stream) (output: Stream): unit =
+    match tp with
+    | GitObjectType.GitTree   -> output.Write(ReadOnlySpan<byte>("tree "B))
+    | GitObjectType.GitCommit -> output.Write(ReadOnlySpan<byte>("commit "B))
+    | GitObjectType.GitBlob   -> output.Write(ReadOnlySpan<byte>("blob "B))
+    | _                       -> failwithf "Invalid type of Git object"
     output.Write(ReadOnlySpan<byte>(input.Length.ToString(CultureInfo.InvariantCulture)
                                     |> System.Text.Encoding.ASCII.GetBytes))
     output.WriteByte(00uy)

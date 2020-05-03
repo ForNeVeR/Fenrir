@@ -121,7 +121,7 @@ let ``Restoring head should work properly``(): unit =
     Commands.guillotineObject input cuttedInput |> ignore
     cuttedInput.Position <- 0L
     use output = new MemoryStream()
-    Commands.writeObjectHeader cuttedInput output
+    Commands.writeObjectHeader Commands.GitObjectType.GitBlob cuttedInput output
     cuttedInput.CopyTo output
     output.Position <- 0L
 
