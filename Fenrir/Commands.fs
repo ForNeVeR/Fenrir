@@ -116,10 +116,12 @@ let SHA1 (input: Stream): byte[] =
 let byteToString (b : byte[]): String =
     BitConverter.ToString(b).Replace("-", "").ToLower()
 
-let stringToByte (s : String): byte[] =
-    let rec twoCharsToByte (i : int): byte list =
-        match (i >= s.Length) with
-            | true  -> []
-            | false -> (Convert.ToByte(s.Substring(i, 2), 16)) :: (twoCharsToByte (i + 2))
-    twoCharsToByte 0 |> Array.ofList
-
+let stringToByte (s: String): byte[] =
+    match s.Length with
+    | even when even % 2 = 0 ->
+        let arrayLength = s.Length / 2
+        Array.init arrayLength (fun byteIndex ->
+            let charIndex = byteIndex * 2
+            Byte.Parse(s.AsSpan(charIndex, 2), NumberStyles.AllowHexSpecifier, provider = CultureInfo.InvariantCulture)
+        )
+    | n -> failwithf "String of invalid length %d: %s" n s
