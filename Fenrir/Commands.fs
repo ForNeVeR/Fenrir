@@ -12,7 +12,7 @@ let unpackObject (input: Stream) (output: Stream): unit =
     deflate.CopyTo output
 
 let packObject (input: Stream) (output: Stream): unit =
-    use deflate = new DeflaterOutputStream(output)
+    use deflate = new DeflaterOutputStream(output, IsStreamOwner = false)
     input.CopyTo deflate
 
 type GitObjectType =

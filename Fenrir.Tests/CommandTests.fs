@@ -22,24 +22,13 @@ let ``Deflate decompression should read the file properly``(): unit =
 
 [<Fact>]
 let ``Deflate compression should write the file properly``(): unit =
-    let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
     let actualObjectContents = "blob 10\x00Test file\n"B
-    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use memInput = input.CopyTo |> Commands.doAndRewind
-    let byteArrayOne = memInput.ToArray()
 
-    use output = new MemoryStream(actualObjectContents)
-    output.Position <- 0L
+    use input = new MemoryStream(actualObjectContents)
+    use compressedOutput = Commands.packObject input |> Commands.doAndRewind
+    use unCompressedOutput = Commands.unpackObject compressedOutput |> Commands.doAndRewind
 
-    let newObjectFilePath = Path.Combine(testDataRoot, "testBlob")
-    use codedOutput = new FileStream(newObjectFilePath, FileMode.Create, FileAccess.Write)
-    Commands.packObject output codedOutput
-
-    use newInput = new FileStream(newObjectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use newMemInput = newInput.CopyTo |> Commands.doAndRewind
-    let byteArrayTwo = memInput.ToArray()
-
-    Assert.True(byteArrayOne.SequenceEqual(byteArrayTwo))
+    Assert.Equal<byte>(actualObjectContents, unCompressedOutput.ToArray())
 
 [<Fact>]
 let ``Blob object header should be read``(): unit =
@@ -123,4 +112,4 @@ let ``Restoring head should work properly``(): unit =
     cuttedInput.CopyTo output
     output.Position <- 0L
 
-    Assert.True(actualObjectContents.SequenceEqual(output.ToArray()))
+    Assert.Equal<byte>(actualObjectContents, output.ToArray())
