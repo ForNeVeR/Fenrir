@@ -103,7 +103,6 @@ let ``Hasher should calculate file name properly``(): unit =
     let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
 
     use input = new MemoryStream(actualObjectContents)
-    input.Position <- 0L
     Assert.Equal(fileName, Commands.SHA1 input |> Commands.byteToString)
 
 [<Fact>]
@@ -116,7 +115,6 @@ let ``Converting String to byte[] and backward should not change the String``():
 let ``Restoring head should work properly``(): unit =
     let actualObjectContents = "blob 10\x00Test file\n"B
     use input = new MemoryStream(actualObjectContents)
-    input.Position <- 0L
     use cuttedInput = new MemoryStream()
     Commands.guillotineObject input cuttedInput |> ignore
     cuttedInput.Position <- 0L
