@@ -5,15 +5,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Native\Windows.fs" />
         <EmbeddedResource Include="RefsWindow.xaml" />
         <Compile Include="RefsViewModel.fs" />
-        <Compile Include="Console.fs" />
         <Compile Include="EntryPoint.fs" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Elwood.ConsoleFramework" Version="0.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Fenrir.Ui.Framework\Fenrir.Ui.Framework.fsproj" />
     </ItemGroup>
 
 </Project>

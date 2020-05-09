@@ -1,8 +1,8 @@
-﻿module Fenrir.Ui.Console
+﻿module Fenrir.Ui.Framework.Console
 
 open System
 
-open Fenrir.Ui.Native
+open Fenrir.Ui.Framework.Native
 
 let private initializeWindows() =
     let stdin = Windows.getStdInHandle()

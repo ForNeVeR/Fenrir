@@ -1,8 +1,12 @@
 ﻿<c:Window xmlns:c="clr-namespace:ConsoleFramework.Controls;assembly=ConsoleFramework"
-                MinHeight="10" MinWidth="25"
-                X="0" Y="0"
-                Title="Refs">
-    <c:Panel Orientation="Vertical" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-        <c:TextBlock>Fenrir</c:TextBlock>
-    </c:Panel>
+          xmlns:x="clr-namespace:ConsoleFramework.Xaml;assembly=ConsoleFramework"
+          xmlns:controls="clr-namespace:Fenrir.Ui.Framework.Controls;assembly=Fenrir.Ui.Framework"
+          MinHeight="10" MinWidth="25"
+          X="0" Y="0"
+          Title="Refs">
+    <controls:LoadableWrapper VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                              IsLoading="{x:Binding IsLoading, Mode=OneWay}">
+        <c:ListBox VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                   Items="{x:Binding RefList, Mode=OneWay}"/>
+    </controls:LoadableWrapper>
 </c:Window>

@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Native\Windows.fs" />
+        <Compile Include="Controls\LoadableWrapper.fs" />
+        <Compile Include="Console.fs" />
+        <Compile Include="ViewModelBase.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Elwood.ConsoleFramework" Version="0.0.3" />
+    </ItemGroup>
+
+</Project>

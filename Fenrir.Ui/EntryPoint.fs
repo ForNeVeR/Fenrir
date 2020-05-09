@@ -3,9 +3,11 @@
 open System.IO
 open System.Reflection
 
-open Xaml
 open ConsoleFramework
 open ConsoleFramework.Controls
+open global.Xaml
+
+open Fenrir.Ui.Framework
 
 let private loadFromXaml<'a when 'a :> Control> resourceName dataContext =
     // This function was copied from ConsoleFramework.ConsoleApplication.LoadFromXaml, but uses the current assembly
