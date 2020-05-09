@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="MainWindow.xaml" />
+        <Compile Include="MainDataContext.fs" />
+        <Compile Include="EntryPoint.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Elwood.ConsoleFramework" Version="0.0.3" />
+    </ItemGroup>
+
+</Project>

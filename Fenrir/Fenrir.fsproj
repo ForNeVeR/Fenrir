@@ -15,4 +15,8 @@
     <PackageReference Include="SharpZipLib" Version="1.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Fenrir.Ui\Fenrir.Ui.fsproj" />
+  </ItemGroup>
+
 </Project>

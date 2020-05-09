@@ -44,6 +44,9 @@ Usage:
     If <path to repository> isn't passed, then current directory are used instead.
     If the <input> isn't defined, then standard input are used instead.
 
+  ui [<path>]
+    Shows UI to select a commit from the repository identified by <path> (.git subdirectory of current directory by default).
+
   unpack [<input> [<output>]]
     Unpacks the object file passed as <input> and writes the results to the <output>.
 
@@ -175,6 +178,13 @@ let main (argv: string[]): int =
         Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
         use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
         Commands.packObject headed output
+        ExitCodes.Success
+
+    | [|"ui"; path|] ->
+        Ui.EntryPoint.run path
+        ExitCodes.Success
+    | [|"ui"|] ->
+        Ui.EntryPoint.run Environment.CurrentDirectory
         ExitCodes.Success
 
     | [|"unpack"|] ->

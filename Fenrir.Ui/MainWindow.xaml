@@ -1,0 +1,5 @@
+﻿<Window MinHeight="10" MinWidth="25" >
+    <Panel Orientation="Vertical" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <TextBlock>Fenrir</TextBlock>
+    </Panel>
+</Window>
