@@ -14,20 +14,17 @@ let private loadFromXaml<'a when 'a :> Control> resourceName dataContext =
     if isNull stream then failwithf "Could not load resource %s" resourceName
 
     use reader = new StreamReader(stream)
-    let namespaces = ResizeArray<_>(seq {
-        "clr-namespace:Xaml;assembly=Xaml"
-        "clr-namespace:ConsoleFramework.Xaml;assembly=ConsoleFramework"
-        "clr-namespace:ConsoleFramework.Controls;assembly=ConsoleFramework"
-    })
-    let control = XamlParser.CreateFromXaml<'a>(reader.ReadToEnd(), dataContext, namespaces)
+    let control = XamlParser.CreateFromXaml<'a>(reader.ReadToEnd(), dataContext, ResizeArray())
     control.DataContext <- dataContext
     control.Created()
     control
 
 let run path =
-    let dataContext = MainDataContext()
-    let window = loadFromXaml<Window> "Fenrir.Ui.MainWindow.xaml" dataContext
+    Console.initialize()
+
+    let refs = RefsViewModel path
+    let commitWindow = loadFromXaml<Window> "Fenrir.Ui.RefsWindow.xaml" refs
 
     let host = WindowsHost()
-    host.Show window
+    host.Show commitWindow
     ConsoleApplication.Instance.Run host

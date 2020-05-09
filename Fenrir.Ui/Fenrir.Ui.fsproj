@@ -5,8 +5,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="MainWindow.xaml" />
-        <Compile Include="MainDataContext.fs" />
+        <Compile Include="Native\Windows.fs" />
+        <EmbeddedResource Include="RefsWindow.xaml" />
+        <Compile Include="RefsViewModel.fs" />
+        <Compile Include="Console.fs" />
         <Compile Include="EntryPoint.fs" />
     </ItemGroup>
 
