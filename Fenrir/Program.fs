@@ -126,7 +126,7 @@ let main (argv: string[]): int =
         ExitCodes.Success
 
     | [|"refs"|] ->
-        let pathToRepo = Directory.GetCurrentDirectory()
+        let pathToRepo = Path.Combine(Directory.GetCurrentDirectory(), ".git")
         let ff = Commands.readBranchList(pathToRepo)
         let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
         printfn "%A" ss
