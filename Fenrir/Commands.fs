@@ -159,3 +159,14 @@ let stringToByte (s: String): byte[] =
             Byte.Parse(s.AsSpan(charIndex, 2), NumberStyles.AllowHexSpecifier, provider = CultureInfo.InvariantCulture)
         )
     | n -> failwithf "String of invalid length %d: %s" n s
+
+let hashOfObjectInTree (tree: TreeBody) (name: String): byte[] =
+    let atom = Array.find (fun a -> a.Name = name) tree
+    atom.Hash
+
+let changeHashInTree (tree: TreeBody) (hash: byte[]) (name: String): TreeBody =
+    let changer (i: int) : TreeAtom =
+        match (tree.[i].Name = name) with
+            | true -> {Mode = tree.[i].Mode; Name = tree.[i].Name; Hash = hash}
+            | false -> tree.[i]
+    Array.init tree.Length changer
