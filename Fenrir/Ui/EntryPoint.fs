@@ -33,9 +33,9 @@ let run (path: string): unit =
 
     let repository = GitRepositoryModel path
     let refs = RefsViewModel repository
-    let commitWindow = loadFromXaml<Window> "Fenrir.Ui.RefsWindow.xaml" refs
-    initializeViewModelOnActivate refs commitWindow
+    let refsWindow = loadFromXaml<Window> "Fenrir.Ui.RefsWindow.xaml" refs
+    initializeViewModelOnActivate refs refsWindow
 
     let host = WindowsHost()
-    host.Show commitWindow
+    host.Show refsWindow
     ConsoleApplication.Instance.Run host
