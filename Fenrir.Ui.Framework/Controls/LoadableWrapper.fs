@@ -7,7 +7,7 @@ open Xaml
 
 /// This is a control that is able to show a placeholder with "Loading" word instead of its content.
 [<ContentProperty("Content")>]
-type LoadableWrapper() =
+type LoadableWrapper() as this =
     inherit Control()
 
     let loadingText = "Loading…"
@@ -15,11 +15,14 @@ type LoadableWrapper() =
     [<VolatileField>]
     let mutable loading = true
     let mutable content: Control = null
+    let children = Control.UIElementCollection(this) // used for UI event propagation to the child control
 
     member this.Content with get() = content
     member this.Content with set(value: Control) =
         value.Visibility <- if loading then Visibility.Visible else Visibility.Collapsed
         content <- value
+        children.Clear()
+        children.Add value |> ignore
 
     member _.IsLoading with get() = loading
     member this.IsLoading with set(value) =
