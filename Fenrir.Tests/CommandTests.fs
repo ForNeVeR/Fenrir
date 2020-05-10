@@ -73,13 +73,6 @@ let ``Cutting off header should write file properly``(): unit =
     Assert.Equal(n, actualObjectContents.Length)
 
 [<Fact>]
-let ``The program should find branch list properly``(): unit =
-    let ff = Commands.readBranchList(testDataRoot)
-    Assert.Equal(fst ff.[0], Path.Combine(testDataRoot, "refs", "heads", "master"))
-    Assert.Equal(snd ff.[0], "cc07136d669554cf46ca4e9ef1eab7361336e1c8")
-
-
-[<Fact>]
 let ``The program should parse commits properly``(): unit =
     let cmt = Commands.parseCommitBody testDataRoot "3cb4a57f644f322c852201a68d2211026912a228"
     Assert.Equal(cmt.Tree, "25e78c44e06b1e5c9c9e39a6a827734eee784066")
