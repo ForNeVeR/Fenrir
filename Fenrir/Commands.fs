@@ -170,3 +170,12 @@ let changeHashInTree (tree: TreeBody) (hash: byte[]) (name: String): TreeBody =
             | true -> {Mode = tree.[i].Mode; Name = tree.[i].Name; Hash = hash}
             | false -> tree.[i]
     Array.init tree.Length changer
+
+let treeBodyToStream (tree: TreeBody) (stream: Stream): unit =
+    let printAtom (a : TreeAtom): unit =
+        stream.Write(ReadOnlySpan<byte>(a.Mode.ToString(CultureInfo.InvariantCulture) |> Encoding.ASCII.GetBytes))
+        stream.WriteByte(' 'B)
+        stream.Write(ReadOnlySpan<byte>(a.Name |> Encoding.ASCII.GetBytes))
+        stream.WriteByte(00uy)
+        stream.Write(ReadOnlySpan<byte>(a.Hash))
+    Array.iter printAtom tree

@@ -125,3 +125,17 @@ let ``Program should change and find hash of file in tree properly``(): unit =
     let newHash = "0000000000000000000000000000000000000000" |> Commands.stringToByte
     let newTr = Commands.changeHashInTree tr newHash "README"
     Assert.Equal<byte>(Commands.hashOfObjectInTree newTr "README", newHash)
+
+[<Fact>]
+let ``Printing of parsed tree should not change the content``(): unit =
+    let tr = Commands.parseTreeBody testDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    use outputPrinted = Commands.treeBodyToStream tr |> Commands.doAndRewind
+
+    let objectFilePath = Path.Combine(testDataRoot, "objects", "0b", "a2ef789f6245b6b6604f54706b1dce1d84907f")
+    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use tempStream = Commands.unpackObject input |> Commands.doAndRewind
+    use outputActual = new MemoryStream()
+    Commands.guillotineObject tempStream outputActual |> ignore
+    outputActual.Position <- 0L
+
+    Assert.Equal<byte>(outputPrinted.ToArray(), outputActual.ToArray())
