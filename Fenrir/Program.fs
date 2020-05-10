@@ -127,14 +127,10 @@ let main (argv: string[]): int =
 
     | [|"refs"|] ->
         let pathToRepo = Path.Combine(Directory.GetCurrentDirectory(), ".git")
-        let ff = Commands.readBranchList(pathToRepo)
-        let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
-        printfn "%A" ss
+        Commands.refsCommand pathToRepo
         ExitCodes.Success
     | [|"refs"; pathToRepo|] ->
-        let ff = Commands.readBranchList(pathToRepo)
-        let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
-        printfn "%A" ss
+        Commands.refsCommand pathToRepo
         ExitCodes.Success
 
     | [|"save"|] ->

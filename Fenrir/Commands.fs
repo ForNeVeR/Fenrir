@@ -78,9 +78,9 @@ let guillotineObject (input: Stream) (output: Stream): int =
             | :? EndOfStreamException -> n
     rewrite 0
 
-let readBranchList (path : String): (String*String)[] =
-    let sf = Directory.GetFiles(Path.Combine(path, "refs", "heads"))
-    Array.map (fun (cp:String) -> cp, File.ReadAllLines(cp).[0]) sf
+let refsCommand(path: string): unit =
+    Refs.readRefs path
+    |> Seq.iter(fun ref -> printfn "%s: %s" ref.Name ref.CommitObjectId)
 
 let parseCommitBody (path : String) (hash : String) : CommitBody =
     let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
