@@ -103,7 +103,6 @@ let ``Hasher should calculate file name properly``(): unit =
 [<Fact>]
 let ``Converting String to byte[] and backward should not change the String``(): unit =
     let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
-    Console.Write (fileName)
     Assert.Equal(fileName, Commands.stringToByte fileName |> Commands.byteToString)
 
 [<Fact>]
@@ -119,3 +118,10 @@ let ``Restoring head should work properly``(): unit =
     output.Position <- 0L
 
     Assert.Equal<byte>(actualObjectContents, output.ToArray())
+
+[<Fact>]
+let ``Program should change and find hash of file in tree properly``(): unit =
+    let tr = Commands.parseTreeBody testDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let newHash = "0000000000000000000000000000000000000000" |> Commands.stringToByte
+    let newTr = Commands.changeHashInTree tr newHash "README"
+    Assert.Equal<byte>(Commands.hashOfObjectInTree newTr "README", newHash)
