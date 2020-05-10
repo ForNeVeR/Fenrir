@@ -15,11 +15,6 @@ let private printUsage() =
     printf @"
 Usage:
 
-  brlist [<path to .git/ directory>]
-    Shows branch list of repository.
-
-    If <path to .git/ directory> isn't passed, then current directory are used instead.
-
   guillotine [<input> [<output>]]
     Read git file and write decoded content of the file without header.
 
@@ -37,6 +32,11 @@ Usage:
     Reads the object file passed as <input> and packs the results to the <output>.
 
     If any of the <input> or <output> parameters isn't defined, then standard input and/or standard output are used instead.
+
+  refs [<path to .git/ directory>]
+    Shows branch list of repository.
+
+    If <path to .git/ directory> isn't passed, then current directory are used instead.
 
   save [<input> [<path to repository>]]
     Read text file and save it as object file to repository.
@@ -66,19 +66,6 @@ module ExitCodes =
 [<EntryPoint>]
 let main (argv: string[]): int =
     match argv with
-
-    | [|"brlist"|] ->
-        let pathToRepo = Directory.GetCurrentDirectory()
-        let ff = Commands.readBranchList(pathToRepo)
-        let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
-        printfn "%A" ss
-        ExitCodes.Success
-    | [|"brlist"; pathToRepo|] ->
-        let ff = Commands.readBranchList(pathToRepo)
-        let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
-        printfn "%A" ss
-        ExitCodes.Success
-
     | [|"guillotine"|] ->
         use input = Console.OpenStandardInput()
         use output = Console.OpenStandardOutput()
@@ -136,6 +123,18 @@ let main (argv: string[]): int =
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
         Commands.packObject input output
+        ExitCodes.Success
+
+    | [|"refs"|] ->
+        let pathToRepo = Directory.GetCurrentDirectory()
+        let ff = Commands.readBranchList(pathToRepo)
+        let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
+        printfn "%A" ss
+        ExitCodes.Success
+    | [|"refs"; pathToRepo|] ->
+        let ff = Commands.readBranchList(pathToRepo)
+        let ss = Array.collect (fun (cp:(String*String)) -> [|((fst cp).Substring(pathToRepo.Length + 5) + " " + (snd cp))|]) ff
+        printfn "%A" ss
         ExitCodes.Success
 
     | [|"save"|] ->
