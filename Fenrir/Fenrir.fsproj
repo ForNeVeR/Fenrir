@@ -8,6 +8,10 @@
 
   <ItemGroup>
     <Compile Include="Commands.fs" />
+    <EmbeddedResource Include="Ui\RefsWindow.xaml" />
+    <Compile Include="Ui\GitRepositoryModel.fs" />
+    <Compile Include="Ui\RefsViewModel.fs" />
+    <Compile Include="Ui\EntryPoint.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
@@ -16,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fenrir.Ui\Fenrir.Ui.fsproj" />
+    <ProjectReference Include="..\Fenrir.Ui.Framework\Fenrir.Ui.Framework.fsproj" />
   </ItemGroup>
 
 </Project>

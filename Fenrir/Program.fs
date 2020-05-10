@@ -184,7 +184,7 @@ let main (argv: string[]): int =
         Ui.EntryPoint.run path
         ExitCodes.Success
     | [|"ui"|] ->
-        Ui.EntryPoint.run Environment.CurrentDirectory
+        Ui.EntryPoint.run(Path.Combine(Environment.CurrentDirectory, ".git"))
         ExitCodes.Success
 
     | [|"unpack"|] ->

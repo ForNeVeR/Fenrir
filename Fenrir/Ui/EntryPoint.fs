@@ -1,5 +1,6 @@
 ﻿module Fenrir.Ui.EntryPoint
 
+open System
 open System.IO
 open System.Reflection
 
@@ -7,6 +8,7 @@ open ConsoleFramework
 open ConsoleFramework.Controls
 open global.Xaml
 
+open ConsoleFramework.Events
 open Fenrir.Ui.Framework
 
 let private loadFromXaml<'a when 'a :> Control> resourceName dataContext =
@@ -21,11 +23,18 @@ let private loadFromXaml<'a when 'a :> Control> resourceName dataContext =
     control.Created()
     control
 
-let run path =
+let private initializeViewModelOnActivate (vm: ViewModelBase) (window: Window): unit =
+    EventManager.AddHandler(window, Window.ActivatedEvent, Action<obj, RoutedEventArgs>(fun _ _ ->
+        vm.Initialize()
+    ))
+
+let run (path: string): unit =
     Console.initialize()
 
-    let refs = RefsViewModel path
+    let repository = GitRepositoryModel path
+    let refs = RefsViewModel repository
     let commitWindow = loadFromXaml<Window> "Fenrir.Ui.RefsWindow.xaml" refs
+    initializeViewModelOnActivate refs commitWindow
 
     let host = WindowsHost()
     host.Show commitWindow

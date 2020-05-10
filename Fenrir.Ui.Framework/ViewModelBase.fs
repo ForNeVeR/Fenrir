@@ -15,3 +15,6 @@ type ViewModelBase() =
         match name with
         | Some name -> propertyChangedEvent.Trigger(this, PropertyChangedEventArgs(name))
         | None -> failwithf "Invalid OnPropertyChanged call"
+
+    abstract Initialize: unit -> unit
+    default _.Initialize() = ()
