@@ -76,8 +76,8 @@ let ``Cutting off header should write file properly``(): unit =
 let ``The program should parse commits properly``(): unit =
     let cmt = Commands.parseCommitBody testDataRoot "3cb4a57f644f322c852201a68d2211026912a228"
     Assert.Equal(cmt.Tree, "25e78c44e06b1e5c9c9e39a6a827734eee784066")
-    Assert.Equal(cmt.Parents.[0], "62f4d4ce40041cd6295eb4a3d663724b4952e7b5")
-    Assert.Equal(cmt.Parents.[1], "c0573616ea63dba6c4b13398058b0950c33a524c")
+    Assert.Equal(cmt.Parents.[1], "62f4d4ce40041cd6295eb4a3d663724b4952e7b5")
+    Assert.Equal(cmt.Parents.[0], "c0573616ea63dba6c4b13398058b0950c33a524c")
 
 [<Fact>]
 let ``The program should parse trees properly``(): unit =
@@ -132,6 +132,20 @@ let ``Printing of parsed tree should not change the content``(): unit =
     use outputPrinted = Commands.treeBodyToStream tr |> Commands.doAndRewind
 
     let objectFilePath = Path.Combine(testDataRoot, "objects", "0b", "a2ef789f6245b6b6604f54706b1dce1d84907f")
+    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use tempStream = Commands.unpackObject input |> Commands.doAndRewind
+    use outputActual = new MemoryStream()
+    Commands.guillotineObject tempStream outputActual |> ignore
+    outputActual.Position <- 0L
+
+    Assert.Equal<byte>(outputPrinted.ToArray(), outputActual.ToArray())
+
+[<Fact>]
+let ``Printing of parsed commit should not change the content``(): unit =
+    let cmt = Commands.parseCommitBody testDataRoot "3cb4a57f644f322c852201a68d2211026912a228"
+    use outputPrinted = Commands.commitBodyToStream cmt |> Commands.doAndRewind
+
+    let objectFilePath = Path.Combine(testDataRoot, "objects", "3c", "b4a57f644f322c852201a68d2211026912a228")
     use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
     use tempStream = Commands.unpackObject input |> Commands.doAndRewind
     use outputActual = new MemoryStream()

@@ -98,7 +98,7 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             let rec parseParents (s : StreamReader) (P : String list) : (String list * String[]) =
                 let str = s.ReadLine()
                 match str.Substring(0, 7) with
-                    | "parent " -> parseParents s (str.Substring(7, 40) :: P)
+                    | "parent " -> parseParents s (List.append P [str.Substring(7, 40)])
                     | _         -> (P, [|str|])
             let (p, r) = parseParents sr []
             let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
@@ -179,3 +179,16 @@ let treeBodyToStream (tree: TreeBody) (stream: Stream): unit =
         stream.WriteByte(00uy)
         stream.Write(ReadOnlySpan<byte>(a.Hash))
     Array.iter printAtom tree
+
+let commitBodyToStream (commit: CommitBody) (stream: Stream): unit =
+    let printParent (a: String): unit =
+        stream.Write(ReadOnlySpan<byte>("parent "B))
+        stream.Write(ReadOnlySpan<byte>(a |> Encoding.ASCII.GetBytes))
+        stream.WriteByte('\n'B)
+
+    stream.Write(ReadOnlySpan<byte>("tree "B))
+    stream.Write(ReadOnlySpan<byte>(commit.Tree |> Encoding.ASCII.GetBytes))
+    stream.WriteByte('\n'B)
+
+    Array.iter printParent commit.Parents
+    stream.Write(ReadOnlySpan<byte>(String.Join('\n', commit.Rest) |> Encoding.ASCII.GetBytes))
