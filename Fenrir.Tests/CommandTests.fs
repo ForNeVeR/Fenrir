@@ -141,6 +141,13 @@ let ``Printing of parsed tree should not change the content``(): unit =
     Assert.Equal<byte>(outputPrinted.ToArray(), outputActual.ToArray())
 
 [<Fact>]
+let ``Program should change and find hash of parent tree in commit properly``(): unit =
+    let cmt = Commands.parseCommitBody testDataRoot "3cb4a57f644f322c852201a68d2211026912a228"
+    let newHash = "0000000000000000000000000000000000000000" |> Commands.stringToByte
+    let newCmt = Commands.changeHashInCommit cmt newHash
+    Assert.Equal<byte>(newCmt.Tree |> Commands.stringToByte, newHash)
+
+[<Fact>]
 let ``Printing of parsed commit should not change the content``(): unit =
     let cmt = Commands.parseCommitBody testDataRoot "3cb4a57f644f322c852201a68d2211026912a228"
     use outputPrinted = Commands.commitBodyToStream cmt |> Commands.doAndRewind

@@ -180,6 +180,11 @@ let treeBodyToStream (tree: TreeBody) (stream: Stream): unit =
         stream.Write(ReadOnlySpan<byte>(a.Hash))
     Array.iter printAtom tree
 
+let changeHashInCommit (commit: CommitBody) (hash: byte[]): CommitBody =
+    {Tree = hash |> byteToString;
+     Parents = commit.Parents;
+     Rest = commit.Rest}
+
 let commitBodyToStream (commit: CommitBody) (stream: Stream): unit =
     let printParent (a: String): unit =
         stream.Write(ReadOnlySpan<byte>("parent "B))
