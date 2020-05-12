@@ -165,11 +165,11 @@ let hashOfObjectInTree (tree: TreeBody) (name: String): byte[] =
     atom.Hash
 
 let changeHashInTree (tree: TreeBody) (hash: byte[]) (name: String): TreeBody =
-    let changer (i: int) : TreeAtom =
-        match (tree.[i].Name = name) with
-            | true -> {Mode = tree.[i].Mode; Name = tree.[i].Name; Hash = hash}
-            | false -> tree.[i]
-    Array.init tree.Length changer
+    let changer (a: TreeAtom) : TreeAtom =
+        match (a.Name = name) with
+            | true -> {Mode = a.Mode; Name = a.Name; Hash = hash}
+            | false -> a
+    Array.map changer tree
 
 let treeBodyToStream (tree: TreeBody) (stream: Stream): unit =
     let printAtom (a : TreeAtom): unit =
