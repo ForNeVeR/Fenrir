@@ -2,12 +2,11 @@
           xmlns:x="clr-namespace:ConsoleFramework.Xaml;assembly=ConsoleFramework"
           xmlns:controls="clr-namespace:Fenrir.Ui.Framework.Controls;assembly=Fenrir.Ui.Framework"
           MinHeight="10" MinWidth="25"
-          X="0" Y="0"
-          Title="Refs">
+          X="50" Y="0"
+          Title="Commits">
     <controls:LoadableWrapper VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                               IsLoading="{x:Binding IsLoading, Mode=OneWay}">
-        <controls:BindableListBox VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-                                  Items="{x:Binding RefList, Mode=OneWay}"
-                                  SelectedItemIndex="{x:Binding SelectedRefIndex, Mode=OneWayToSource}" />
+        <c:ListBox VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                   Items="{x:Binding CommitList, Mode=OneWay}"/>
     </controls:LoadableWrapper>
 </c:Window>

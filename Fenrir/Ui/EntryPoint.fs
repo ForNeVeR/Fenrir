@@ -11,7 +11,7 @@ open global.Xaml
 open ConsoleFramework.Events
 open Fenrir.Ui.Framework
 
-let private loadFromXaml<'a when 'a :> Control> resourceName dataContext =
+let private loadFromXaml<'a when 'a :> Control> resourceName (dataContext: obj) =
     // This function was copied from ConsoleFramework.ConsoleApplication.LoadFromXaml, but uses the current assembly
     // instead of the entry one.
     use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream resourceName
@@ -23,10 +23,13 @@ let private loadFromXaml<'a when 'a :> Control> resourceName dataContext =
     control.Created()
     control
 
+#nowarn "40" // recursive handler object
 let private initializeViewModelOnActivate (vm: ViewModelBase) (window: Window): unit =
-    EventManager.AddHandler(window, Window.ActivatedEvent, Action<obj, RoutedEventArgs>(fun _ _ ->
+    let rec handler = Action<obj, RoutedEventArgs>(fun _ _ ->
         vm.Initialize()
-    ))
+        EventManager.RemoveHandler(window, Window.ActivatedEvent, handler)
+    )
+    EventManager.AddHandler(window, Window.ActivatedEvent, handler)
 
 let run (path: string): unit =
     Console.initialize()
@@ -36,6 +39,11 @@ let run (path: string): unit =
     let refsWindow = loadFromXaml<Window> "Fenrir.Ui.RefsWindow.xaml" refs
     initializeViewModelOnActivate refs refsWindow
 
+    let commits = CommitsViewModel(repository, refs)
+    let commitsWindow = loadFromXaml<Window> "Fenrir.Ui.CommitsWindow.xaml" commits
+    initializeViewModelOnActivate commits commitsWindow
+
     let host = WindowsHost()
     host.Show refsWindow
+    host.Show commitsWindow
     ConsoleApplication.Instance.Run host

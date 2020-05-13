@@ -2,7 +2,7 @@
 
 open System
 
-let runTask (task: Async<unit>): unit =
+let runTask(task: Async<unit>): unit =
     ignore <| Async.StartAsTask(async {
         try
             do! task
@@ -11,3 +11,6 @@ let runTask (task: Async<unit>): unit =
             printfn "Exception: %A" ex
             Environment.FailFast("Unhandled async exception", ex)
     })
+
+let switchToUiThread(): Async<unit> =
+    Async.SwitchToContext ConsoleFrameworkSynchronizationContext.instance

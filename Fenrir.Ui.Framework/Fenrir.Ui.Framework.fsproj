@@ -7,9 +7,10 @@
     <ItemGroup>
         <Compile Include="Native\Windows.fs" />
         <Compile Include="Controls\LoadableWrapper.fs" />
-        <Compile Include="Async.fs" />
+        <Compile Include="Controls\BindableTextBox.fs" />
         <Compile Include="Console.fs" />
         <Compile Include="ConsoleFrameworkSynchronizationContext.fs" />
+        <Compile Include="Async.fs" />
         <Compile Include="ViewModelBase.fs" />
     </ItemGroup>
 

@@ -10,8 +10,10 @@
     <Compile Include="Refs.fs" />
     <Compile Include="Commands.fs" />
     <EmbeddedResource Include="Ui\RefsWindow.xaml" />
+    <EmbeddedResource Include="Ui\CommitsWindow.xaml" />
     <Compile Include="Ui\GitRepositoryModel.fs" />
     <Compile Include="Ui\RefsViewModel.fs" />
+    <Compile Include="Ui\CommitsViewModel.fs" />
     <Compile Include="Ui\EntryPoint.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
