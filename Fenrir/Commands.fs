@@ -82,12 +82,7 @@ let refsCommand(path: string): unit =
     Refs.readRefs path
     |> Seq.iter(fun ref -> printfn "%s: %s" ref.Name ref.CommitObjectId)
 
-let parseCommitBody (path : String) (hash : String) : CommitBody =
-    let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
-    use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use decodedInput = new MemoryStream()
-    unpackObject input decodedInput
-    decodedInput.Position <- 0L
+let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
     match (readHeader decodedInput).Type with
         | GitObjectType.GitTree   -> failwithf "Found tree file instead of commit file"
         | GitObjectType.GitBlob   -> failwithf "Found blob file instead of commit file"
@@ -104,12 +99,16 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
             {Tree = tree; Parents = (Array.ofList p); Rest = rr}
 
-let parseTreeBody (path : String) (hash : String) : TreeBody =
+
+let parseCommitBody (path : String) (hash : String) : CommitBody =
     let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
     use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
     use decodedInput = new MemoryStream()
     unpackObject input decodedInput
     decodedInput.Position <- 0L
+    streamToCommitBody decodedInput
+
+let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
     let hd = readHeader decodedInput
     match hd.Type with
         | GitObjectType.GitCommit   -> failwithf "Found commit file instead of commit file"
@@ -125,6 +124,13 @@ let parseTreeBody (path : String) (hash : String) : TreeBody =
                     | :? EndOfStreamException -> []
             makeList 0 |> Array.ofList
 
+let parseTreeBody (path : String) (hash : String) : TreeBody =
+    let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+    use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use decodedInput = new MemoryStream()
+    unpackObject input decodedInput
+    decodedInput.Position <- 0L
+    streamToTreeBody decodedInput
 
 let writeObjectHeader (tp: GitObjectType) (input: Stream) (output: Stream): unit =
     match tp with
@@ -197,3 +203,48 @@ let commitBodyToStream (commit: CommitBody) (stream: Stream): unit =
 
     Array.iter printParent commit.Parents
     stream.Write(ReadOnlySpan<byte>(String.Join('\n', commit.Rest) |> Encoding.ASCII.GetBytes))
+
+type TreeStreams (length: int) =
+    member this.Streams = Array.create (length) (new MemoryStream())
+    member this.Hashes = Array.create (length) ""
+    interface System.IDisposable with
+        member this.Dispose() =
+            Array.iter (fun (s: MemoryStream) -> s.Dispose()) this.Streams
+
+let updateObjectInTree (rootTreeHash: string) (pathToRepo: String) (filePath: string) (blobHash: string): TreeStreams =
+    let filePathList = filePath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries) |> List.ofArray
+    use treeStreams = new TreeStreams (filePathList.Length)
+
+    let rec updateFileHashInTree (tree: TreeBody) (filePaths: String list): String =
+        let index = treeStreams.Streams.Length - filePaths.Length
+        match filePaths with
+        | [] -> failwithf "Empty path to file"
+        | [fileName] ->
+            let newTree = changeHashInTree tree (stringToByte blobHash) fileName
+
+            use input = new MemoryStream()
+            treeBodyToStream newTree input
+            writeObjectHeader GitObjectType.GitTree input treeStreams.Streams.[index]
+            let hash = SHA1 treeStreams.Streams.[index] |> byteToString
+            treeStreams.Streams.[index].Position <- 0L
+            treeStreams.Hashes.[index] <- hash
+            hash
+        | directoryName :: restPathSegments ->
+            let directoryHash = hashOfObjectInTree tree directoryName |> byteToString
+            let subTree = parseTreeBody pathToRepo directoryHash
+            let newHash = updateFileHashInTree subTree restPathSegments
+            let newTree = changeHashInTree tree (stringToByte newHash) directoryName
+
+            use input = new MemoryStream()
+            treeBodyToStream newTree input
+            writeObjectHeader GitObjectType.GitTree input treeStreams.Streams.[index]
+            let hash = SHA1 treeStreams.Streams.[index] |> byteToString
+            treeStreams.Streams.[index].Position <- 0L
+            treeStreams.Hashes.[index] <- hash
+            hash
+
+    let parentTree = parseTreeBody pathToRepo rootTreeHash
+    updateFileHashInTree parentTree filePathList |> ignore
+    treeStreams
+
+//let writeTreeObjects (gitDirectoryPath: string) (streams: TreeStream seq): unit =
