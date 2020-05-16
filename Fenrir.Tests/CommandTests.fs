@@ -219,3 +219,16 @@ let ``updateObjectInTree should change the whole tree properly``(): unit =
     Assert.Equal(subTr.[0].Mode, 100644UL)
     Assert.Equal(subTr.[0].Name, "FIGHTTHEMACHINE")
     Assert.Equal<byte>(subTr.[0].Hash, newBlobHash |> Commands.stringToByte)
+
+[<Fact>]
+let ``Files should be written after updating of the whole tree``(): unit =
+    let oldParentHash = "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let newBlobHash = "724978a20d84133868886a8e580f59c6f8586733"
+    let pathToParentTree = Path.Combine(testDataRoot, ".git", "objects", "a3", "ecc1b7fb40831db85596a4f6d2b5e0a1070292")
+    let pathToSubTree = Path.Combine(testDataRoot, ".git", "objects", "b6", "c6d6bca44755db41e85040189d86c0dbec691e")
+
+    let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
+    use treeStreams = Commands.updateObjectInTree oldParentHash testDataRoot pathToFile newBlobHash
+    Commands.writeTreeObjects testDataRoot treeStreams
+    Assert.True(File.Exists(pathToParentTree))
+    Assert.True(File.Exists(pathToSubTree))
