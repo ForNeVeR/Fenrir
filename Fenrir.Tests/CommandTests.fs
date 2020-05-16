@@ -162,13 +162,17 @@ let ``Printing of parsed commit should not change the content``(): unit =
     Assert.Equal<byte>(outputPrinted.ToArray(), outputActual.ToArray())
 
 [<Fact>]
-let ``Program should change the whole tree properly``(): unit =
+let ``updateObjectInTree should not change the whole tree if blob wasn't changed``(): unit =
     let parentHash = "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let subTreeHash = "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05"
-    let oldBlobHash = "b5c9fc36bc435a3addb76b0115e8763c75eedf"
+    let oldBlobHash = "b5c9fc36bc435a3addb76b0115e8763c75eedf2a"
+    let readmeHash = "e2af08e76b2408a88f13d2c64ca89f2d03c98385"
 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
     use treeStreams = Commands.updateObjectInTree parentHash testDataRoot pathToFile oldBlobHash
+
+    Assert.Equal(treeStreams.Hashes.[0], parentHash)
+    Assert.Equal(treeStreams.Hashes.[1], subTreeHash)
 
     let tr = Commands.streamToTreeBody treeStreams.Streams.[0]
     let subTr = Commands.streamToTreeBody treeStreams.Streams.[1]
@@ -176,11 +180,42 @@ let ``Program should change the whole tree properly``(): unit =
     Assert.Equal(tr.Length, 2)
     Assert.Equal(tr.[0].Mode, 100644UL)
     Assert.Equal(tr.[0].Name, "README")
-    Assert.Equal<byte>(tr.[0].Hash, "e2af08e76b2408a88f13d2c64ca89f2d03c98385" |> Commands.stringToByte)
+    Assert.Equal<byte>(tr.[0].Hash, readmeHash |> Commands.stringToByte)
     Assert.Equal(tr.[1].Mode, 40000UL)
     Assert.Equal(tr.[1].Name, "ex")
     Assert.Equal<byte>(tr.[1].Hash, subTreeHash |> Commands.stringToByte)
+
     Assert.Equal(subTr.Length, 1)
     Assert.Equal(subTr.[0].Mode, 100644UL)
+    Assert.Equal(subTr.[0].Name, "FIGHTTHEMACHINE")
+    Assert.Equal<byte>(subTr.[0].Hash, oldBlobHash |> Commands.stringToByte)
+
+[<Fact>]
+let ``updateObjectInTree should change the whole tree properly``(): unit =
+    let oldParentHash = "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let newParentHash = "a3ecc1b7fb40831db85596a4f6d2b5e0a1070292"
+    let newSubTreeHash = "b6c6d6bca44755db41e85040189d86c0dbec691e"
+    let newBlobHash = "724978a20d84133868886a8e580f59c6f8586733"
+    let readmeHash = "e2af08e76b2408a88f13d2c64ca89f2d03c98385"
+
+    let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
+    use treeStreams = Commands.updateObjectInTree oldParentHash testDataRoot pathToFile newBlobHash
+
+    Assert.Equal(treeStreams.Hashes.[0], newParentHash)
+    Assert.Equal(treeStreams.Hashes.[1], newSubTreeHash)
+
+    let tr = Commands.streamToTreeBody treeStreams.Streams.[0]
+    let subTr = Commands.streamToTreeBody treeStreams.Streams.[1]
+
+    Assert.Equal(tr.Length, 2)
+    Assert.Equal(tr.[0].Mode, 100644UL)
     Assert.Equal(tr.[0].Name, "README")
-    Assert.Equal<byte>(tr.[0].Hash, "e2af08e76b2408a88f13d2c64ca89f2d03c98385" |> Commands.stringToByte)
+    Assert.Equal<byte>(tr.[0].Hash, readmeHash |> Commands.stringToByte)
+    Assert.Equal(tr.[1].Mode, 40000UL)
+    Assert.Equal(tr.[1].Name, "ex")
+    Assert.Equal<byte>(tr.[1].Hash, newSubTreeHash |> Commands.stringToByte)
+
+    Assert.Equal(subTr.Length, 1)
+    Assert.Equal(subTr.[0].Mode, 100644UL)
+    Assert.Equal(subTr.[0].Name, "FIGHTTHEMACHINE")
+    Assert.Equal<byte>(subTr.[0].Hash, newBlobHash |> Commands.stringToByte)
