@@ -243,3 +243,17 @@ let updateObjectInTree (rootTreeHash: string) (pathToRepo: String) (filePath: st
     updateFileHashInTree parentTree filePathList |> ignore
     treeStreams.Streams |> Array.iter (fun s -> s.Position <- 0L)
     treeStreams
+
+let writeTreeObjects (pathToRepo: string) (streams: TreeStreams): unit =
+    let writeTreeStreamToFile (stream: MemoryStream) (hash: String): unit =
+        let pathToDirectory = Path.Combine(pathToRepo, ".git", "objects", hash.Substring(0, 2))
+        let pathToFile = Path.Combine(pathToRepo, ".git", "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+        match Directory.Exists(pathToDirectory) with
+            | true -> ()
+            | false -> Directory.CreateDirectory(pathToDirectory) |> ignore
+        match File.Exists(pathToFile) with
+            | true -> ()
+            | false ->
+                use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
+                packObject stream output
+    Array.iter2 writeTreeStreamToFile streams.Streams streams.Hashes
