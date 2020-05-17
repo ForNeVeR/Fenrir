@@ -111,8 +111,8 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
 let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
     let hd = readHeader decodedInput
     match hd.Type with
-        | GitObjectType.GitCommit   -> failwithf "Found commit file instead of commit file"
-        | GitObjectType.GitBlob     -> failwithf "Found blob file instead of commit file"
+        | GitObjectType.GitCommit   -> failwithf "Found commit file instead of tree file"
+        | GitObjectType.GitBlob     -> failwithf "Found blob file instead of tree file"
         | GitObjectType.GitTree     ->
             let bF = new BinaryReader(decodedInput, Encoding.ASCII)
             let rec makeList (n:int): TreeAtom list =
