@@ -232,3 +232,5 @@ let ``Files should be written after updating of the whole tree``(): unit =
     Commands.writeTreeObjects testDataRoot treeStreams
     Assert.True(File.Exists(pathToParentTree))
     Assert.True(File.Exists(pathToSubTree))
+    File.Delete(pathToParentTree)
+    File.Delete(pathToSubTree)
