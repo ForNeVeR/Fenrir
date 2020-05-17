@@ -154,10 +154,7 @@ let main (argv: string[]): int =
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Commands.byteToString
         headed.Position <- 0L
-        let pathToFile = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
-        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
-        use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
-        Commands.packObject headed output
+        Commands.writeStreamToFile pathToRepo headed hashName
         ExitCodes.Success
     | [|"save"; inputPath|] ->
         let pathToRepo = Directory.GetCurrentDirectory()
@@ -168,10 +165,7 @@ let main (argv: string[]): int =
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Commands.byteToString
         headed.Position <- 0L
-        let pathToFile = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
-        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
-        use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
-        Commands.packObject headed output
+        Commands.writeStreamToFile pathToRepo headed hashName
         ExitCodes.Success
     | [|"save"; inputPath; pathToRepo|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
@@ -181,10 +175,7 @@ let main (argv: string[]): int =
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Commands.byteToString
         headed.Position <- 0L
-        let pathToFile = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
-        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
-        use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
-        Commands.packObject headed output
+        Commands.writeStreamToFile pathToRepo headed hashName
         ExitCodes.Success
 
     | [|"ui"; path|] ->
@@ -223,10 +214,7 @@ let main (argv: string[]): int =
         headedBlob.Position <- 0L
         let blobHash = Commands.SHA1 headedBlob |> Commands.byteToString
         headedBlob.Position <- 0L
-        let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", blobHash.Substring(0, 2), blobHash.Substring(2, 38))
-        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", blobHash.Substring(0, 2))) |> ignore
-        use outputBlob = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
-        Commands.packObject headedBlob outputBlob
+        Commands.writeStreamToFile pathToRepo headedBlob blobHash
         use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
         let newRootTreeHash = treeStreams.Hashes.[0]
         let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Commands.stringToByte)
@@ -237,10 +225,7 @@ let main (argv: string[]): int =
         headedCommit.Position <- 0L
         let blobCommit = Commands.SHA1 headedCommit |> Commands.byteToString
         headedCommit.Position <- 0L
-        let pathToCommit = Path.Combine(pathToRepo, ".git", "objects", blobCommit.Substring(0, 2), blobCommit.Substring(2, 38))
-        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", blobCommit.Substring(0, 2))) |> ignore
-        use outputCommit = new FileStream(pathToCommit, FileMode.CreateNew, FileAccess.Write)
-        Commands.packObject headedCommit outputCommit
+        Commands.writeStreamToFile pathToRepo headedCommit blobCommit
         Commands.writeTreeObjects pathToRepo treeStreams
         ExitCodes.Success
     | [|"update-commit"; commitHash; pathToRepo; filePath|] ->
@@ -255,10 +240,7 @@ let main (argv: string[]): int =
         headedBlob.Position <- 0L
         let blobHash = Commands.SHA1 headedBlob |> Commands.byteToString
         headedBlob.Position <- 0L
-        let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", blobHash.Substring(0, 2), blobHash.Substring(2, 38))
-        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", blobHash.Substring(0, 2))) |> ignore
-        use outputBlob = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
-        Commands.packObject headedBlob outputBlob
+        Commands.writeStreamToFile pathToRepo headedBlob blobHash
         use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
         let newRootTreeHash = treeStreams.Hashes.[0]
         let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Commands.stringToByte)
@@ -269,10 +251,7 @@ let main (argv: string[]): int =
         headedCommit.Position <- 0L
         let blobCommit = Commands.SHA1 headedCommit |> Commands.byteToString
         headedCommit.Position <- 0L
-        let pathToCommit = Path.Combine(pathToRepo, ".git", "objects", blobCommit.Substring(0, 2), blobCommit.Substring(2, 38))
-        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", blobCommit.Substring(0, 2))) |> ignore
-        use outputCommit = new FileStream(pathToCommit, FileMode.CreateNew, FileAccess.Write)
-        Commands.packObject headedCommit outputCommit
+        Commands.writeStreamToFile pathToRepo headedCommit blobCommit
         Commands.writeTreeObjects pathToRepo treeStreams
         ExitCodes.Success
 
