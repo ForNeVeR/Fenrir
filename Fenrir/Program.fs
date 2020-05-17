@@ -149,32 +149,20 @@ let main (argv: string[]): int =
         let pathToRepo = Directory.GetCurrentDirectory()
         use input = Console.OpenStandardInput()
         use headed = new MemoryStream()
-        Commands.writeObjectHeader Commands.GitObjectType.GitBlob input headed
-        input.CopyTo headed
-        headed.Position <- 0L
-        let hashName = Commands.SHA1 headed |> Commands.byteToString
-        headed.Position <- 0L
+        let hashName = Commands.headifyStream Commands.GitObjectType.GitBlob input headed
         Commands.writeStreamToFile pathToRepo headed hashName
         ExitCodes.Success
     | [|"save"; inputPath|] ->
         let pathToRepo = Directory.GetCurrentDirectory()
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        Commands.writeObjectHeader Commands.GitObjectType.GitBlob input headed
-        input.CopyTo headed
-        headed.Position <- 0L
-        let hashName = Commands.SHA1 headed |> Commands.byteToString
-        headed.Position <- 0L
+        let hashName = Commands.headifyStream Commands.GitObjectType.GitBlob input headed
         Commands.writeStreamToFile pathToRepo headed hashName
         ExitCodes.Success
     | [|"save"; inputPath; pathToRepo|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        Commands.writeObjectHeader Commands.GitObjectType.GitBlob input headed
-        input.CopyTo headed
-        headed.Position <- 0L
-        let hashName = Commands.SHA1 headed |> Commands.byteToString
-        headed.Position <- 0L
+        let hashName = Commands.headifyStream Commands.GitObjectType.GitBlob input headed
         Commands.writeStreamToFile pathToRepo headed hashName
         ExitCodes.Success
 
@@ -209,23 +197,15 @@ let main (argv: string[]): int =
         let oldRootTreeHash = oldCommit.Tree
         use inputBlob = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headedBlob = new MemoryStream()
-        Commands.writeObjectHeader Commands.GitObjectType.GitBlob inputBlob headedBlob
-        inputBlob.CopyTo headedBlob
-        headedBlob.Position <- 0L
-        let blobHash = Commands.SHA1 headedBlob |> Commands.byteToString
-        headedBlob.Position <- 0L
+        let blobHash = Commands.headifyStream Commands.GitObjectType.GitBlob inputBlob headedBlob
         Commands.writeStreamToFile pathToRepo headedBlob blobHash
         use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
         let newRootTreeHash = treeStreams.Hashes.[0]
         let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Commands.stringToByte)
         use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
         use headedCommit = new MemoryStream()
-        Commands.writeObjectHeader Commands.GitObjectType.GitCommit inputCommit headedCommit
-        inputCommit.CopyTo headedCommit
-        headedCommit.Position <- 0L
-        let blobCommit = Commands.SHA1 headedCommit |> Commands.byteToString
-        headedCommit.Position <- 0L
-        Commands.writeStreamToFile pathToRepo headedCommit blobCommit
+        let commitHash = Commands.headifyStream Commands.GitObjectType.GitCommit inputCommit headedCommit
+        Commands.writeStreamToFile pathToRepo headedCommit commitHash
         Commands.writeTreeObjects pathToRepo treeStreams
         ExitCodes.Success
     | [|"update-commit"; commitHash; pathToRepo; filePath|] ->
@@ -235,23 +215,15 @@ let main (argv: string[]): int =
         let oldRootTreeHash = oldCommit.Tree
         use inputBlob = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headedBlob = new MemoryStream()
-        Commands.writeObjectHeader Commands.GitObjectType.GitBlob inputBlob headedBlob
-        inputBlob.CopyTo headedBlob
-        headedBlob.Position <- 0L
-        let blobHash = Commands.SHA1 headedBlob |> Commands.byteToString
-        headedBlob.Position <- 0L
+        let blobHash = Commands.headifyStream Commands.GitObjectType.GitBlob inputBlob headedBlob
         Commands.writeStreamToFile pathToRepo headedBlob blobHash
         use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
         let newRootTreeHash = treeStreams.Hashes.[0]
         let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Commands.stringToByte)
         use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
         use headedCommit = new MemoryStream()
-        Commands.writeObjectHeader Commands.GitObjectType.GitCommit inputCommit headedCommit
-        inputCommit.CopyTo headedCommit
-        headedCommit.Position <- 0L
-        let blobCommit = Commands.SHA1 headedCommit |> Commands.byteToString
-        headedCommit.Position <- 0L
-        Commands.writeStreamToFile pathToRepo headedCommit blobCommit
+        let commitHash = Commands.headifyStream Commands.GitObjectType.GitCommit inputCommit headedCommit
+        Commands.writeStreamToFile pathToRepo headedCommit commitHash
         Commands.writeTreeObjects pathToRepo treeStreams
         ExitCodes.Success
 

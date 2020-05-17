@@ -166,6 +166,14 @@ let stringToByte (s: String): byte[] =
         )
     | n -> failwithf "String of invalid length %d: %s" n s
 
+let headifyStream (tp: GitObjectType) (input: Stream) (headed: MemoryStream): String =
+    writeObjectHeader tp input headed
+    input.CopyTo headed
+    headed.Position <- 0L
+    let hash = SHA1 headed |> byteToString
+    headed.Position <- 0L
+    hash
+
 let hashOfObjectInTree (tree: TreeBody) (name: String): byte[] =
     let atom = Array.find (fun a -> a.Name = name) tree
     atom.Hash
@@ -217,12 +225,8 @@ let updateObjectInTree (rootTreeHash: string) (pathToRepo: String) (filePath: st
     let treeToStream (newTree: TreeBody) (index: int): String =
         use input = new MemoryStream()
         treeBodyToStream newTree input
-        writeObjectHeader GitObjectType.GitTree input treeStreams.Streams.[index]
         input.Position <- 0L
-        input.CopyTo treeStreams.Streams.[index]
-        treeStreams.Streams.[index].Position <- 0L
-        let hash = SHA1 treeStreams.Streams.[index] |> byteToString
-        treeStreams.Streams.[index].Position <- 0L
+        let hash = headifyStream GitObjectType.GitTree input treeStreams.Streams.[index]
         treeStreams.Hashes.[index] <- hash
         hash
     let rec updateFileHashInTree (tree: TreeBody) (filePaths: String list): String =
