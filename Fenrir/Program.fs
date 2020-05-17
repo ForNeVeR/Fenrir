@@ -52,6 +52,12 @@ Usage:
 
     If any of the <input> or <output> parameters isn't defined, then standard input and/or standard output are used instead.
 
+  update-commit <id of commit> [<path to repository>] <path of file>
+    Read updated text file from <path to repository>/<path of file> and save it as new object file to repository.
+    Moreover, save new trees based on <id of commit> parent tree, its subtrees to repository and commit file.
+
+    If <path to repository> isn't passed, then current directory are used instead.
+
   update-with-trees <id of root tree> [<path to repository>] <path of file>
     Read updated text file from <path to repository>/<path of file> and save it as new object file to repository.
     Moreover, save new trees based on <id of root tree> tree and its subtrees to repository.
@@ -202,6 +208,72 @@ let main (argv: string[]): int =
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
         Commands.unpackObject input output
+        ExitCodes.Success
+
+    | [|"update-commit"; commitHash; filePath|] ->
+        let pathToRepo = Directory.GetCurrentDirectory()
+        let pathToDotGit = Path.Combine(pathToRepo, ".git")
+        let fullPathToFile = Path.Combine(pathToRepo, filePath)
+        let oldCommit = Commands.parseCommitBody pathToDotGit commitHash
+        let oldRootTreeHash = oldCommit.Tree
+        use inputBlob = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use headedBlob = new MemoryStream()
+        Commands.writeObjectHeader Commands.GitObjectType.GitBlob inputBlob headedBlob
+        inputBlob.CopyTo headedBlob
+        headedBlob.Position <- 0L
+        let blobHash = Commands.SHA1 headedBlob |> Commands.byteToString
+        headedBlob.Position <- 0L
+        let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", blobHash.Substring(0, 2), blobHash.Substring(2, 38))
+        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", blobHash.Substring(0, 2))) |> ignore
+        use outputBlob = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
+        Commands.packObject headedBlob outputBlob
+        use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
+        let newRootTreeHash = treeStreams.Hashes.[0]
+        let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Commands.stringToByte)
+        use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
+        use headedCommit = new MemoryStream()
+        Commands.writeObjectHeader Commands.GitObjectType.GitCommit inputCommit headedCommit
+        inputCommit.CopyTo headedCommit
+        headedCommit.Position <- 0L
+        let blobCommit = Commands.SHA1 headedCommit |> Commands.byteToString
+        headedCommit.Position <- 0L
+        let pathToCommit = Path.Combine(pathToRepo, ".git", "objects", blobCommit.Substring(0, 2), blobCommit.Substring(2, 38))
+        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", blobCommit.Substring(0, 2))) |> ignore
+        use outputCommit = new FileStream(pathToCommit, FileMode.CreateNew, FileAccess.Write)
+        Commands.packObject headedCommit outputCommit
+        Commands.writeTreeObjects pathToRepo treeStreams
+        ExitCodes.Success
+    | [|"update-commit"; commitHash; pathToRepo; filePath|] ->
+        let pathToDotGit = Path.Combine(pathToRepo, ".git")
+        let fullPathToFile = Path.Combine(pathToRepo, filePath)
+        let oldCommit = Commands.parseCommitBody pathToDotGit commitHash
+        let oldRootTreeHash = oldCommit.Tree
+        use inputBlob = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use headedBlob = new MemoryStream()
+        Commands.writeObjectHeader Commands.GitObjectType.GitBlob inputBlob headedBlob
+        inputBlob.CopyTo headedBlob
+        headedBlob.Position <- 0L
+        let blobHash = Commands.SHA1 headedBlob |> Commands.byteToString
+        headedBlob.Position <- 0L
+        let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", blobHash.Substring(0, 2), blobHash.Substring(2, 38))
+        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", blobHash.Substring(0, 2))) |> ignore
+        use outputBlob = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
+        Commands.packObject headedBlob outputBlob
+        use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
+        let newRootTreeHash = treeStreams.Hashes.[0]
+        let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Commands.stringToByte)
+        use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
+        use headedCommit = new MemoryStream()
+        Commands.writeObjectHeader Commands.GitObjectType.GitCommit inputCommit headedCommit
+        inputCommit.CopyTo headedCommit
+        headedCommit.Position <- 0L
+        let blobCommit = Commands.SHA1 headedCommit |> Commands.byteToString
+        headedCommit.Position <- 0L
+        let pathToCommit = Path.Combine(pathToRepo, ".git", "objects", blobCommit.Substring(0, 2), blobCommit.Substring(2, 38))
+        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", blobCommit.Substring(0, 2))) |> ignore
+        use outputCommit = new FileStream(pathToCommit, FileMode.CreateNew, FileAccess.Write)
+        Commands.packObject headedCommit outputCommit
+        Commands.writeTreeObjects pathToRepo treeStreams
         ExitCodes.Success
 
     | [|"update-with-trees"; rootTreeHash; filePath|] ->
