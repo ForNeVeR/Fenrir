@@ -52,6 +52,12 @@ Usage:
 
     If any of the <input> or <output> parameters isn't defined, then standard input and/or standard output are used instead.
 
+  update-with-trees <id of root tree> [<path to repository>] <path of file>
+    Read updated text file from <path to repository>/<path of file> and save it as new object file to repository.
+    Moreover, save new trees based on <id of root tree> tree and its subtrees to repository.
+
+    If <path to repository> isn't passed, then current directory are used instead.
+
   (version | --version)
     Print the program version.
 "
@@ -196,6 +202,40 @@ let main (argv: string[]): int =
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
         Commands.unpackObject input output
+        ExitCodes.Success
+
+    | [|"update-with-trees"; rootTreeHash; filePath|] ->
+        let pathToRepo = Directory.GetCurrentDirectory()
+        let pathToDotGit = Path.Combine(pathToRepo, ".git")
+        let fullPathToFile = Path.Combine(pathToRepo, filePath)
+        use input = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use headed = new MemoryStream()
+        Commands.writeObjectHeader Commands.GitObjectType.GitBlob input headed
+        input.CopyTo headed
+        headed.Position <- 0L
+        let hashName = Commands.SHA1 headed |> Commands.byteToString
+        headed.Position <- 0L
+        let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
+        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
+        use output = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
+        Commands.packObject headed output
+        Commands.updateObjectInTree rootTreeHash pathToDotGit filePath hashName |> Commands.writeTreeObjects pathToRepo
+        ExitCodes.Success
+    | [|"update-with-trees"; rootTreeHash; pathToRepo; filePath|] ->
+        let pathToDotGit = Path.Combine(pathToRepo, ".git")
+        let fullPathToFile = Path.Combine(pathToRepo, filePath)
+        use input = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use headed = new MemoryStream()
+        Commands.writeObjectHeader Commands.GitObjectType.GitBlob input headed
+        input.CopyTo headed
+        headed.Position <- 0L
+        let hashName = Commands.SHA1 headed |> Commands.byteToString
+        headed.Position <- 0L
+        let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
+        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
+        use output = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
+        Commands.packObject headed output
+        Commands.updateObjectInTree rootTreeHash pathToDotGit filePath hashName |> Commands.writeTreeObjects pathToRepo
         ExitCodes.Success
 
     | [|"version"|] | [|"--version"|] ->
