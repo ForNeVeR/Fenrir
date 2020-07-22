@@ -15,6 +15,7 @@
     <Compile Include="Ui\RefsViewModel.fs" />
     <Compile Include="Ui\CommitsViewModel.fs" />
     <Compile Include="Ui\EntryPoint.fs" />
+    <Compile Include="Packing.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
