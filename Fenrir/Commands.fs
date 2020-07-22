@@ -116,7 +116,7 @@ let runProc filename args startDir : string[] * string[] =
 
 let packedType (hash: String): GitObjectType option =
     let args = sprintf "cat-file -t %s" hash
-    let (out, err) = runProc "git" args None
+    let (out, _) = runProc "git" args None
     match Seq.tryItem 0 out with
         | Some "commit" -> Some GitObjectType.GitCommit
         | Some "tree" -> Some GitObjectType.GitTree
@@ -124,21 +124,20 @@ let packedType (hash: String): GitObjectType option =
         | _ -> None
 
 let packedToCommitBody (hash: String): CommitBody =
-    match packedType hash with
+    let datType = packedType hash
+    match datType with
         | Some GitObjectType.GitTree -> failwithf "Found tree file instead of commit file"
         | Some GitObjectType.GitBlob -> failwithf "Found blob file instead of commit file"
-        | None -> failwithf "Found unknown file"
         | Some GitObjectType.GitCommit ->
             let args = sprintf "cat-file -p %s" hash
             let (out, _) = runProc "git" args None
             let tree = out.[0].Substring(5)
             let parents = out
-                          |> Seq.filter (fun s -> s.StartsWith("parent "))
-                          |> Seq.map (fun s -> s.Substring 7)
-                          |> Seq.toArray
-            let rest = out.[parents.Length..out.Length - 2]
+                              |> Array.filter (fun s -> not(isNull s) && s.StartsWith("parent "))
+                              |> Array.map (fun s -> s.Substring 7)
+            let rest = out.[parents.Length..out.Length]
             {Tree = tree; Parents = parents; Rest = rest}
-
+        | None -> failwithf "Found unknown file"
 
 
 let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
@@ -160,12 +159,15 @@ let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
 
 
 let parseCommitBody (path : String) (hash : String) : CommitBody =
-    let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
-    use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use decodedInput = new MemoryStream()
-    unpackObject input decodedInput
-    decodedInput.Position <- 0L
-    streamToCommitBody decodedInput
+    try
+        let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+        use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use decodedInput = new MemoryStream()
+        unpackObject input decodedInput
+        decodedInput.Position <- 0L
+        streamToCommitBody decodedInput
+    with
+        | :? IOException -> packedToCommitBody hash
 
 let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
     let hd = readHeader decodedInput
