@@ -13,10 +13,9 @@ type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
 
     let formatCommit (commit: Commands.CommitBody) =
         commit.Rest
-        |> Seq.skip 2
-        |> Seq.filter(fun s -> not(s.StartsWith "gpgsig"))
-        |> Seq.tryFind(not << String.IsNullOrWhiteSpace)
-        |> Option.defaultValue "[NO MESSAGE]"
+            |> Seq.tryItem (commit.Rest.Length - 2)
+            |> Option.filter (not << String.IsNullOrWhiteSpace)
+            |> Option.defaultValue "[NO MESSAGE]"
         // TODO: Properly gather commit messages
 
     let commitList = ObservableList<string>(ResizeArray())
