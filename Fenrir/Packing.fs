@@ -20,10 +20,7 @@ let parseIndex (path: String) (hash: String) : int =
     idxReader.BaseStream.Position <- sizePosition
 
     let size = anotherEndian idxReader
-    let hashes = Array.zeroCreate size
-    seq{0..size - 1}
-        |> Seq.iter (fun i ->
-            hashes.[i] <- readHash idxReader)
+    let hashes = Array.init size (fun _ -> readHash idxReader)
     hashes.[0] |> printfn "%s"
     hashes.[1] |> printfn "%s"
     size
