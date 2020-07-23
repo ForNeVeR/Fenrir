@@ -14,13 +14,19 @@ let readHash (reader: BinaryReader) : String =
         |> Array.fold (fun acc elem ->
             String.Concat(acc, sprintf "%02x" elem)) ""
 
-let parseIndex (path: String) (hash: String) : int =
-    let sizePosition = 1028L
+let parseIndexOffset (path: String) (hash: String) : int =
     let idxReader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-    idxReader.BaseStream.Position <- sizePosition
-
+    //skip header and fanout table
+    idxReader.BaseStream.Position <- 1028L
+    //last item in fanout table
     let size = anotherEndian idxReader
+    //hashes extraction
     let hashes = Array.init size (fun _ -> readHash idxReader)
-    hashes.[0] |> printfn "%s"
-    hashes.[1] |> printfn "%s"
-    size
+    //position binary search of the hash
+    let pos = Array.BinarySearch(hashes, hash)
+    //skipping crc table and getting offset location
+    idxReader.BaseStream.Position <-
+        idxReader.BaseStream.Position + int64 size * 4L
+        + (int64 pos) * 4L
+
+    anotherEndian idxReader
