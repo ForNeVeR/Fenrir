@@ -147,34 +147,37 @@ let getDecodedStream (input : Stream) : MemoryStream =
     decodedInput.Position <- 0L
     decodedInput
 
+let getHeadlessCommitBody (decodedInput: MemoryStream): CommitBody =
+    let enc = System.Text.Encoding.UTF8
+    use sr = new StreamReader(decodedInput, enc)
+    let tree = sr.ReadLine().Substring(5)
+    let rec parseParents (s : StreamReader) (P : String list) : (String list * String[]) =
+        let str = s.ReadLine()
+        match str.Substring(0, 7) with
+            | "parent " -> parseParents s (List.append P [str.Substring(7, 40)])
+            | _         -> (P, [|str|])
+    let (p, r) = parseParents sr []
+    let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
+    {Tree = tree; Parents = (Array.ofList p); Rest = rr}
+
 let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
     match (readHeader decodedInput).Type with
         | GitObjectType.GitTree   -> failwithf "Found tree file instead of commit file"
         | GitObjectType.GitBlob   -> failwithf "Found blob file instead of commit file"
-        | GitObjectType.GitCommit ->
-            let enc = System.Text.Encoding.UTF8
-            use sr = new StreamReader(decodedInput, enc)
-            let tree = sr.ReadLine().Substring(5)
-            let rec parseParents (s : StreamReader) (P : String list) : (String list * String[]) =
-                let str = s.ReadLine()
-                match str.Substring(0, 7) with
-                    | "parent " -> parseParents s (List.append P [str.Substring(7, 40)])
-                    | _         -> (P, [|str|])
-            let (p, r) = parseParents sr []
-            let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
-            {Tree = tree; Parents = (Array.ofList p); Rest = rr}
+        | GitObjectType.GitCommit -> getHeadlessCommitBody decodedInput
 
 
 let parseCommitBody (path : String) (hash : String) : CommitBody =
     try
         let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
-        use decodedInput = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-                           |> getDecodedStream
-        streamToCommitBody decodedInput
+        new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+            |> getDecodedStream
+            |> streamToCommitBody
     with
         | :? IOException -> packedToCommitBody hash
-            //use decodedInput = getPackedStream path hash
+            //use decodedInput = getPackedStream path hash "commit"
             //                   |> getDecodedStream
+            //getHeadlessCommitBody decodedInput
 
 let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
     let hd = readHeader decodedInput

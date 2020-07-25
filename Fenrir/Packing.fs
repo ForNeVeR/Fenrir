@@ -78,7 +78,7 @@ let parsePackInfo (path: String) (offset: int) (flag: String) : MemoryStream =
         failwithf "wrong type of file provided"
     new MemoryStream(size + 50 |> packReader.ReadBytes)
 
-let getPackedStream (path: String) (hash: String) : MemoryStream =
+let getPackedStream (path : String) (hash : String) (flag : String) : MemoryStream =
     let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
                 |> Array.map Path.GetFileName
                 |> Array.map ((fun count (str : String) -> str.[0..str.Length - count - 1]) 4)
@@ -95,4 +95,4 @@ let getPackedStream (path: String) (hash: String) : MemoryStream =
         | _ -> parsePackInfo
                <| getPackPath path (Option.toObj containingPack) ".pack"
                <| offset
-               <| "commit"
+               <| flag
