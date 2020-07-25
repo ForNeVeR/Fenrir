@@ -3,6 +3,9 @@
 open System
 open System.IO
 
+let getPackPath (gitPath: String) (packFile: String) (extension: String) : String =
+    Path.Combine(gitPath, "objects", "pack", packFile + extension)
+
 let flagToBits(key: String) : byte[] =
     match key with
         | "commit" -> [| 0uy; 0uy; 1uy |]
@@ -74,3 +77,22 @@ let parsePackInfo (path: String) (offset: int) (flag: String) : MemoryStream =
     else
         failwithf "wrong type of file provided"
     new MemoryStream(size + 50 |> packReader.ReadBytes)
+
+let getPackedStream (path: String) (hash: String) : MemoryStream =
+    let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
+                |> Array.map Path.GetFileName
+                |> Array.map ((fun count (str : String) -> str.[0..str.Length - count - 1]) 4)
+    let mutable offset = -1
+
+    let containingPack = packs |> Array.tryFind (fun item ->
+        offset <- parseIndexOffset
+                  <| getPackPath path item ".idx"
+                  <| hash
+        offset <> -1)
+
+    match offset with
+        | -1 -> failwithf "git repo is corrupted"
+        | _ -> parsePackInfo
+               <| getPackPath path (Option.toObj containingPack) ".pack"
+               <| offset
+               <| "commit"

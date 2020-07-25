@@ -7,6 +7,7 @@ open System.IO
 open ICSharpCode.SharpZipLib.Zip.Compression.Streams
 open System.Security.Cryptography
 open System.Diagnostics
+open Fenrir.Packing
 
 let unpackObject (input: Stream) (output: Stream): unit =
     use deflate = new InflaterInputStream(input)
@@ -140,6 +141,12 @@ let packedToCommitBody (hash: String): CommitBody =
         | None -> failwithf "Found unknown file"
 
 
+let getDecodedStream (input : Stream) : MemoryStream =
+    let decodedInput = new MemoryStream()
+    unpackObject input decodedInput
+    decodedInput.Position <- 0L
+    decodedInput
+
 let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
     match (readHeader decodedInput).Type with
         | GitObjectType.GitTree   -> failwithf "Found tree file instead of commit file"
@@ -161,13 +168,13 @@ let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
 let parseCommitBody (path : String) (hash : String) : CommitBody =
     try
         let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
-        use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-        use decodedInput = new MemoryStream()
-        unpackObject input decodedInput
-        decodedInput.Position <- 0L
+        use decodedInput = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+                           |> getDecodedStream
         streamToCommitBody decodedInput
     with
         | :? IOException -> packedToCommitBody hash
+            //use decodedInput = getPackedStream path hash
+            //                   |> getDecodedStream
 
 let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
     let hd = readHeader decodedInput
