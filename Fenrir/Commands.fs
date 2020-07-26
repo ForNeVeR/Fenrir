@@ -84,63 +84,6 @@ let refsCommand(path: string): unit =
     Refs.readRefs path
     |> Seq.iter(fun ref -> printfn "%s: %s" ref.Name ref.CommitObjectId)
 
-
-let runProc filename args startDir : string[] * string[] =
-    let procStartInfo =
-        ProcessStartInfo(
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            FileName = filename,
-            Arguments = args
-        )
-    match startDir with | Some d -> procStartInfo.WorkingDirectory <- d | _ -> ()
-
-    let outputs = System.Collections.Generic.List<string>()
-    let errors = System.Collections.Generic.List<string>()
-    let outputHandler f (_sender:obj) (args:DataReceivedEventArgs) = f args.Data
-    use p = new Process(StartInfo = procStartInfo)
-    p.OutputDataReceived.AddHandler(DataReceivedEventHandler (outputHandler outputs.Add))
-    p.ErrorDataReceived.AddHandler(DataReceivedEventHandler (outputHandler errors.Add))
-    let started =
-        try
-            p.Start()
-        with | ex ->
-            ex.Data.Add("filename", filename)
-            reraise()
-    if not started then
-        failwithf "Failed to start process %s" filename
-    p.BeginOutputReadLine()
-    p.BeginErrorReadLine()
-    p.WaitForExit()
-    (Array.ofSeq outputs, Array.ofSeq errors)
-
-let packedType (hash: String): GitObjectType option =
-    let args = sprintf "cat-file -t %s" hash
-    let (out, _) = runProc "git" args None
-    match Seq.tryItem 0 out with
-        | Some "commit" -> Some GitObjectType.GitCommit
-        | Some "tree" -> Some GitObjectType.GitTree
-        | Some "blob" -> Some GitObjectType.GitBlob
-        | _ -> None
-
-let packedToCommitBody (hash: String): CommitBody =
-    let datType = packedType hash
-    match datType with
-        | Some GitObjectType.GitTree -> failwithf "Found tree file instead of commit file"
-        | Some GitObjectType.GitBlob -> failwithf "Found blob file instead of commit file"
-        | Some GitObjectType.GitCommit ->
-            let args = sprintf "cat-file -p %s" hash
-            let (out, _) = runProc "git" args None
-            let tree = out.[0].Substring(5)
-            let parents = out
-                              |> Array.filter (fun s -> not(isNull s) && s.StartsWith("parent "))
-                              |> Array.map (fun s -> s.Substring 7)
-            let rest = out.[parents.Length..out.Length]
-            {Tree = tree; Parents = parents; Rest = rest}
-        | None -> failwithf "Found unknown file"
-
-
 let getDecodedStream (input : Stream) : MemoryStream =
     let decodedInput = new MemoryStream()
     unpackObject input decodedInput
