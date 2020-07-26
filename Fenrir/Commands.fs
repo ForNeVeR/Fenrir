@@ -174,10 +174,10 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             |> getDecodedStream
             |> streamToCommitBody
     with
-        | :? IOException -> packedToCommitBody hash
-            //use decodedInput = getPackedStream path hash "commit"
-            //                   |> getDecodedStream
-            //getHeadlessCommitBody decodedInput
+        | :? IOException -> //packedToCommitBody hash
+            getPackedStream path hash "commit"
+                |> getDecodedStream
+                |> getHeadlessCommitBody
 
 let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
     let hd = readHeader decodedInput
