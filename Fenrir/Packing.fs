@@ -56,11 +56,15 @@ let parseIndexOffset (path: String) (hash: String) : int =
         idxReader.BaseStream.Position + int64 size * 4L
         + (int64 pos) * 4L
 
-    anotherEndian idxReader
+    let result = anotherEndian idxReader
+    idxReader.Close()
+    result
 
 let parsePackInfo (path: String) (offset: int) (flag: String) : MemoryStream =
+    let mutable flagByte = 0uy
     let bitsExtractor (reader: BinaryReader) =
-        reader.ReadByte() |> byteToBits |> Array.rev
+        flagByte <- reader.ReadByte()
+        flagByte |> byteToBits |> Array.rev
 
     let packReader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
     packReader.BaseStream.Position <- int64 offset
@@ -70,13 +74,15 @@ let parsePackInfo (path: String) (offset: int) (flag: String) : MemoryStream =
 
     //TODO implement delta objs
     if bits.[1..3] = flagToBits(flag) then
-        while bits.[0] = 1uy do
-            bits <- bitsExtractor packReader
-            size <- bits.[1..] |> bitsToInt <<< sizeOffset ||| size
+        while flagByte >= 128uy do
+            flagByte <- packReader.ReadByte()
+            size <- int (flagByte % 128uy) <<< sizeOffset ||| size
             sizeOffset <- sizeOffset + 7
     else
         failwithf "wrong type of file provided"
-    new MemoryStream(size + 50 |> packReader.ReadBytes)
+    let result = new MemoryStream(size + 50 |> packReader.ReadBytes)
+    packReader.Close()
+    result
 
 let getPackedStream (path : String) (hash : String) (flag : String) : MemoryStream =
     let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
