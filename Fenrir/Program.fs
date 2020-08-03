@@ -82,7 +82,7 @@ let main (argv: string[]): int =
         use input = Console.OpenStandardInput()
         use output = Console.OpenStandardOutput()
         use decodedInput = new MemoryStream()
-        Commands.unpackObject input decodedInput
+        Zlib.unpackObject input decodedInput
         decodedInput.Position <- 0L
         let n = Commands.guillotineObject decodedInput output
         printfn "%A bytes have been written" n
@@ -90,7 +90,7 @@ let main (argv: string[]): int =
     | [|"guillotine"; inputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use decodedInput = new MemoryStream()
-        Commands.unpackObject input decodedInput
+        Zlib.unpackObject input decodedInput
         decodedInput.Position <- 0L
         use output = Console.OpenStandardOutput()
         let n = Commands.guillotineObject decodedInput output
@@ -99,7 +99,7 @@ let main (argv: string[]): int =
     | [|"guillotine"; inputPath; outputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use decodedInput = new MemoryStream()
-        Commands.unpackObject input decodedInput
+        Zlib.unpackObject input decodedInput
         decodedInput.Position <- 0L
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
         let n = Commands.guillotineObject decodedInput output
@@ -124,17 +124,17 @@ let main (argv: string[]): int =
     | [|"pack"|] ->
         use input = Console.OpenStandardInput()
         use output = Console.OpenStandardOutput()
-        Commands.packObject input output
+        Zlib.packObject input output
         ExitCodes.Success
     | [|"pack"; inputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = Console.OpenStandardOutput()
-        Commands.packObject input output
+        Zlib.packObject input output
         ExitCodes.Success
     | [|"pack"; inputPath; outputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
-        Commands.packObject input output
+        Zlib.packObject input output
         ExitCodes.Success
 
     | [|"refs"|] ->
@@ -176,17 +176,17 @@ let main (argv: string[]): int =
     | [|"unpack"|] ->
         use input = Console.OpenStandardInput()
         use output = Console.OpenStandardOutput()
-        Commands.unpackObject input output
+        Zlib.unpackObject input output
         ExitCodes.Success
     | [|"unpack"; inputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = Console.OpenStandardOutput()
-        Commands.unpackObject input output
+        Zlib.unpackObject input output
         ExitCodes.Success
     | [|"unpack"; inputPath; outputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
-        Commands.unpackObject input output
+        Zlib.unpackObject input output
         ExitCodes.Success
 
     | [|"update-commit"; commitHash; filePath|] ->
@@ -241,7 +241,7 @@ let main (argv: string[]): int =
         let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
         Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
         use output = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
-        Commands.packObject headed output
+        Zlib.packObject headed output
         Commands.updateObjectInTree rootTreeHash pathToDotGit filePath hashName |> Commands.writeTreeObjects pathToRepo
         ExitCodes.Success
     | [|"update-with-trees"; rootTreeHash; pathToRepo; filePath|] ->
@@ -257,7 +257,7 @@ let main (argv: string[]): int =
         let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
         Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
         use output = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
-        Commands.packObject headed output
+        Zlib.packObject headed output
         Commands.updateObjectInTree rootTreeHash pathToDotGit filePath hashName |> Commands.writeTreeObjects pathToRepo
         ExitCodes.Success
 

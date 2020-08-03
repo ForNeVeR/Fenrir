@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="Refs.fs" />
+    <Compile Include="Zlib.fs" />
     <Compile Include="Packing.fs" />
     <Compile Include="Commands.fs" />
     <EmbeddedResource Include="Ui\RefsWindow.xaml" />

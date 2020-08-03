@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open Fenrir.Zlib
 
 let getPackPath (gitPath: String) (packFile: String) (extension: String) : String =
     Path.Combine(gitPath, "objects", "pack", packFile + extension)
@@ -42,7 +43,7 @@ let bitsToInt (bits: byte[]) =
         result) bits 0
 
 let parseIndexOffset (path: String) (hash: String) : int =
-    let idxReader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+    use idxReader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
     //skip header and fanout table
     idxReader.BaseStream.Position <- 1028L
     //last item in fanout table
@@ -52,13 +53,17 @@ let parseIndexOffset (path: String) (hash: String) : int =
     //position binary search of the hash
     let pos = Array.BinarySearch(hashes, hash)
     //skipping crc table and getting offset location
-    idxReader.BaseStream.Position <-
-        idxReader.BaseStream.Position + int64 size * 4L
-        + (int64 pos) * 4L
+    if pos >= 0 then
+        idxReader.BaseStream.Position <-
+            idxReader.BaseStream.Position + int64 size * 4L
+            + (int64 pos) * 4L
 
-    let result = anotherEndian idxReader
-    idxReader.Close()
-    result
+        let result = anotherEndian idxReader
+        idxReader.Close()
+        result
+    else
+        idxReader.Close()
+        -1
 
 let parsePackInfo (path: String) (offset: int) (flag: String) : MemoryStream =
     let mutable flagByte = 0uy
@@ -80,7 +85,7 @@ let parsePackInfo (path: String) (offset: int) (flag: String) : MemoryStream =
             sizeOffset <- sizeOffset + 7
     else
         failwithf "wrong type of file provided"
-    let result = new MemoryStream(size + 50 |> packReader.ReadBytes)
+    let result = new MemoryStream(size + 20 |> packReader.ReadBytes) |> getDecodedStream
     packReader.Close()
     result
 

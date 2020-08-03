@@ -7,15 +7,9 @@ open System.IO
 open ICSharpCode.SharpZipLib.Zip.Compression.Streams
 open System.Security.Cryptography
 open System.Diagnostics
+
 open Fenrir.Packing
-
-let unpackObject (input: Stream) (output: Stream): unit =
-    use deflate = new InflaterInputStream(input)
-    deflate.CopyTo output
-
-let packObject (input: Stream) (output: Stream): unit =
-    use deflate = new DeflaterOutputStream(output, IsStreamOwner = false)
-    input.CopyTo deflate
+open Fenrir.Zlib
 
 type GitObjectType =
     | GitCommit = 0
@@ -84,12 +78,6 @@ let refsCommand(path: string): unit =
     Refs.readRefs path
     |> Seq.iter(fun ref -> printfn "%s: %s" ref.Name ref.CommitObjectId)
 
-let getDecodedStream (input : Stream) : MemoryStream =
-    let decodedInput = new MemoryStream()
-    unpackObject input decodedInput
-    decodedInput.Position <- 0L
-    decodedInput
-
 let getHeadlessCommitBody (decodedInput: MemoryStream): CommitBody =
     let enc = System.Text.Encoding.UTF8
     use sr = new StreamReader(decodedInput, enc)
@@ -117,9 +105,8 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             |> getDecodedStream
             |> streamToCommitBody
     with
-        | :? IOException -> //packedToCommitBody hash
+        | :? IOException ->
             getPackedStream path hash "commit"
-                |> getDecodedStream
                 |> getHeadlessCommitBody
 
 let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
