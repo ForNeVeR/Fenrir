@@ -4,7 +4,6 @@ open System
 open System.Text
 open System.Globalization
 open System.IO
-open ICSharpCode.SharpZipLib.Zip.Compression.Streams
 open System.Security.Cryptography
 open System.Diagnostics
 

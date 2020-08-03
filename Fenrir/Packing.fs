@@ -71,7 +71,7 @@ let parsePackInfo (path: String) (offset: int) (flag: String) : MemoryStream =
         flagByte <- reader.ReadByte()
         flagByte |> byteToBits |> Array.rev
 
-    let packReader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+    use packReader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
     packReader.BaseStream.Position <- int64 offset
     let mutable bits = bitsExtractor packReader
     let mutable size = bits.[4..7] |> bitsToInt
@@ -86,7 +86,6 @@ let parsePackInfo (path: String) (offset: int) (flag: String) : MemoryStream =
     else
         failwithf "wrong type of file provided"
     let result = new MemoryStream(size + 20 |> packReader.ReadBytes) |> getDecodedStream
-    packReader.Close()
     result
 
 let getPackedStream (path : String) (hash : String) (flag : String) : MemoryStream =
