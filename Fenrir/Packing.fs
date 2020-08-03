@@ -18,11 +18,8 @@ let bitKeys(key: String) : byte[] =
         | "tag"    -> [| 1uy; 0uy; 0uy |]
         | _        -> failwithf "Unknown object type provided"
 
-let anotherEndian (reader: BinaryReader) : int =
-    reader.ReadBytes 4
-        |> Array.map (fun x -> int x)
-        |> Array.reduce (fun x y ->
-            x * 256 + y)
+let getBigEndian (reader: BinaryReader) : int =
+    reader.ReadInt32() |> Net.IPAddress.NetworkToHostOrder
 
 let readHash (reader: BinaryReader) : String =
     reader.ReadBytes 20
@@ -34,7 +31,7 @@ let parseIndexOffset (path: String) (hash: String) : int =
     //skip header and fanout table
     idxReader.BaseStream.Position <- 1028L
     //last item in fanout table
-    let size = anotherEndian idxReader
+    let size = getBigEndian idxReader
     //hashes extraction
     let hashes = Array.init size (fun _ -> readHash idxReader)
     //position binary search of the hash
@@ -45,7 +42,7 @@ let parseIndexOffset (path: String) (hash: String) : int =
             idxReader.BaseStream.Position + int64 size * 4L
             + (int64 pos) * 4L
 
-        let result = anotherEndian idxReader
+        let result = getBigEndian idxReader
         result
     else
         -1
