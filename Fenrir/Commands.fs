@@ -43,6 +43,15 @@ let readWhile (condition: byte -> bool) (maxSize: uint64) (stream: BinaryReader)
             | false                -> []
     makeList(0UL) |> List.toArray
 
+let readWhileLast (condition: byte -> bool) (maxSize: uint64) (stream: BinaryReader): byte array =
+    let rec makeList (n: uint64): byte list =
+        let newByte = stream.ReadByte()
+        match (condition newByte) with
+            | _ when n > (maxSize) -> failwithf "Invalid Git object header"
+            | true                 -> newByte :: makeList (n + 1UL)
+            | false                -> [newByte]
+    makeList(0UL) |> List.toArray
+
 let readHeader(input: Stream): ObjectHeader =
     let bF = new BinaryReader(input, Encoding.ASCII)
 
