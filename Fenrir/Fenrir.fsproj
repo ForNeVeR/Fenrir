@@ -18,6 +18,7 @@
     <Compile Include="Ui\CommitsViewModel.fs" />
     <Compile Include="Ui\EntryPoint.fs" />
     <Compile Include="Program.fs" />
+    <Compile Include="DeltaCommands.fs" />
   </ItemGroup>
 
   <ItemGroup>

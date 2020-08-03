@@ -101,7 +101,7 @@ let getPackedStream (path : String) (hash : String) (flag : String) : MemoryStre
         offset <> -1)
 
     match offset with
-        | -1 -> failwithf "git repo is corrupted"
+        | -1 -> failwithf "pack source not found, git repo is corrupted"
         | _ -> parsePackInfo
                <| getPackPath path (Option.toObj containingPack) ".pack"
                <| offset
