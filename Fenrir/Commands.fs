@@ -5,10 +5,10 @@ open System.Text
 open System.Globalization
 open System.IO
 open System.Security.Cryptography
-open System.Diagnostics
 
 open Fenrir.Packing
 open Fenrir.Zlib
+open Fenrir.Tools
 
 type GitObjectType =
     | GitCommit = 0
@@ -33,24 +33,6 @@ type TreeAtom = {
 }
 
 type TreeBody = TreeAtom[]
-
-let readWhile (condition: byte -> bool) (maxSize: uint64) (stream: BinaryReader): byte array =
-    let rec makeList (n: uint64): byte list =
-        let newByte = stream.ReadByte()
-        match (condition newByte) with
-            | _ when n > (maxSize) -> failwithf "Invalid Git object header"
-            | true                 -> newByte :: makeList (n + 1UL)
-            | false                -> []
-    makeList(0UL) |> List.toArray
-
-let readWhileLast (condition: byte -> bool) (maxSize: uint64) (stream: BinaryReader): byte array =
-    let rec makeList (n: uint64): byte list =
-        let newByte = stream.ReadByte()
-        match (condition newByte) with
-            | _ when n > (maxSize) -> failwithf "Invalid Git object header"
-            | true                 -> newByte :: makeList (n + 1UL)
-            | false                -> [newByte]
-    makeList(0UL) |> List.toArray
 
 let readHeader(input: Stream): ObjectHeader =
     let bF = new BinaryReader(input, Encoding.ASCII)
@@ -109,13 +91,12 @@ let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
 let parseCommitBody (path : String) (hash : String) : CommitBody =
     try
         let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
-        new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-            |> getDecodedStream
-            |> streamToCommitBody
+        use stream = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        stream |> getDecodedStream |> streamToCommitBody
     with
         | :? IOException ->
-            getPackedStream path hash "commit"
-                |> getHeadlessCommitBody
+            use stream = getPackedStream path hash "commit"
+            stream |> getHeadlessCommitBody
 
 let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
     let hd = readHeader decodedInput
@@ -161,19 +142,6 @@ let SHA1 (input: Stream): byte[] =
     use tempStream = input.CopyTo |> doAndRewind
     use sha = new SHA1CryptoServiceProvider()
     sha.ComputeHash(tempStream.ToArray())
-
-let byteToString (b : byte[]): String =
-    BitConverter.ToString(b).Replace("-", "").ToLower()
-
-let stringToByte (s: String): byte[] =
-    match s.Length with
-    | even when even % 2 = 0 ->
-        let arrayLength = s.Length / 2
-        Array.init arrayLength (fun byteIndex ->
-            let charIndex = byteIndex * 2
-            Byte.Parse(s.AsSpan(charIndex, 2), NumberStyles.AllowHexSpecifier, provider = CultureInfo.InvariantCulture)
-        )
-    | n -> failwithf "String of invalid length %d: %s" n s
 
 let headifyStream (tp: GitObjectType) (input: Stream) (headed: MemoryStream): String =
     writeObjectHeader tp input headed

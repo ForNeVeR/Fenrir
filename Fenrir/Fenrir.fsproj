@@ -8,7 +8,9 @@
 
   <ItemGroup>
     <Compile Include="Refs.fs" />
+    <Compile Include="Tools.fs" />
     <Compile Include="Zlib.fs" />
+    <Compile Include="PackDeltaMethods.fs" />
     <Compile Include="Packing.fs" />
     <Compile Include="Commands.fs" />
     <EmbeddedResource Include="Ui\RefsWindow.xaml" />
@@ -18,7 +20,6 @@
     <Compile Include="Ui\CommitsViewModel.fs" />
     <Compile Include="Ui\EntryPoint.fs" />
     <Compile Include="Program.fs" />
-    <Compile Include="DeltaCommands.fs" />
   </ItemGroup>
 
   <ItemGroup>

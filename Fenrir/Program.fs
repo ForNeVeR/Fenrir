@@ -4,7 +4,6 @@ open System
 open System.IO
 open System.Reflection
 
-open System.Text
 open Fenrir
 
 let private printVersion() =
@@ -201,7 +200,7 @@ let main (argv: string[]): int =
         Commands.writeStreamToFile pathToRepo headedBlob blobHash
         use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
         let newRootTreeHash = treeStreams.Hashes.[0]
-        let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Commands.stringToByte)
+        let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Tools.stringToByte)
         use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
         use headedCommit = new MemoryStream()
         let commitHash = Commands.headifyStream Commands.GitObjectType.GitCommit inputCommit headedCommit
@@ -219,7 +218,7 @@ let main (argv: string[]): int =
         Commands.writeStreamToFile pathToRepo headedBlob blobHash
         use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
         let newRootTreeHash = treeStreams.Hashes.[0]
-        let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Commands.stringToByte)
+        let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Tools.stringToByte)
         use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
         use headedCommit = new MemoryStream()
         let commitHash = Commands.headifyStream Commands.GitObjectType.GitCommit inputCommit headedCommit
@@ -236,7 +235,7 @@ let main (argv: string[]): int =
         Commands.writeObjectHeader Commands.GitObjectType.GitBlob input headed
         input.CopyTo headed
         headed.Position <- 0L
-        let hashName = Commands.SHA1 headed |> Commands.byteToString
+        let hashName = Commands.SHA1 headed |> Tools.byteToString
         headed.Position <- 0L
         let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
         Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
@@ -252,7 +251,7 @@ let main (argv: string[]): int =
         Commands.writeObjectHeader Commands.GitObjectType.GitBlob input headed
         input.CopyTo headed
         headed.Position <- 0L
-        let hashName = Commands.SHA1 headed |> Commands.byteToString
+        let hashName = Commands.SHA1 headed |> Tools.byteToString
         headed.Position <- 0L
         let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
         Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
