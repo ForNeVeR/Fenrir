@@ -91,36 +91,42 @@ let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
 let parseCommitBody (path : String) (hash : String) : CommitBody =
     try
         let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
-        use stream = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-        stream |> getDecodedStream |> streamToCommitBody
+        use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use decodedInput = input |> getDecodedStream
+        decodedInput |> streamToCommitBody
     with
         | :? IOException ->
-            use stream = getPackedStream path hash "commit"
-            stream |> getHeadlessCommitBody
+            use packedStream = getPackedStream path hash "commit"
+            packedStream |> getHeadlessCommitBody
+
+let getHeadlessTreeBody (size: uint64) (decodedInput: MemoryStream): TreeBody =
+    let bF = new BinaryReader(decodedInput, Encoding.ASCII)
+    let rec makeList (n:int): TreeAtom list =
+        try
+            {Mode = readWhile (fun b -> b <> byte ' ') size bF |> Encoding.ASCII.GetString |> Convert.ToUInt64;
+            Name = readWhile (fun b -> b <> 0uy) size bF |> Encoding.ASCII.GetString;
+            Hash = bF.ReadBytes(20)} :: makeList (n + 1)
+        with
+            | :? EndOfStreamException -> []
+    makeList 0 |> Array.ofList
 
 let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
     let hd = readHeader decodedInput
     match hd.Type with
         | GitObjectType.GitCommit   -> failwithf "Found commit file instead of tree file"
         | GitObjectType.GitBlob     -> failwithf "Found blob file instead of tree file"
-        | GitObjectType.GitTree     ->
-            let bF = new BinaryReader(decodedInput, Encoding.ASCII)
-            let rec makeList (n:int): TreeAtom list =
-                try
-                    {Mode = readWhile (fun b -> b <> byte ' ') hd.Size bF |> Encoding.ASCII.GetString |> Convert.ToUInt64;
-                    Name = readWhile (fun b -> b <> 0uy) hd.Size bF |> Encoding.ASCII.GetString;
-                    Hash = bF.ReadBytes(20)} :: makeList (n + 1)
-                with
-                    | :? EndOfStreamException -> []
-            makeList 0 |> Array.ofList
+        | GitObjectType.GitTree     -> getHeadlessTreeBody hd.Size decodedInput
 
 let parseTreeBody (path : String) (hash : String) : TreeBody =
-    let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
-    use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use decodedInput = new MemoryStream()
-    unpackObject input decodedInput
-    decodedInput.Position <- 0L
-    streamToTreeBody decodedInput
+    try
+        let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+        use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use decodedInput = input |> getDecodedStream
+        decodedInput |> streamToTreeBody
+    with
+        | :? IOException ->
+            use packedStream = getPackedStream path hash "tree"
+            packedStream |> getHeadlessTreeBody (uint64 packedStream.Length)
 
 let writeObjectHeader (tp: GitObjectType) (input: Stream) (output: Stream): unit =
     match tp with
