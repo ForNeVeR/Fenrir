@@ -42,8 +42,7 @@ let parseIndexOffset (path: String) (hash: String) : int =
             idxReader.BaseStream.Position + int64 size * 4L
             + (int64 pos) * 4L
 
-        let result = getBigEndian idxReader
-        result
+        getBigEndian idxReader
     else
         -1
 

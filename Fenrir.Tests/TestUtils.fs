@@ -3,6 +3,12 @@
 open System.IO
 open System.Reflection
 
-let testDataRoot: string =
+let getTestDirectory(dir: string) =
     let location = Assembly.GetExecutingAssembly().Location
-    Path.Combine(Path.GetDirectoryName(location), "Data")
+    Path.Combine(Path.GetDirectoryName(location), dir)
+
+let testDataRoot: string =
+    getTestDirectory("Data")
+
+let testOutputRoot: string =
+    getTestDirectory("Outputs")

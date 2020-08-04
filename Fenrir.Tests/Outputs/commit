@@ -1,0 +1,22 @@
+tree a2e23cc79548cb0b4ca0cbb4ed680354f1d06cfa
+parent 5714d04cad6a29ff75d2f07a4d7d0a3ec9f16ed6
+author Friedrich von Never <friedrich@fornever.me> 1589113577 +0700
+committer Friedrich von Never <friedrich@fornever.me> 1589114428 +0700
+gpgsig -----BEGIN PGP SIGNATURE-----
+ 
+ iQIzBAABCAAdFiEEGIpV+jDM0vRUPASOFL66M3TPrZgFAl639jwACgkQFL66M3TP
+ rZgAWxAAiD02FTgeGy8mV0iUlkGPnsZ4YkPAijkk0v+E8ecnEstiBMLd1YAdfGLZ
+ goA04ZYQKIHuI2n86FL2WmMou4xVGqLzgfZYFOIhllYTUOgZKj96dvkowDkvkJ80
+ WrgWv7qspZh6B3X7un+Qbpj9sBQ+m29AQP+kyfifuqYeAdciAGb8G95FtBtXKj79
+ S63cKthxpy/MqJxlTpb76kQwYgQhxIYcpqPnFHj+svr9kdb2qK6c57S8M0HEUlnk
+ y2bepR4t5iZWftCL/N2Aak+Xga4kaZ1TeD8t44uHiTdN95Na5KAtH9tDOoP/myn0
+ 6hjA8CAo9+5Suy8mnTuwHX9NPFqMSFI4OhJab1e2EKiukrjf5E17JmJ9+g9NCsyo
+ JKksisSel+5Gy3RXoWAeccGqcX9OC8y2MltIMqU6fdRwCYhTV1Pk0CFOPiRFwOuU
+ 9FV0Q03iKmjEmxRd8/lF49uEgki4GomeyLiiTioemen933C+dZT0oRq3R+f66U01
+ zzFuFAX/3E/+pBB4AgU6TD4woArhcYlVRBjt7fM6Y3NTT7TV+1Z82mR3UJljL1vw
+ 8DQI65/jD7alBpmj9qz9/UHv+ApkDZVsuw9EM7nF4+gd7tksQkBMMZ067L4YwWsF
+ DBhCzRemfXF4XTH6mhs8PLgr0kdey7+2xjVWPOwHb4ebASXCi2E=
+ =qKto
+ -----END PGP SIGNATURE-----
+
+Propagate events to the child control (#9)

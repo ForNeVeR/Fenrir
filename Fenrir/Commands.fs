@@ -89,13 +89,13 @@ let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
 
 
 let parseCommitBody (path : String) (hash : String) : CommitBody =
-    try
-        let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
-        use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-        use decodedInput = input |> getDecodedStream
-        decodedInput |> streamToCommitBody
-    with
-        | :? IOException ->
+    let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+    match File.Exists(pathToFile) with
+        | true ->
+            use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use decodedInput = input |> getDecodedStream
+            decodedInput |> streamToCommitBody
+        | false ->
             use packedStream = getPackedStream path hash "commit"
             packedStream |> getHeadlessCommitBody
 
@@ -118,13 +118,13 @@ let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
         | GitObjectType.GitTree     -> getHeadlessTreeBody hd.Size decodedInput
 
 let parseTreeBody (path : String) (hash : String) : TreeBody =
-    try
-        let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
-        use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-        use decodedInput = input |> getDecodedStream
-        decodedInput |> streamToTreeBody
-    with
-        | :? IOException ->
+    let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+    match File.Exists(pathToFile) with
+        | true ->
+            use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use decodedInput = input |> getDecodedStream
+            decodedInput |> streamToTreeBody
+        | false ->
             use packedStream = getPackedStream path hash "tree"
             packedStream |> getHeadlessTreeBody (uint64 packedStream.Length)
 
