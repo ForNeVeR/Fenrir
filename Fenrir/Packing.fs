@@ -72,7 +72,7 @@ let rec parsePackInfo (path: String) (offset: int) (flag: String): MemoryStream 
                                                 FileShare.Read))
     packReader.BaseStream.Position <- int64 offset
 
-    let sizeBytes = readWhileLast MSBCondition (uint64 packReader.BaseStream.Length) packReader
+    let sizeBytes = readWhileLast isMsbSet (uint64 packReader.BaseStream.Length) packReader
     let bits = sizeBytes.[0] |> byteToBits |> Array.rev
     let mutable size = bits.[4..7] |> bitsToInt
 
@@ -82,7 +82,7 @@ let rec parsePackInfo (path: String) (offset: int) (flag: String): MemoryStream 
     else if bits.[1..3] = [| 1uy; 1uy; 0uy |] then
         let mutable additional = 0
         let mutable offStep = 0
-        let negOffset = (readWhileLast MSBCondition (uint64 packReader.BaseStream.Length) packReader
+        let negOffset = (readWhileLast isMsbSet (uint64 packReader.BaseStream.Length) packReader
                         |> Array.fold (fun acc elem ->
                             additional <- additional + (1 <<< offStep)
                             offStep <- offStep + 7

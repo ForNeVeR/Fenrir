@@ -4,7 +4,8 @@ open System.IO
 open Fenrir.Tools
 open Fenrir.Zlib
 
-let MSBCondition (b: byte): bool =
+//checks if MSB (a.k.a. Most Significant Byte) is set to 1
+let isMsbSet (b: byte): bool =
     b >= 128uy
 
 let estimateSize (startSize: int) (off: int) (bytes: byte array): int =
@@ -49,10 +50,11 @@ let copyCommand (comm: byte array) (mem: MemoryStream)
         (extractBit comm.[6] <<< 8) +
         (extractBit comm.[5] <<< 16) +
         (extractBit comm.[4] <<< 24)
-    let copySize =
+    let mutable copySize =
         extractBit comm.[3] +
         (extractBit comm.[2] <<< 8) +
         (extractBit comm.[1] <<< 16)
+    if copySize = 0 then copySize <- 0x10000
 
     nonDelta.BaseStream.Position <- int64 copyOffset
     mem.Write(nonDelta.ReadBytes(copySize), 0, copySize)
@@ -61,9 +63,9 @@ let copyCommand (comm: byte array) (mem: MemoryStream)
 let processDelta (pack: BinaryReader) (nonDelta: BinaryReader) (size: int): MemoryStream =
     use deltaReader = new BinaryReader(new MemoryStream(size + 20 |> pack.ReadBytes)
                                            |> getDecodedStream)
-    let sourceSize = readWhileLast MSBCondition (uint64 deltaReader.BaseStream.Length) deltaReader
+    let sourceSize = readWhileLast isMsbSet (uint64 deltaReader.BaseStream.Length) deltaReader
                          |> estimateSize 0 0
-    let targetSize = readWhileLast MSBCondition (uint64 deltaReader.BaseStream.Length) deltaReader
+    let targetSize = readWhileLast isMsbSet (uint64 deltaReader.BaseStream.Length) deltaReader
                          |> estimateSize 0 0
 
     let deltaCommSize = size - (int) deltaReader.BaseStream.Position
