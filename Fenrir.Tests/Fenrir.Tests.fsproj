@@ -14,7 +14,6 @@
         <Compile Include="RefsTests.fs" />
         <Compile Include="PackTests.fs" />
         <Compile Include="Program.fs" />
-        <Content Include="Outputs\commit" />
         <Content Update="Data\pack-07a2498901f9e70c9056ae89d11aba80b3402616.idx">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
