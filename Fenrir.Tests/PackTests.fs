@@ -1,5 +1,6 @@
 ﻿module Fenrir.Tests.PackTests
 
+open System
 open System.IO
 open System.Text
 open Xunit
@@ -10,7 +11,7 @@ open Fenrir.Packing
 [<Fact>]
 let ``Packed commit should be parsed properly``(): unit =
     let toString (arr: byte array) =
-        arr |> Encoding.ASCII.GetString
+        (arr |> Encoding.UTF8.GetString).Replace(Environment.NewLine, "\n")
 
     let commitHash = "8c3ecc6b9abdab719915046ce7e989715fde5f5b"
     use content = getPackedStream testDataRoot commitHash "commit"
