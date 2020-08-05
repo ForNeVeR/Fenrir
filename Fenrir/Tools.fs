@@ -3,6 +3,13 @@
 open System
 open System.IO
 open System.Globalization
+open System.Collections
+
+let sliceBitArray (bits: BitArray) (start: int) (finish: int): BitArray =
+    [| for b in bits do yield b |].[start..finish] |> BitArray
+
+let compareBitArrays (immut: BitArray) (mut: BitArray): bool =
+    seq {for b in mut.Xor immut do yield b} |> Seq.exists (fun item -> item = true) |> not
 
 let readWhile (condition: byte -> bool) (maxSize: uint64) (stream: BinaryReader): byte array =
     let rec makeList (n: uint64): byte list =

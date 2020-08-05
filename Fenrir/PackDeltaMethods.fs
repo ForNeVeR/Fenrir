@@ -1,5 +1,6 @@
 ﻿module Fenrir.DeltaCommands
 
+open System.Collections
 open System.IO
 open Fenrir.Tools
 open Fenrir.Zlib
@@ -14,46 +15,44 @@ let estimateSize (startSize: int) (off: int) (bytes: byte array): int =
             shift <- shift + 7
             int (elem % 128uy) <<< shift ||| acc) startSize bytes
 
-let byteToBits (num: byte) : byte[] =
-    let mutable number = num
-    Array.init 8 (fun _ ->
-        let result = number % 2uy
-        number <- number >>> 1
-        result)
+let byteToBits (num: byte) : BitArray =
+    BitArray([| num |])
 
 
-let bitsToInt (bits: byte[]) =
+
+let bitsToInt (bits: BitArray): int =
     let mutable st = 1
 
-    Array.foldBack (fun i acc ->
-        let result = acc + int i * st
+    seq { for b in bits do yield b }
+    |> Seq.fold (fun acc i ->
+        let result = acc + (if i then 1 else 0) * st
         st <- st * 2
-        result) bits 0
+        result) 0
 
-let insertCommand (reader: BinaryReader) (mem: MemoryStream) (flag: byte) (counter: int) =
+let insertCommand (reader: BinaryReader) (mem: MemoryStream) (flag: byte) (counter: int): int =
     mem.Write(reader.ReadBytes(int flag), 0, int flag)
     counter + int flag
 
-let copyCommand (comm: byte array) (mem: MemoryStream)
-    (delta: BinaryReader) (nonDelta: BinaryReader) (count: int) =
+let copyCommand (comm: BitArray) (mem: MemoryStream)
+    (delta: BinaryReader) (nonDelta: BinaryReader) (count: int): int =
 
     let mutable counter = count
-    let extractBit (flag: byte) =
+    let extractBit (flag: bool): int =
         match flag with
-            | 1uy ->
+            | true ->
                 counter <- counter + 1
                 int <| delta.ReadByte()
-            | _ -> 0
+            | false -> 0
 
     let copyOffset =
-        extractBit comm.[7] +
-        (extractBit comm.[6] <<< 8) +
-        (extractBit comm.[5] <<< 16) +
-        (extractBit comm.[4] <<< 24)
+        extractBit comm.[0] +
+        (extractBit comm.[1] <<< 8) +
+        (extractBit comm.[2] <<< 16) +
+        (extractBit comm.[3] <<< 24)
     let mutable copySize =
-        extractBit comm.[3] +
-        (extractBit comm.[2] <<< 8) +
-        (extractBit comm.[1] <<< 16)
+        extractBit comm.[4] +
+        (extractBit comm.[5] <<< 8) +
+        (extractBit comm.[6] <<< 16)
     if copySize = 0 then copySize <- 0x10000
 
     nonDelta.BaseStream.Position <- int64 copyOffset
@@ -76,14 +75,13 @@ let processDelta (pack: BinaryReader) (nonDelta: BinaryReader) (size: int): Memo
         let mutable flagByte = 0uy
         if counter < deltaCommSize then
             flagByte <- deltaReader.ReadByte()
-            let comm = flagByte |> byteToBits |> Array.rev
+            let comm = flagByte |> byteToBits
             counter <- counter + 1
-            match comm.[0] with
-                    | 0uy ->
+            match comm.[7] with
+                    | false ->
                         counter <- insertCommand deltaReader result flagByte counter
-                    | 1uy ->
+                    | true ->
                         counter <- copyCommand comm result deltaReader nonDelta counter
-                    | _ -> failwithf "0 or 1 expected, something in bitsExtractor went FUBAR"
             applyDelta()
 
     applyDelta()
