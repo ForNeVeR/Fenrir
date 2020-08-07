@@ -23,7 +23,7 @@ let byteToBits (num: byte) : BitArray =
 let bitsToInt (bits: BitArray): int =
     let mutable st = 1
 
-    seq { for b in bits do yield b }
+    Seq.cast<bool> bits
     |> Seq.fold (fun acc i ->
         let result = acc + (if i then 1 else 0) * st
         st <- st * 2
