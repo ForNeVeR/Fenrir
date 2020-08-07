@@ -8,6 +8,10 @@ type Ref = {
 module Refs =
     open System.IO
 
+    let isHeadDetached (pathToRepo: string): bool =
+        let pathToHead = Path.Combine(pathToRepo, "HEAD")
+        not <| File.ReadAllText(pathToHead).StartsWith("ref: refs/heads/")
+
     let private prependName name ref =
         { ref with Name = sprintf "%s/%s" name ref.Name }
 

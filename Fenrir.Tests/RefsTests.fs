@@ -6,6 +6,14 @@ open Fenrir
 open Fenrir.Tests.TestUtils
 
 [<Fact>]
+let ``Attached head should be recognized properly``(): unit =
+    Assert.False(Refs.isHeadDetached("Data"))
+    
+[<Fact>]
+let ``Detached head should be recognized properly``(): unit =
+    Assert.True(Refs.isHeadDetached("moreData"))
+
+[<Fact>]
 let ``Ref list should be read properly``(): unit =
     let refs = Refs.readRefs testDataRoot
     let expectedRefs = [|
