@@ -5,6 +5,7 @@ open System.IO
 open System.Reflection
 
 open Fenrir
+open Fenrir.ArgumentCommands
 
 let private printVersion() =
     let version = Assembly.GetExecutingAssembly().GetName().Version
@@ -69,10 +70,6 @@ Usage:
 
 let private printUnrecognizedArguments argv =
     printfn "Arguments were not recognized: %A" argv
-
-module ExitCodes =
-    let Success = 0
-    let UnrecognizedArguments = 1
 
 [<EntryPoint>]
 let main (argv: string[]): int =
@@ -190,41 +187,9 @@ let main (argv: string[]): int =
 
     | [|"update-commit"; commitHash; filePath|] ->
         let pathToRepo = Directory.GetCurrentDirectory()
-        let pathToDotGit = Path.Combine(pathToRepo, ".git")
-        let fullPathToFile = Path.Combine(pathToRepo, filePath)
-        let oldCommit = Commands.parseCommitBody pathToDotGit commitHash
-        let oldRootTreeHash = oldCommit.Tree
-        use inputBlob = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-        use headedBlob = new MemoryStream()
-        let blobHash = Commands.headifyStream Commands.GitObjectType.GitBlob inputBlob headedBlob
-        Commands.writeStreamToFile pathToRepo headedBlob blobHash
-        use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
-        let newRootTreeHash = treeStreams.Hashes.[0]
-        let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Tools.stringToByte)
-        use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
-        use headedCommit = new MemoryStream()
-        let commitHash = Commands.headifyStream Commands.GitObjectType.GitCommit inputCommit headedCommit
-        Commands.writeStreamToFile pathToRepo headedCommit commitHash
-        Commands.writeTreeObjects pathToRepo treeStreams
-        ExitCodes.Success
+        updateCommitOp commitHash pathToRepo filePath
     | [|"update-commit"; commitHash; pathToRepo; filePath|] ->
-        let pathToDotGit = Path.Combine(pathToRepo, ".git")
-        let fullPathToFile = Path.Combine(pathToRepo, filePath)
-        let oldCommit = Commands.parseCommitBody pathToDotGit commitHash
-        let oldRootTreeHash = oldCommit.Tree
-        use inputBlob = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-        use headedBlob = new MemoryStream()
-        let blobHash = Commands.headifyStream Commands.GitObjectType.GitBlob inputBlob headedBlob
-        Commands.writeStreamToFile pathToRepo headedBlob blobHash
-        use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
-        let newRootTreeHash = treeStreams.Hashes.[0]
-        let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Tools.stringToByte)
-        use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
-        use headedCommit = new MemoryStream()
-        let commitHash = Commands.headifyStream Commands.GitObjectType.GitCommit inputCommit headedCommit
-        Commands.writeStreamToFile pathToRepo headedCommit commitHash
-        Commands.writeTreeObjects pathToRepo treeStreams
-        ExitCodes.Success
+        updateCommitOp commitHash pathToRepo filePath
 
     | [|"update-with-trees"; rootTreeHash; filePath|] ->
         let pathToRepo = Directory.GetCurrentDirectory()

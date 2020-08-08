@@ -13,6 +13,7 @@
     <Compile Include="PackDeltaMethods.fs" />
     <Compile Include="Packing.fs" />
     <Compile Include="Commands.fs" />
+    <Compile Include="ArgumentCommands.fs" />
     <EmbeddedResource Include="Ui\RefsWindow.xaml" />
     <EmbeddedResource Include="Ui\CommitsWindow.xaml" />
     <Compile Include="Ui\GitRepositoryModel.fs" />
