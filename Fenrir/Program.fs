@@ -68,9 +68,6 @@ Usage:
     Print the program version.
 "
 
-let private printUnrecognizedArguments argv =
-    printfn "Arguments were not recognized: %A" argv
-
 [<EntryPoint>]
 let main (argv: string[]): int =
     match argv with
@@ -185,11 +182,18 @@ let main (argv: string[]): int =
         Zlib.unpackObject input output
         ExitCodes.Success
 
-    | [|"update-commit"; commitHash; filePath|] ->
-        let pathToRepo = Directory.GetCurrentDirectory()
-        updateCommitOp commitHash pathToRepo filePath
-    | [|"update-commit"; commitHash; pathToRepo; filePath|] ->
-        updateCommitOp commitHash pathToRepo filePath
+    | [|"update-commit"; commitHash; filePath; repoOrForce|] ->
+        match repoOrForce.Equals "--force" with
+        | true ->
+            let pathToRepo = Directory.GetCurrentDirectory()
+            updateCommitOp commitHash pathToRepo filePath true
+        | false ->
+            updateCommitOp commitHash repoOrForce filePath false
+
+    | [|"update-commit"; commitHash; filePath; pathToRepo; forceKey|] ->
+        match forceKey.Equals "--force" with
+        | false -> unrecognizedArgs(argv)
+        | true -> updateCommitOp commitHash pathToRepo filePath true
 
     | [|"update-with-trees"; rootTreeHash; filePath|] ->
         let pathToRepo = Directory.GetCurrentDirectory()
@@ -230,5 +234,4 @@ let main (argv: string[]): int =
         ExitCodes.Success
 
     | _ ->
-        printUnrecognizedArguments argv
-        ExitCodes.UnrecognizedArguments
+        unrecognizedArgs(argv)

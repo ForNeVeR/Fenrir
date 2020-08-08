@@ -5,7 +5,15 @@ module ExitCodes =
     let UnrecognizedArguments = 1
 
 open System.IO
-let updateCommitOp (commitHash: string) (pathToRepo: string) (filePath: string): int =
+
+let private printUnrecognizedArguments argv =
+    printfn "Arguments were not recognized: %A" argv
+
+let unrecognizedArgs(argv: string[]): int =
+    printUnrecognizedArguments argv
+    ExitCodes.UnrecognizedArguments
+
+let updateCommitOp (commitHash: string) (pathToRepo: string) (filePath: string) (detachedAllowed: bool): int =
     let pathToDotGit = Path.Combine(pathToRepo, ".git")
     let fullPathToFile = Path.Combine(pathToRepo, filePath)
     let oldCommit = Commands.parseCommitBody pathToDotGit commitHash
