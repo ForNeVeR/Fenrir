@@ -1,5 +1,7 @@
 ﻿namespace Fenrir
 
+open System
+
 type Ref = {
     Name: string
     CommitObjectId: string
@@ -32,3 +34,16 @@ module Refs =
         readRefsRecursively refsDirectory
         |> Seq.map(prependName "refs")
         |> Seq.sortBy(fun ref -> ref.Name)
+
+    let private identifyRefs (commitHash: string) (repositoryPath: string): Ref seq =
+        readRefs repositoryPath
+        |> Seq.filter (fun item -> item.CommitObjectId.Equals commitHash)
+
+    let updateRefs (oldCommit: string) (newCommit: string) (pathToRep: string): unit =
+        identifyRefs oldCommit pathToRep
+        |> Seq.iter (fun ref ->
+            let splitName = ref.Name.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries)
+                            |> List.ofArray
+            let pathToRef = Path.Combine(pathToRep::splitName |> Array.ofList)
+            File.WriteAllText(pathToRef, newCommit))
+
