@@ -182,6 +182,10 @@ let main (argv: string[]): int =
         Zlib.unpackObject input output
         ExitCodes.Success
 
+    | [|"update-commit"; commitHash; filePath|] ->
+        let pathToRepo = Directory.GetCurrentDirectory()
+        updateCommitOp commitHash pathToRepo filePath false
+
     | [|"update-commit"; commitHash; filePath; repoOrForce|] ->
         match repoOrForce.Equals "--force" with
         | true ->
@@ -192,8 +196,8 @@ let main (argv: string[]): int =
 
     | [|"update-commit"; commitHash; filePath; pathToRepo; forceKey|] ->
         match forceKey.Equals "--force" with
-        | false -> unrecognizedArgs(argv)
         | true -> updateCommitOp commitHash pathToRepo filePath true
+        | false -> unrecognizedArgs(argv)
 
     | [|"update-with-trees"; rootTreeHash; filePath|] ->
         let pathToRepo = Directory.GetCurrentDirectory()
