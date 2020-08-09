@@ -9,5 +9,9 @@ let testDataRoot: string =
     let location = Assembly.GetExecutingAssembly().Location
     Path.Combine(Path.GetDirectoryName(location), "Data")
 
+let testMoreDateRoot: string =
+    let location = Assembly.GetExecutingAssembly().Location
+    Path.Combine(Path.GetDirectoryName(location), "moreData")
+
 let toString (arr: byte array) =
     (arr |> Encoding.ASCII.GetString).Replace(Environment.NewLine, "\n")
