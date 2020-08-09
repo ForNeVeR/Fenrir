@@ -35,7 +35,7 @@ module Refs =
         |> Seq.map(prependName "refs")
         |> Seq.sortBy(fun ref -> ref.Name)
 
-    let private identifyRefs (commitHash: string) (repositoryPath: string): Ref seq =
+    let identifyRefs (commitHash: string) (repositoryPath: string): Ref seq =
         readRefs repositoryPath
         |> Seq.filter (fun item -> item.CommitObjectId.Equals commitHash)
 
