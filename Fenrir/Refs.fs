@@ -39,11 +39,17 @@ module Refs =
         readRefs repositoryPath
         |> Seq.filter (fun item -> item.CommitObjectId.Equals commitHash)
 
-    let updateRefs (oldCommit: string) (newCommit: string) (pathToRep: string): unit =
-        identifyRefs oldCommit pathToRep
-        |> Seq.iter (fun ref ->
-            let splitName = ref.Name.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries)
-                            |> List.ofArray
-            let pathToRef = Path.Combine(pathToRep::splitName |> Array.ofList)
-            File.WriteAllText(pathToRef, newCommit))
+    let updateHead (oldCommit: string) (newCommit: string) (pathToRepo: string): unit =
+        let pathToHead = Path.Combine(pathToRepo, "HEAD")
+        match (File.ReadAllText pathToHead).StartsWith oldCommit with
+        | true -> File.WriteAllText(pathToHead, newCommit)
+        | false -> ()
 
+    let updateRef (newCommit: string) (pathToRepo: string) (ref: Ref) : unit =
+        let splitName = ref.Name.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries)
+                            |> List.ofArray
+        let pathToRef = Path.Combine(pathToRepo::splitName |> Array.ofList)
+        File.WriteAllText(pathToRef, newCommit)
+
+    let updateAllRefs (oldCommit: string) (newCommit: string) (pathToRepo: string): unit =
+        identifyRefs oldCommit pathToRepo |> Seq.iter (updateRef newCommit pathToRepo)
