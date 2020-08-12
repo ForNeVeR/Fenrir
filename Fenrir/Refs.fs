@@ -10,8 +10,8 @@ type Ref = {
 module Refs =
     open System.IO
 
-    let isHeadDetached (pathToRepo: string): bool =
-        let pathToHead = Path.Combine(pathToRepo, "HEAD")
+    let isHeadDetached (pathDotGit: string): bool =
+        let pathToHead = Path.Combine(pathDotGit, "HEAD")
         not <| File.ReadAllText(pathToHead).StartsWith("ref: refs/heads/")
 
     let private prependName name ref =
@@ -39,17 +39,17 @@ module Refs =
         readRefs repositoryPath
         |> Seq.filter (fun item -> item.CommitObjectId.Equals commitHash)
 
-    let updateHead (oldCommit: string) (newCommit: string) (pathToRepo: string): unit =
-        let pathToHead = Path.Combine(pathToRepo, "HEAD")
+    let updateHead (oldCommit: string) (newCommit: string) (pathDotGit: string): unit =
+        let pathToHead = Path.Combine(pathDotGit, "HEAD")
         match (File.ReadAllText pathToHead).StartsWith oldCommit with
         | true -> File.WriteAllText(pathToHead, newCommit)
         | false -> ()
 
-    let updateRef (newCommit: string) (pathToRepo: string) (ref: Ref) : unit =
+    let updateRef (newCommit: string) (pathDotGit: string) (ref: Ref) : unit =
         let splitName = ref.Name.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries)
                             |> List.ofArray
-        let pathToRef = Path.Combine(pathToRepo::splitName |> Array.ofList)
+        let pathToRef = Path.Combine(pathDotGit::splitName |> Array.ofList)
         File.WriteAllText(pathToRef, newCommit)
 
-    let updateAllRefs (oldCommit: string) (newCommit: string) (pathToRepo: string): unit =
-        identifyRefs oldCommit pathToRepo |> Seq.iter (updateRef newCommit pathToRepo)
+    let updateAllRefs (oldCommit: string) (newCommit: string) (pathDotGit: string): unit =
+        identifyRefs oldCommit pathDotGit |> Seq.iter (updateRef newCommit pathDotGit)

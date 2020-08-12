@@ -9,7 +9,7 @@
 
     <ItemGroup>
         <Content Include="Data\**\*" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="moreData\**\*" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Data2\**\*" CopyToOutputDirectory="PreserveNewest" />
         <Compile Include="TestUtils.fs" />
         <Compile Include="CommandTests.fs" />
         <Compile Include="RefsTests.fs" />
