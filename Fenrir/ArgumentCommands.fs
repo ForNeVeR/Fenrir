@@ -14,14 +14,12 @@ let unrecognizedArgs(argv: string[]): int =
     ExitCodes.UnrecognizedArguments
 
 let updateCommitOp (commitHash: string) (pathToRepo: string) (filePath: string) (detachedAllowed: bool): int =
-    if not detachedAllowed && Refs.isHeadDetached pathToRepo then
-        printfn "You are in detached head mode. Any repo modifications may turn your repo FUBAR.\n
-        If you ARE willing to seek adventure through Stackoverflow or aware of what you are doing,
-        provide --force key.\n
-        If at any moment your repo has turned FUBAR, consider consulting 'git log --reflog' option
-        in your Git terminal to locate your missing commits."
+    let pathToDotGit = Path.Combine(pathToRepo, ".git")
+    if not detachedAllowed && Refs.isHeadDetached pathToDotGit then
+        printfn "You are in the detached head mode. Any repository modifications may turn it FUBAR.
+If you are ready to spend a fair chunk of your time on Stack Overflow or aware of what you're doing, provide the --force key.
+If at any moment your repository has turned FUBAR, consider revising the results of 'git log --reflog' to locate any commits missing."
     else
-        let pathToDotGit = Path.Combine(pathToRepo, ".git")
         let fullPathToFile = Path.Combine(pathToRepo, filePath)
         let oldCommit = Commands.parseCommitBody pathToDotGit commitHash
         let oldRootTreeHash = oldCommit.Tree
@@ -38,6 +36,7 @@ let updateCommitOp (commitHash: string) (pathToRepo: string) (filePath: string) 
         Commands.writeStreamToFile pathToRepo headedCommit newCommitHash
         Commands.writeTreeObjects pathToRepo treeStreams
 
-        Refs.updateHead commitHash newCommitHash pathToDotGit
+        if Refs.isHeadDetached pathToDotGit then
+            Refs.updateHead commitHash newCommitHash pathToDotGit
         Refs.updateAllRefs commitHash newCommitHash pathToDotGit
     ExitCodes.Success

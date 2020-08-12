@@ -11,7 +11,7 @@ let ``Attached head should be recognized properly``(): unit =
 
 [<Fact>]
 let ``Detached head should be recognized properly``(): unit =
-    Assert.True(Refs.isHeadDetached("moreData"))
+    Assert.True(Refs.isHeadDetached("Data2"))
 
 [<Fact>]
 let ``Ref list should be read properly``(): unit =
