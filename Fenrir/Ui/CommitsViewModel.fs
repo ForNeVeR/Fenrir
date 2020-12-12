@@ -9,7 +9,7 @@ open Fenrir
 open Fenrir.Ui.Framework
 
 type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
-    inherit ViewModelBase()
+    inherit LoadableViewModelBase()
 
     let formatCommit (commit: Commands.CommitBody) =
         commit.Rest
@@ -19,12 +19,6 @@ type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
         // TODO: Properly gather commit messages
 
     let commitList = ObservableList<string>(ResizeArray())
-
-    let mutable isLoading = true
-    member _.IsLoading with get() = isLoading
-    member this.IsLoading with set(value) =
-        isLoading <- value
-        this.OnPropertyChanged()
 
     member _.CommitList: ObservableList<string> =
         commitList

@@ -9,17 +9,11 @@ open Fenrir
 open Fenrir.Ui.Framework
 
 type RefsViewModel(repository: GitRepositoryModel) as this =
-    inherit ViewModelBase()
+    inherit LoadableViewModelBase()
 
     let mutable refs: IReadOnlyList<Ref> = upcast Array.empty
     let commitList = ObservableList<string>(ResizeArray())
     let mutable selectedRefIndex: Nullable<int32> = Unchecked.defaultof<_>
-
-    let mutable isLoading = true
-    member _.IsLoading with get() = isLoading
-    member this.IsLoading with set(value) =
-        isLoading <- value
-        this.OnPropertyChanged()
 
     member _.RefList: ObservableList<string> =
         commitList

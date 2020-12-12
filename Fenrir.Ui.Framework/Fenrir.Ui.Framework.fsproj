@@ -12,6 +12,7 @@
         <Compile Include="ConsoleFrameworkSynchronizationContext.fs" />
         <Compile Include="Async.fs" />
         <Compile Include="ViewModelBase.fs" />
+        <Compile Include="LoadableViewModelBase.fs" />
     </ItemGroup>
 
     <ItemGroup>
