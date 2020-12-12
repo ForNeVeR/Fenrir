@@ -96,7 +96,7 @@ let parseCommitBody (path : String) (hash : String) : CommitBody =
             use decodedInput = input |> getDecodedStream
             decodedInput |> streamToCommitBody
         | false ->
-            use packedStream = getPackedStream path hash "commit"
+            use packedStream = getPackedStream path hash
             packedStream |> getHeadlessCommitBody
 
 let getHeadlessTreeBody (size: uint64) (decodedInput: MemoryStream): TreeBody =
@@ -125,7 +125,7 @@ let parseTreeBody (path : String) (hash : String) : TreeBody =
             use decodedInput = input |> getDecodedStream
             decodedInput |> streamToTreeBody
         | false ->
-            use packedStream = getPackedStream path hash "tree"
+            use packedStream = getPackedStream path hash
             packedStream |> getHeadlessTreeBody (uint64 packedStream.Length)
 
 let writeObjectHeader (tp: GitObjectType) (input: Stream) (output: Stream): unit =

@@ -11,19 +11,14 @@ open Fenrir.Tools
 let getPackPath (gitPath: String) (packFile: String) (extension: String) : String =
     Path.Combine(gitPath, "objects", "pack", packFile + extension)
 
-let bitKeys (key: String): BitArray =
-    match key with
-        | "commit" -> BitArray [| true; false; false |]
-        | "tree"   -> BitArray [| false; true; false |]
-        | "blob"   -> BitArray [| true; true; false |]
-        | "tag"    -> BitArray [| false; false; true |]
-        | _        -> failwithf "Unknown object type provided"
-
-let deltaKeys (key: String): BitArray =
-    match key with
-        | "ofs_delta" -> BitArray [| false; true; true |]
-        | "ref_delta" -> BitArray [| true; true; true |]
-        | _ -> failwithf "\"Undefined\" of \"not yet used\" bits provided"
+// https://git-scm.com/docs/pack-format
+type private PackedObjectType =
+    | Commit = 1
+    | Tree = 2
+    | Blob = 3
+    | Tag = 4
+    | OfsDelta = 6
+    | RefDelta = 7
 
 let getBigEndian (reader: BinaryReader) : int =
     reader.ReadInt32() |> Net.IPAddress.NetworkToHostOrder
@@ -53,8 +48,13 @@ let parseIndexOffset (path: String) (hash: String) : int =
     else
         -1
 
-let rec parsePackInfo (path: String) (offset: int) (flag: String): MemoryStream =
-    let getStream (path: String) (hash: String) (flag: String): MemoryStream =
+let private getObjectKind(bits: BitArray): PackedObjectType =
+    let array = Array.zeroCreate 1
+    bits.CopyTo(array, 0)
+    enum array.[0]
+
+let rec parsePackInfo (path: String) (offset: int): MemoryStream =
+    let getStream (path: String) (hash: String): MemoryStream =
         let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
                     |> Array.map Path.GetFileName
                     |> Array.map ((fun count (str: String) -> str.[0..str.Length - count - 1]) 4)
@@ -71,7 +71,6 @@ let rec parsePackInfo (path: String) (offset: int) (flag: String): MemoryStream 
             | _ -> parsePackInfo
                    <| getPackPath path (Option.toObj containingPack) ".pack"
                    <| offset
-                   <| flag
 
     use packReader = new BinaryReader(File.Open(path,
                                                 FileMode.Open,
@@ -85,9 +84,10 @@ let rec parsePackInfo (path: String) (offset: int) (flag: String): MemoryStream 
 
     size <- estimateSize size 4 sizeBytes.[1..]
     let objectMask = sliceBitArray bits 4 6
-    if compareBitArrays <| objectMask <| bitKeys flag then
+    match getObjectKind objectMask with
+    | PackedObjectType.Commit | PackedObjectType.Tree | PackedObjectType.Blob | PackedObjectType.Tag ->
         new MemoryStream(size + 20 |> packReader.ReadBytes) |> getDecodedStream
-    else if compareBitArrays <| objectMask <| deltaKeys "ofs_delta" then
+    | PackedObjectType.OfsDelta ->
         let mutable additional = 0
         let mutable offStep = 0
         let negOffset = (readWhileLast isMsbSet (uint64 packReader.BaseStream.Length) packReader
@@ -99,17 +99,17 @@ let rec parsePackInfo (path: String) (offset: int) (flag: String): MemoryStream 
                         )
                         + additional - 1
 
-        use stream = parsePackInfo path (offset - negOffset) flag
+        use stream = parsePackInfo path (offset - negOffset)
         use nonDeltaReader = new BinaryReader(stream)
         processDelta packReader nonDeltaReader size
-    else if compareBitArrays <| objectMask <| deltaKeys "ref_delta" then
+    | PackedObjectType.RefDelta ->
         let hash = packReader |> readHash
-        use stream = getStream path hash flag
+        use stream = getStream path hash
         use nonDeltaReader = new BinaryReader(stream)
         processDelta packReader nonDeltaReader size
-    else failwithf "wrong bits"
+    | o -> failwithf "Cannot parse object type from a pack file: %A" o
 
-let getPackedStream (path: String) (hash: String) (flag: String): MemoryStream =
+let getPackedStream (path: String) (hash: String): MemoryStream =
     let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
                 |> Array.map Path.GetFileName
                 |> Array.map ((fun count (str : String) -> str.[0..str.Length - count - 1]) 4)
@@ -126,4 +126,3 @@ let getPackedStream (path: String) (hash: String) (flag: String): MemoryStream =
         | _ -> parsePackInfo
                <| getPackPath path (Option.toObj containingPack) ".pack"
                <| offset
-               <| flag
