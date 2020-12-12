@@ -1,4 +1,4 @@
-﻿name: Build
+﻿name: Main
 on:
   push:
     branches:
@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.image }}
     strategy:
       matrix:
-        image: [macos-latest, ubuntu-18.04, windows-latest]
+        image: [macos-10.15, ubuntu-18.04, windows-2019]
     env:
       NUGET_PACKAGES: ${{ github.workspace }}/.github/nuget-packages
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v1.7.2
         with:
-          dotnet-version: '3.1.101'
+          dotnet-version: '3.1.404'
 
       - name: Build .NET Assemblies
         run: dotnet build --configuration Release
