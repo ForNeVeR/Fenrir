@@ -6,33 +6,13 @@ open System.Globalization
 open System.IO
 open System.Security.Cryptography
 
+open Fenrir.Metadata
 open Fenrir.Packing
-open Fenrir.Zlib
 open Fenrir.Tools
+open Fenrir.Zlib
 
-type GitObjectType =
-    | GitCommit = 0
-    | GitTree   = 1
-    | GitBlob   = 2
-
-type ObjectHeader = {
-    Type: GitObjectType
-    Size: UInt64
-}
-
-type CommitBody = {
-    Tree : String
-    Parents : String[]
-    Rest : String[]
-}
-
-type TreeAtom = {
-    Mode: uint64
-    Name: String
-    Hash: byte array
-}
-
-type TreeBody = TreeAtom[]
+let getRawObjectPath (gitDirectoryPath: string) (objectHash: string): string =
+    Path.Combine(gitDirectoryPath, "objects", objectHash.Substring(0, 2), objectHash.Substring(2, 38))
 
 let readHeader(input: Stream): ObjectHeader =
     let bF = new BinaryReader(input, Encoding.ASCII)
@@ -51,6 +31,18 @@ let readHeader(input: Stream): ObjectHeader =
     let sz = Convert.ToUInt64(System.Text.Encoding.ASCII.GetString(sizeArray), CultureInfo.InvariantCulture)
 
     {Type = tp; Size = sz}
+
+let readObjectHeader (gitDirectoryPath: string) (objectHash: string): ObjectHeader =
+    let rawObjectPath = getRawObjectPath gitDirectoryPath objectHash
+    if File.Exists rawObjectPath
+    then
+        use input = new FileStream(rawObjectPath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use decodedInput = input |> getDecodedStream
+        readHeader decodedInput
+    else
+        use packedObject = getPackedObject gitDirectoryPath objectHash
+        { Type = packedObject.ObjectType
+          Size = Checked.uint64 packedObject.Stream.Length }
 
 let guillotineObject (input: Stream) (output: Stream): int =
     readHeader input |> ignore
@@ -89,15 +81,15 @@ let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
 
 
 let parseCommitBody (path : String) (hash : String) : CommitBody =
-    let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+    let pathToFile = getRawObjectPath path hash
     match File.Exists(pathToFile) with
         | true ->
             use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
             use decodedInput = input |> getDecodedStream
             decodedInput |> streamToCommitBody
         | false ->
-            use packedStream = getPackedStream path hash
-            packedStream |> getHeadlessCommitBody
+            use packedObject = getPackedObject path hash
+            packedObject.Stream |> getHeadlessCommitBody
 
 let getHeadlessTreeBody (size: uint64) (decodedInput: MemoryStream): TreeBody =
     let bF = new BinaryReader(decodedInput, Encoding.ASCII)
@@ -118,15 +110,15 @@ let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
         | GitObjectType.GitTree     -> getHeadlessTreeBody hd.Size decodedInput
 
 let parseTreeBody (path : String) (hash : String) : TreeBody =
-    let pathToFile = Path.Combine(path, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+    let pathToFile = getRawObjectPath path hash
     match File.Exists(pathToFile) with
         | true ->
             use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
             use decodedInput = input |> getDecodedStream
             decodedInput |> streamToTreeBody
         | false ->
-            use packedStream = getPackedStream path hash
-            packedStream |> getHeadlessTreeBody (uint64 packedStream.Length)
+            use packedObject = getPackedObject path hash
+            packedObject.Stream |> getHeadlessTreeBody (uint64 packedObject.Stream.Length)
 
 let writeObjectHeader (tp: GitObjectType) (input: Stream) (output: Stream): unit =
     match tp with
@@ -233,7 +225,7 @@ let updateObjectInTree (rootTreeHash: string) (pathToRepo: String) (filePath: st
 
 let writeStreamToFile (pathToRepo: string) (stream: MemoryStream) (hash: String) : unit =
     let pathToDirectory = Path.Combine(pathToRepo, ".git", "objects", hash.Substring(0, 2))
-    let pathToFile = Path.Combine(pathToRepo, ".git", "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+    let pathToFile = getRawObjectPath (Path.Combine(pathToRepo, ".git")) hash
     match Directory.Exists(pathToDirectory) with
         | true -> ()
         | false -> Directory.CreateDirectory(pathToDirectory) |> ignore

@@ -7,9 +7,9 @@ open Fenrir.Tests.TestUtils
 open Fenrir.Packing
 
 let private packTest (hash: string) (source: string): unit =
-    use content = getPackedStream testDataRoot hash
+    use packedObject = getPackedObject testDataRoot hash
     let expected = File.ReadAllBytes(Path.Combine(testDataRoot, source)) |> toString
-    let actual = content.ToArray() |> toString
+    let actual = packedObject.Stream.ToArray() |> toString
     Assert.Equal(expected, actual)
 
 [<Fact>]

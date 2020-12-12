@@ -1,10 +1,12 @@
 ﻿module Fenrir.ArgumentCommands
 
+open System.IO
+
+open Fenrir.Metadata
+
 module ExitCodes =
     let Success = 0
     let UnrecognizedArguments = 1
-
-open System.IO
 
 let private printUnrecognizedArguments argv =
     printfn "Arguments were not recognized: %A" argv
@@ -25,14 +27,14 @@ If at any moment your repository has turned FUBAR, consider revising the results
         let oldRootTreeHash = oldCommit.Tree
         use inputBlob = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headedBlob = new MemoryStream()
-        let blobHash = Commands.headifyStream Commands.GitObjectType.GitBlob inputBlob headedBlob
+        let blobHash = Commands.headifyStream GitObjectType.GitBlob inputBlob headedBlob
         Commands.writeStreamToFile pathToRepo headedBlob blobHash
         use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
         let newRootTreeHash = treeStreams.Hashes.[0]
         let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Tools.stringToByte)
         use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
         use headedCommit = new MemoryStream()
-        let newCommitHash = Commands.headifyStream Commands.GitObjectType.GitCommit inputCommit headedCommit
+        let newCommitHash = Commands.headifyStream GitObjectType.GitCommit inputCommit headedCommit
         Commands.writeStreamToFile pathToRepo headedCommit newCommitHash
         Commands.writeTreeObjects pathToRepo treeStreams
 

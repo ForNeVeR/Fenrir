@@ -2,12 +2,11 @@
 
 open System.IO
 open System.Text
+
 open Xunit
 
-open System.Linq
-
-open System
 open Fenrir
+open Fenrir.Metadata
 open Fenrir.Tests.TestUtils
 
 [<Fact>]
@@ -37,7 +36,7 @@ let ``Blob object header should be read``(): unit =
     use output = Zlib.unpackObject input |> Commands.doAndRewind
 
     let header = Commands.readHeader output
-    let actualHeader = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitBlob; Commands.ObjectHeader.Size = 10UL}
+    let actualHeader = { Type = GitObjectType.GitBlob; Size = 10UL }
     Assert.Equal(actualHeader, header)
 
 [<Fact>]
@@ -47,7 +46,7 @@ let ``Tree object header should be read``(): unit =
     use output = Zlib.unpackObject input |> Commands.doAndRewind
 
     let header = Commands.readHeader output
-    let actualHeader = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitTree; Commands.ObjectHeader.Size = 63UL}
+    let actualHeader = { Type = GitObjectType.GitTree; Size = 63UL }
     Assert.Equal(actualHeader, header)
 
 [<Fact>]
@@ -57,7 +56,7 @@ let ``Commit object header should be read``(): unit =
     use output = Zlib.unpackObject input |> Commands.doAndRewind
 
     let header = Commands.readHeader output
-    let actualHeader = {Commands.ObjectHeader.Type = Commands.GitObjectType.GitCommit; Commands.ObjectHeader.Size = 242UL}
+    let actualHeader = { Type = GitObjectType.GitCommit; Size = 242UL }
     Assert.Equal(actualHeader, header)
 
 [<Fact>]
@@ -113,7 +112,7 @@ let ``Restoring head should work properly``(): unit =
     Commands.guillotineObject input cuttedInput |> ignore
     cuttedInput.Position <- 0L
     use output = new MemoryStream()
-    Commands.headifyStream Commands.GitObjectType.GitBlob cuttedInput output |> ignore
+    Commands.headifyStream GitObjectType.GitBlob cuttedInput output |> ignore
     Assert.Equal<byte>(actualObjectContents, output.ToArray())
 
 [<Fact>]

@@ -4,9 +4,10 @@ open System
 open System.Collections
 open System.IO
 
-open Fenrir.Zlib
 open Fenrir.DeltaCommands
+open Fenrir.Metadata
 open Fenrir.Tools
+open Fenrir.Zlib
 
 let getPackPath (gitPath: String) (packFile: String) (extension: String) : String =
     Path.Combine(gitPath, "objects", "pack", packFile + extension)
@@ -53,8 +54,16 @@ let private getObjectKind(bits: BitArray): PackedObjectType =
     bits.CopyTo(array, 0)
     enum array.[0]
 
-let rec parsePackInfo (path: String) (offset: int): MemoryStream =
-    let getStream (path: String) (hash: String): MemoryStream =
+type PackedObjectInfo =
+    {
+        ObjectType: GitObjectType
+        Stream: MemoryStream
+    }
+    interface IDisposable with
+        member this.Dispose() = this.Stream.Dispose()
+
+let rec parsePackInfo (path: String) (offset: int): PackedObjectInfo =
+    let getStream (path: String) (hash: String): PackedObjectInfo =
         let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
                     |> Array.map Path.GetFileName
                     |> Array.map ((fun count (str: String) -> str.[0..str.Length - count - 1]) 4)
@@ -84,9 +93,19 @@ let rec parsePackInfo (path: String) (offset: int): MemoryStream =
 
     size <- estimateSize size 4 sizeBytes.[1..]
     let objectMask = sliceBitArray bits 4 6
-    match getObjectKind objectMask with
+    let packedObjectType = getObjectKind objectMask
+    match packedObjectType with
     | PackedObjectType.Commit | PackedObjectType.Tree | PackedObjectType.Blob | PackedObjectType.Tag ->
-        new MemoryStream(size + 20 |> packReader.ReadBytes) |> getDecodedStream
+        let stream = new MemoryStream(size + 20 |> packReader.ReadBytes) |> getDecodedStream
+        let objectType =
+            match packedObjectType with
+            | PackedObjectType.Commit | PackedObjectType.Tag -> GitObjectType.GitCommit
+            | PackedObjectType.Tree -> GitObjectType.GitTree
+            | PackedObjectType.Blob -> GitObjectType.GitBlob
+            | _ -> failwith "Impossible!"
+        { ObjectType = objectType
+          Stream = stream }
+
     | PackedObjectType.OfsDelta ->
         let mutable additional = 0
         let mutable offStep = 0
@@ -99,17 +118,19 @@ let rec parsePackInfo (path: String) (offset: int): MemoryStream =
                         )
                         + additional - 1
 
-        use stream = parsePackInfo path (offset - negOffset)
-        use nonDeltaReader = new BinaryReader(stream)
-        processDelta packReader nonDeltaReader size
+        use deltifiedEntity = parsePackInfo path (offset - negOffset)
+        use nonDeltaReader = new BinaryReader(deltifiedEntity.Stream)
+        { deltifiedEntity with
+            Stream = processDelta packReader nonDeltaReader size }
     | PackedObjectType.RefDelta ->
         let hash = packReader |> readHash
-        use stream = getStream path hash
-        use nonDeltaReader = new BinaryReader(stream)
-        processDelta packReader nonDeltaReader size
+        use deltifiedEntity = getStream path hash
+        use nonDeltaReader = new BinaryReader(deltifiedEntity.Stream)
+        { deltifiedEntity with
+            Stream = processDelta packReader nonDeltaReader size }
     | o -> failwithf "Cannot parse object type from a pack file: %A" o
 
-let getPackedStream (path: String) (hash: String): MemoryStream =
+let getPackedObject (path: String) (hash: String): PackedObjectInfo =
     let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
                 |> Array.map Path.GetFileName
                 |> Array.map ((fun count (str : String) -> str.[0..str.Length - count - 1]) 4)

@@ -13,6 +13,7 @@
         <Compile Include="Async.fs" />
         <Compile Include="ViewModelBase.fs" />
         <Compile Include="LoadableViewModelBase.fs" />
+        <Compile Include="PropertyUtil.fs" />
     </ItemGroup>
 
     <ItemGroup>

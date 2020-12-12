@@ -1,28 +1,28 @@
 ﻿namespace Fenrir.Ui
 
 open System
-open System.ComponentModel
+open System.Collections.Generic
 
 open Binding.Observables
 
-open Fenrir
+open Fenrir.Metadata
 open Fenrir.Ui.Framework
+open Fenrir.Ui.Models
 
 type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
     inherit LoadableViewModelBase()
 
-    let formatCommit (commit: Commands.CommitBody) =
+    let formatCommit (commit: CommitBody) =
         commit.Rest
             |> Seq.tryItem (commit.Rest.Length - 2)
             |> Option.filter (not << String.IsNullOrWhiteSpace)
             |> Option.defaultValue "[NO MESSAGE]"
         // TODO: Properly gather commit messages
 
-    let commitList = ObservableList<string>(ResizeArray())
+    let mutable commits: IReadOnlyList<CommitBody> = upcast Array.empty
     let mutable selectedCommitIndex: Nullable<int32> = Unchecked.defaultof<_>
 
-    member _.CommitList: ObservableList<string> =
-        commitList
+    member val CommitMessages = ObservableList<string>(ResizeArray())
 
     member _.SelectedCommitIndex with get(): Nullable<int32> = selectedCommitIndex
     member this.SelectedCommitIndex with set(value: Nullable<int32>) =
@@ -30,29 +30,29 @@ type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
         this.OnPropertyChanged()
         this.OnPropertyChanged(nameof this.SelectedCommit)
 
-    member _.SelectedCommit: string option =
+    member _.SelectedCommit: CommitBody option =
         if not selectedCommitIndex.HasValue
             || selectedCommitIndex.Value < 0
-            || selectedCommitIndex.Value > commitList.Count
+            || selectedCommitIndex.Value > commits.Count
         then None
-        else Some commitList.[selectedCommitIndex.Value]
+        else Some commits.[selectedCommitIndex.Value]
 
     override this.Initialize() =
-        (refs :> INotifyPropertyChanged).PropertyChanged.Add(fun event ->
-            if event.PropertyName = "SelectedRef" then
-                // TODO: Cancel previous request if it wasn't applied yet
-                this.IsLoading <- true
-                match refs.SelectedRef with
-                | None ->
-                    commitList.Clear()
+        PropertyUtil.onPropertyChange refs (nameof refs.SelectedRef) (fun () ->
+            // TODO: Cancel previous request if it wasn't applied yet
+            this.IsLoading <- true
+            match refs.SelectedRef with
+            | None ->
+                commits <- Array.empty
+                this.CommitMessages.Clear()
+                this.IsLoading <- false
+            | Some ref ->
+                Async.runTask(async {
+                    let! newCommits = repository.ReadCommitsAsync ref
+                    commits <- newCommits
+                    do! Async.SwitchToContext ConsoleFrameworkSynchronizationContext.instance
+                    this.CommitMessages.Clear()
+                    commits |> Seq.iter(formatCommit >> this.CommitMessages.Add)
                     this.IsLoading <- false
-                | Some ref ->
-                    Async.runTask(async {
-                        let! commits = repository.ReadCommitsAsync ref
-                        do! Async.SwitchToContext ConsoleFrameworkSynchronizationContext.instance
-                        commitList.Clear()
-                        commits |> Seq.iter(formatCommit >> commitList.Add)
-                        this.IsLoading <- false
-                    })
+                })
         )
-

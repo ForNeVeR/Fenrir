@@ -3,11 +3,10 @@
           xmlns:controls="clr-namespace:Fenrir.Ui.Framework.Controls;assembly=Fenrir.Ui.Framework"
           MinHeight="10" MinWidth="25"
           X="50" Y="0"
-          Title="Commits">
+          Title="Files">
     <controls:LoadableWrapper VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                               IsLoading="{x:Binding IsLoading, Mode=OneWay}">
         <controls:BindableListBox VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-                                  Items="{x:Binding CommitMessages, Mode=OneWay}"
-                                  SelectedItemIndex="{x:Binding SelectedCommitIndex, Mode=OneWayToSource}" />
+                                  Items="{x:Binding FilePathList, Mode=OneWay}"/>
     </controls:LoadableWrapper>
 </c:Window>

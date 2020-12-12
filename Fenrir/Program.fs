@@ -6,6 +6,7 @@ open System.Reflection
 
 open Fenrir
 open Fenrir.ArgumentCommands
+open Fenrir.Metadata
 
 let private printVersion() =
     let version = Assembly.GetExecutingAssembly().GetName().Version
@@ -142,20 +143,20 @@ let main (argv: string[]): int =
         let pathToRepo = Directory.GetCurrentDirectory()
         use input = Console.OpenStandardInput()
         use headed = new MemoryStream()
-        let hashName = Commands.headifyStream Commands.GitObjectType.GitBlob input headed
+        let hashName = Commands.headifyStream GitObjectType.GitBlob input headed
         Commands.writeStreamToFile pathToRepo headed hashName
         ExitCodes.Success
     | [|"save"; inputPath|] ->
         let pathToRepo = Directory.GetCurrentDirectory()
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        let hashName = Commands.headifyStream Commands.GitObjectType.GitBlob input headed
+        let hashName = Commands.headifyStream GitObjectType.GitBlob input headed
         Commands.writeStreamToFile pathToRepo headed hashName
         ExitCodes.Success
     | [|"save"; inputPath; pathToRepo|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        let hashName = Commands.headifyStream Commands.GitObjectType.GitBlob input headed
+        let hashName = Commands.headifyStream GitObjectType.GitBlob input headed
         Commands.writeStreamToFile pathToRepo headed hashName
         ExitCodes.Success
 
@@ -205,12 +206,12 @@ let main (argv: string[]): int =
         let fullPathToFile = Path.Combine(pathToRepo, filePath)
         use input = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        Commands.writeObjectHeader Commands.GitObjectType.GitBlob input headed
+        Commands.writeObjectHeader GitObjectType.GitBlob input headed
         input.CopyTo headed
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Tools.byteToString
         headed.Position <- 0L
-        let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
+        let pathToBlob = Commands.getRawObjectPath (Path.Combine(pathToRepo, ".git")) hashName
         Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
         use output = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
         Zlib.packObject headed output
@@ -221,12 +222,12 @@ let main (argv: string[]): int =
         let fullPathToFile = Path.Combine(pathToRepo, filePath)
         use input = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        Commands.writeObjectHeader Commands.GitObjectType.GitBlob input headed
+        Commands.writeObjectHeader GitObjectType.GitBlob input headed
         input.CopyTo headed
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Tools.byteToString
         headed.Position <- 0L
-        let pathToBlob = Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2), hashName.Substring(2, 38))
+        let pathToBlob = Commands.getRawObjectPath (Path.Combine(pathToRepo, ".git")) hashName
         Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
         use output = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
         Zlib.packObject headed output

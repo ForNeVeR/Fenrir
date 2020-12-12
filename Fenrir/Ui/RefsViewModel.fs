@@ -7,6 +7,7 @@ open Binding.Observables
 
 open Fenrir
 open Fenrir.Ui.Framework
+open Fenrir.Ui.Models
 
 type RefsViewModel(repository: GitRepositoryModel) as this =
     inherit LoadableViewModelBase()

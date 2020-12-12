@@ -6,10 +6,11 @@ open System.Reflection
 
 open ConsoleFramework
 open ConsoleFramework.Controls
+open ConsoleFramework.Events
 open global.Xaml
 
-open ConsoleFramework.Events
 open Fenrir.Ui.Framework
+open Fenrir.Ui.Models
 
 let private loadFromXaml<'a when 'a :> Control> resourceName (dataContext: obj) =
     // This function was copied from ConsoleFramework.ConsoleApplication.LoadFromXaml, but uses the current assembly
@@ -43,7 +44,12 @@ let run (path: string): unit =
     let commitsWindow = loadFromXaml<Window> "Fenrir.Ui.CommitsWindow.xaml" commits
     initializeViewModelOnActivate commits commitsWindow
 
+    let files = FilesViewModel(repository, commits)
+    let filesWindow = loadFromXaml<Window> "Fenrir.Ui.FilesWindow.xaml" files
+    initializeViewModelOnActivate files filesWindow
+
     let host = WindowsHost()
     host.Show refsWindow
     host.Show commitsWindow
+    host.Show filesWindow
     ConsoleApplication.Instance.Run host
