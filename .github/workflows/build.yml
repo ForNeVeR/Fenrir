@@ -24,7 +24,7 @@ jobs:
           path: ${{ env.NUGET_PACKAGES }}
           key: ${{ runner.os }}.nuget.${{ hashFiles('**/*.fsproj') }}
       - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v1.4.0
+        uses: actions/setup-dotnet@v1.7.2
         with:
           dotnet-version: '3.1.101'
 
