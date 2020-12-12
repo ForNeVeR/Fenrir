@@ -19,9 +19,23 @@ type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
         // TODO: Properly gather commit messages
 
     let commitList = ObservableList<string>(ResizeArray())
+    let mutable selectedCommitIndex: Nullable<int32> = Unchecked.defaultof<_>
 
     member _.CommitList: ObservableList<string> =
         commitList
+
+    member _.SelectedCommitIndex with get(): Nullable<int32> = selectedCommitIndex
+    member this.SelectedCommitIndex with set(value: Nullable<int32>) =
+        selectedCommitIndex <- value
+        this.OnPropertyChanged()
+        this.OnPropertyChanged(nameof this.SelectedCommit)
+
+    member _.SelectedCommit: string option =
+        if not selectedCommitIndex.HasValue
+            || selectedCommitIndex.Value < 0
+            || selectedCommitIndex.Value > commitList.Count
+        then None
+        else Some commitList.[selectedCommitIndex.Value]
 
     override this.Initialize() =
         (refs :> INotifyPropertyChanged).PropertyChanged.Add(fun event ->

@@ -6,7 +6,8 @@
           Title="Commits">
     <controls:LoadableWrapper VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                               IsLoading="{x:Binding IsLoading, Mode=OneWay}">
-        <c:ListBox VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-                   Items="{x:Binding CommitList, Mode=OneWay}"/>
+        <controls:BindableListBox VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                                  Items="{x:Binding CommitList, Mode=OneWay}"
+                                  SelectedItemIndex="{x:Binding SelectedCommitIndex, Mode=OneWayToSource}" />
     </controls:LoadableWrapper>
 </c:Window>
