@@ -8,7 +8,7 @@ Build
 
 ### Prerequisites
 
-- [.NET Core SDK][dotnet-core-sdk] 3.1 or later
+- [.NET SDK][dotnet-sdk] 5.0 or later
 
 ### Build
 
@@ -28,4 +28,4 @@ $ dotnet run --project Fenrir -- [arguments...]
 $ dotnet test
 ```
 
-[dotnet-core-sdk]: https://dot.net/
+[dotnet-sdk]: https://dot.net/
