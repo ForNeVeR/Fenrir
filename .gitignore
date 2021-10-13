@@ -4,3 +4,7 @@ bin/
 obj/
 
 *.DotSettings.user
+
+# VS files and dirs
+.vs/
+*.user
