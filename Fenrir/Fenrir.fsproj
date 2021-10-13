@@ -14,25 +14,10 @@
     <Compile Include="Metadata.fs" />
     <Compile Include="Packing.fs" />
     <Compile Include="Commands.fs" />
-    <Compile Include="ArgumentCommands.fs" />
-    <Compile Include="Ui\Models\TreeItemModel.fs" />
-    <Compile Include="Ui\Models\GitRepositoryModel.fs" />
-    <EmbeddedResource Include="Ui\RefsWindow.xaml" />
-    <EmbeddedResource Include="Ui\CommitsWindow.xaml" />
-    <EmbeddedResource Include="Ui\FilesWindow.xaml" />
-    <Compile Include="Ui\RefsViewModel.fs" />
-    <Compile Include="Ui\CommitsViewModel.fs" />
-    <Compile Include="Ui\FilesViewModel.fs" />
-    <Compile Include="Ui\EntryPoint.fs" />
-    <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="SharpZipLib" Version="1.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Fenrir.Ui.Framework\Fenrir.Ui.Framework.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace Fenrir.Ui
+namespace Fenrir.Ui
 
 open System
 open System.Collections.Generic
@@ -8,6 +8,7 @@ open Binding.Observables
 open Fenrir.Metadata
 open Fenrir.Ui.Framework
 open Fenrir.Ui.Models
+
 
 type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
     inherit LoadableViewModelBase()

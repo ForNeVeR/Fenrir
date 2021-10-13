@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <WarnOn>3390;$(WarnOn)</WarnOn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ArgumentCommands.fs" />
+    <Compile Include="Ui\Models\TreeItemModel.fs" />
+    <Compile Include="Ui\Models\GitRepositoryModel.fs" />
+    <EmbeddedResource Include="Ui\RefsWindow.xaml" />
+    <EmbeddedResource Include="Ui\CommitsWindow.xaml" />
+    <EmbeddedResource Include="Ui\FilesWindow.xaml" />
+    <Compile Include="Ui\RefsViewModel.fs" />
+    <Compile Include="Ui\CommitsViewModel.fs" />
+    <Compile Include="Ui\FilesViewModel.fs" />
+    <Compile Include="Ui\EntryPoint.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fenrir.Ui.Framework\Fenrir.Ui.Framework.fsproj" />
+    <ProjectReference Include="..\Fenrir\Fenrir.fsproj" />
+  </ItemGroup>
+
+</Project>
