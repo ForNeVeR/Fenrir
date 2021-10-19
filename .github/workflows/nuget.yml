@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
-      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_NOLOGO: 1
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       NUGET_PACKAGES: ${{ github.workspace }}/.github/nuget-packages
     
@@ -35,43 +35,45 @@ jobs:
         
     - name: Prepare a NuGet package
       run: dotnet pack ./Fenrir/Fenrir.fsproj --configuration Release -p:Version=${{ steps.version.outputs.version }}
-    - name: Push a package to NuGet
-      run: dotnet nuget push ./Fenrir/bin/Release/Fenrir.${{ steps.version.outputs.version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_TOKEN }}
+#    - name: Push a package to NuGet
+#      run: dotnet nuget push ./Fenrir/bin/Release/Fenrir.${{ steps.version.outputs.version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_TOKEN }}
 
 
-#    - name: Read changelog
-#      id: changelog
-#      uses: mindsers/changelog-reader-action@v2
-#      with:
-#        version: ${{ steps.version.outputs.version }}
-#        
-#    - name: Create release
-#      id: release
-#      uses: actions/create-release@v1
-#      env:
-#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      with:
-#        tag_name: ${{ github.ref }}
-#        release_name: WPF-Math v${{ steps.version.outputs.version }}
-#        body: ${{ steps.changelog.outputs.changes }}
-#    - name: Upload .nupkg file
-#      uses: actions/upload-release-asset@v1
-#      env:
-#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      with:
-#        upload_url: ${{ steps.release.outputs.upload_url }}
-#        asset_name: WPF-Math.${{ steps.version.outputs.version }}.nupkg
-#        asset_path: ./src/WpfMath/bin/Release/WpfMath.${{ steps.version.outputs.version }}.nupkg
-#        asset_content_type: application/zip
-#    - name: Upload .snupkg file
-#      uses: actions/upload-release-asset@v1
-#      env:
-#         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      with:
-#          upload_url: ${{ steps.release.outputs.upload_url }}
-#          asset_name: WPF-Math.${{ steps.version.outputs.version }}.snupkg
-#          asset_path: ./src/WpfMath/bin/Release/WpfMath.${{ steps.version.outputs.version }}.snupkg
-#          asset_content_type: application/zip
+    - name: Read changelog
+      id: changelog
+      uses: mindsers/changelog-reader-action@v2
+      with:
+        version: ${{ steps.version.outputs.version }}
+        
+    - name: Create release
+      id: release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Fenrir v${{ steps.version.outputs.version }}
+        body: ${{ steps.changelog.outputs.changes }}
+        
+    - name: Upload .nupkg file
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_name: Fenrir.${{ steps.version.outputs.version }}.nupkg
+        asset_path: ./Fenrir/bin/Release/Fenrir.${{ steps.version.outputs.version }}.nupkg
+        asset_content_type: application/zip
+        
+    - name: Upload .snupkg file
+      uses: actions/upload-release-asset@v1
+      env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_name: Fenrir.${{ steps.version.outputs.version }}.snupkg
+          asset_path: ./Fenrir/bin/Release/Fenrir.${{ steps.version.outputs.version }}.snupkg
+          asset_content_type: application/zip
         
         
         
