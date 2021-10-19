@@ -62,7 +62,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_name: Fenrir.${{ steps.version.outputs.version }}.nupkg
+        asset_name: Fenrir.Git.${{ steps.version.outputs.version }}.nupkg
         asset_path: ./Fenrir/bin/Release/Fenrir.${{ steps.version.outputs.version }}.nupkg
         asset_content_type: application/zip
         
@@ -72,7 +72,7 @@ jobs:
          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
           upload_url: ${{ steps.release.outputs.upload_url }}
-          asset_name: Fenrir.${{ steps.version.outputs.version }}.snupkg
+          asset_name: Fenrir.Git.${{ steps.version.outputs.version }}.snupkg
           asset_path: ./Fenrir/bin/Release/Fenrir.${{ steps.version.outputs.version }}.snupkg
           asset_content_type: application/zip
         
