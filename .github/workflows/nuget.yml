@@ -74,21 +74,47 @@ jobs:
           asset_content_type: application/zip
           
           
-    - name: Prepare application archive to release
-      run: dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj -c Release -o ./publish
-    - name: Archive publish folder
-      run: zip -r publish.zip ./publish/*
+    - name: Publish for all os
+      run: |
+        dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj -c Release -o ./publish-win -r win-x64 --self-contained false
+        dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj -c Release -o ./publish-lin -r linux-x64 --self-contained false
+        dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj -c Release -o ./publish-osx -r osx-x64 --self-contained false
+        
+    - name: Archive all publish folders
+      run: |
+          zip -r publish-win.zip ./publish-win/*
+          zip -r publish-lin.zip ./publish-lin/*
+          zip -r publish-osx.zip ./publish-osx/*
       
-    - name: Upload publish archive
+    - name: Upload windows publish archive
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_name: Fenrir.Application.zip
-        asset_path: ./publish.zip
+        asset_name: Fenrir.Application.windows.zip
+        asset_path: ./publish-win.zip
         asset_content_type: application/zip
         
+    - name: Upload linux publish archive
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_name: Fenrir.Application.linux.zip
+        asset_path: ./publish-lin.zip
+        asset_content_type: application/zip
+        
+    - name: Upload osx publish archive
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_name: Fenrir.Application.osx.zip
+        asset_path: ./publish-osx.zip
+        asset_content_type: application/zip
     
 #    - name: Push a package to NuGet
 #      run: dotnet nuget push ./Fenrir/bin/Release/Fenrir.${{ steps.version.outputs.version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_TOKEN }}   
