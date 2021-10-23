@@ -76,8 +76,8 @@ jobs:
           
     - name: Prepare application archive to release
       run: dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj -c Release -o ./publish
-    - name: archive publish folder
-      run: zip -r publish.zip ./publish
+    - name: Archive publish folder
+      run: zip -r publish.zip ./publish/*
       
     - name: Upload publish archive
       uses: actions/upload-release-asset@v1
