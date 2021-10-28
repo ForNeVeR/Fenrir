@@ -21,22 +21,14 @@ type private PackedObjectType =
     | OfsDelta = 6
     | RefDelta = 7
 
-let getBigEndian (reader: BinaryReader) : int =
-    reader.ReadInt32() |> Net.IPAddress.NetworkToHostOrder
-
-let readHash (reader: BinaryReader) : String =
-    reader.ReadBytes 20
-        |> Array.fold (fun acc elem ->
-            String.Concat(acc, sprintf "%02x" elem)) ""
-
 let parseIndexOffset (path: String) (hash: String) : int =
     use idxReader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
     //skip header and fanout table
     idxReader.BaseStream.Position <- 1028L
     //last item in fanout table
-    let size = getBigEndian idxReader
+    let size = idxReader.GetBigEndian()
     //hashes extraction
-    let hashes = Array.init size (fun _ -> readHash idxReader)
+    let hashes = Array.init size (fun _ -> idxReader.ReadHash())
     //position binary search of the hash
     let pos = Array.BinarySearch(hashes, hash)
     //skipping crc table and getting offset location
@@ -45,7 +37,7 @@ let parseIndexOffset (path: String) (hash: String) : int =
             idxReader.BaseStream.Position + int64 size * 4L
             + (int64 pos) * 4L
 
-        getBigEndian idxReader
+        idxReader.GetBigEndian()
     else
         -1
 
@@ -62,25 +54,7 @@ type PackedObjectInfo =
     interface IDisposable with
         member this.Dispose() = this.Stream.Dispose()
 
-let rec parsePackInfo (path: String) (offset: int): PackedObjectInfo =
-    let getStream (path: String) (hash: String): PackedObjectInfo =
-        let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
-                    |> Array.map Path.GetFileName
-                    |> Array.map ((fun count (str: String) -> str.[0..str.Length - count - 1]) 4)
-        let mutable offset = -1
-
-        let containingPack = packs |> Array.tryFind (fun item ->
-            offset <- parseIndexOffset
-                      <| getPackPath path item ".idx"
-                      <| hash
-            offset <> -1)
-
-        match offset with
-            | -1 -> failwithf "git repo is corrupted"
-            | _ -> parsePackInfo
-                   <| getPackPath path (Option.toObj containingPack) ".pack"
-                   <| offset
-
+let rec parsePackInfo (path: String) (offset: int) (getPackedObject: String -> String -> PackedObjectInfo) : PackedObjectInfo =
     use packReader = new BinaryReader(File.Open(path,
                                                 FileMode.Open,
                                                 FileAccess.Read,
@@ -118,19 +92,19 @@ let rec parsePackInfo (path: String) (offset: int): PackedObjectInfo =
                         )
                         + additional - 1
 
-        use deltifiedEntity = parsePackInfo path (offset - negOffset)
+        use deltifiedEntity = parsePackInfo path (offset - negOffset) getPackedObject
         use nonDeltaReader = new BinaryReader(deltifiedEntity.Stream)
         { deltifiedEntity with
             Stream = processDelta packReader nonDeltaReader size }
     | PackedObjectType.RefDelta ->
-        let hash = packReader |> readHash
-        use deltifiedEntity = getStream path hash
+        let hash = packReader.ReadHash()
+        use deltifiedEntity = getPackedObject path hash
         use nonDeltaReader = new BinaryReader(deltifiedEntity.Stream)
         { deltifiedEntity with
             Stream = processDelta packReader nonDeltaReader size }
     | o -> failwithf "Cannot parse object type from a pack file: %A" o
 
-let getPackedObject (path: String) (hash: String): PackedObjectInfo =
+let rec getPackedObject (path: String) (hash: String): PackedObjectInfo =
     let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
                 |> Array.map Path.GetFileName
                 |> Array.map ((fun count (str : String) -> str.[0..str.Length - count - 1]) 4)
@@ -147,3 +121,4 @@ let getPackedObject (path: String) (hash: String): PackedObjectInfo =
         | _ -> parsePackInfo
                <| getPackPath path (Option.toObj containingPack) ".pack"
                <| offset
+               <| getPackedObject

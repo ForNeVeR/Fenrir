@@ -41,3 +41,12 @@ let stringToByte (s: String): byte[] =
             Byte.Parse(s.AsSpan(charIndex, 2), NumberStyles.AllowHexSpecifier, provider = CultureInfo.InvariantCulture)
         )
     | n -> failwithf "String of invalid length %d: %s" n s
+
+type BinaryReader with
+    member reader.GetBigEndian() : int =
+        reader.ReadInt32()
+        |> Net.IPAddress.NetworkToHostOrder
+
+    member reader.ReadHash() : String =
+        reader.ReadBytes 20
+        |> Array.fold (fun acc elem -> String.Concat(acc, $"%02x{elem}")) ""
