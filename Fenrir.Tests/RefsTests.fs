@@ -15,7 +15,7 @@ let ``Detached head should be recognized properly``(): unit =
 
     
 [<Fact>]
-let ``Ref list should be read properl``():unit =
+let ``Ref list should be read properly``():unit =
     let refs = Refs.readRefs testDataRoot
     let expectedRefs = [|
         { Name = "refs/heads/feature/feature-name"; CommitObjectId = "cc07136d669554cf46ca4e9ef1eab7361336e1c8" }
