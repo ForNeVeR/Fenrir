@@ -1,4 +1,4 @@
-﻿namespace Fenrir
+namespace Fenrir
 
 open System
 
@@ -29,11 +29,33 @@ module Refs =
                 Seq.singleton { Name = name; CommitObjectId = commitId }
         )
 
+
+    let private readPackedRefs (repositoryPath:string) :Ref seq=
+        let pathToPackedRefs = Path.Combine(repositoryPath, "packed-refs")
+        if File.Exists pathToPackedRefs
+        then
+            let packedRefsLines =  File.ReadAllLines(pathToPackedRefs)
+            Array.filter (fun (str : string) -> not(str.StartsWith('#') || str.StartsWith('^'))) packedRefsLines
+            |> Seq.collect (fun entryString ->
+            let commitAndName = entryString.Split(' ')
+            Seq.singleton {Name = commitAndName.[1]; CommitObjectId = commitAndName.[0]}
+            )
+        else
+            Seq.empty
+
+
     let rec readRefs(repositoryPath: string): Ref seq =
         let refsDirectory = Path.Combine(repositoryPath, "refs")
+        let packedRefs = readPackedRefs repositoryPath
+
         readRefsRecursively refsDirectory
         |> Seq.map(prependName "refs")
+        |> Seq.append packedRefs
         |> Seq.sortBy(fun ref -> ref.Name)
+
+        
+        
+
 
     let identifyRefs (commitHash: string) (repositoryPath: string): Ref seq =
         readRefs repositoryPath
