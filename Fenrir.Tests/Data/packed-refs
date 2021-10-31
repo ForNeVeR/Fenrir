@@ -1,0 +1,8 @@
+# pack-refs with: peeled fully-peeled sorted 
+# next few refs dont exist in this repo. i just copied them from other.
+953b93514f32c580081b81be9e2918214e9891a2 refs/tags/apr2016
+^615d94ea64f4fb929b1342de44925e6689bbf73b
+77969da813b975ff6b7805814bb3c959cbcc1d6c refs/tags/apr2017
+^2a222c1074416907432b738e5d7b39cf2f9d084c
+6ffb8ec42b04d0f9334c1799338a0fa73381ad3d refs/tags/apr2018
+^75e2d241516ff9ad72a03d17b82e82f8f047f241
