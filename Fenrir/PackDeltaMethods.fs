@@ -2,6 +2,7 @@
 
 open System.Collections
 open System.IO
+open System.Text
 open Fenrir.Tools
 open Fenrir.Zlib
 
@@ -59,9 +60,8 @@ let copyCommand (comm: BitArray) (mem: MemoryStream)
     mem.Write(nonDelta.ReadBytes(copySize), 0, copySize)
     counter
 
-let processDelta (pack: BinaryReader) (nonDelta: BinaryReader) (size: int): MemoryStream =
-    use deltaReader = new BinaryReader(new MemoryStream(size + 20 |> pack.ReadBytes)
-                                           |> getDecodedStream)
+let processDelta (decodedStream: MemoryStream) (nonDelta: BinaryReader) (size: int): MemoryStream =
+    use deltaReader = new BinaryReader(decodedStream, Encoding.UTF8, true)
     let sourceSize = readWhileLast isMsbSet (uint64 deltaReader.BaseStream.Length) deltaReader
                          |> estimateSize 0 0
     let targetSize = readWhileLast isMsbSet (uint64 deltaReader.BaseStream.Length) deltaReader
