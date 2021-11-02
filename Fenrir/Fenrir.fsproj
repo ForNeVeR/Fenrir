@@ -39,6 +39,7 @@ Fixed:
     <Compile Include="PackDeltaMethods.fs" />
     <Compile Include="Metadata.fs" />
     <Compile Include="Packing.fs" />
+    <Compile Include="PackVerification.fs" />
     <Compile Include="Commands.fs" />
   </ItemGroup>
 
