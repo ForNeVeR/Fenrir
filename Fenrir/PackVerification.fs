@@ -23,15 +23,22 @@ let verifyPackHeader (reader: BinaryReader) : int =
     // objects count
     reader.GetBigEndian()
 
-type VerifyPackObjectInfo =
-    { Hash: string
-      Type: GitObjectType
-      Size: int64
-      PackedSize: int64
-      Offset: int64
-      Depth: int
-      Data: byte array
-      BaseHash: string option }
+
+
+type VerifyPackObjectInfo(objType: GitObjectType, packedSize: int64, size: int64, offset: int64, depth: int) =
+    let mutable children: VerifyPackObjectInfo list = []
+
+    member this.Type = objType
+    member this.Size = int size
+    member this.PackedSize = packedSize
+    member this.Offset = offset
+    member this.Depth = depth
+
+    member val Hash = "" with get, set
+    member val BaseHash: string option = None with get, set
+
+    member this.Children = children
+    member this.AddChild child = children <- child :: children
 
 let getTypeName (objectType: GitObjectType) =
     match objectType with
@@ -40,23 +47,20 @@ let getTypeName (objectType: GitObjectType) =
     | GitObjectType.GitTree -> "tree"
     | _ -> failwith "Can't find object type name"
 
-let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectInfo list =
-    let mutable parsedObjects = list.Empty
+let unpack (reader: BinaryReader) (size: int) =
+    use packedStream =
+        new MemoryStream(size + 20 |> reader.ReadBytes)
 
-    let sha1 = HashAlgorithm.Create("SHA1")
+    let unpackedStream = new MemoryStream()
 
-    let unpack (reader: BinaryReader) (size: int) =
-        use packedStream =
-            new MemoryStream(size + 20 |> reader.ReadBytes)
+    let packedSize =
+        Zlib.unpackObjectAndReturnPackedLength packedStream unpackedStream
 
-        let unpackedStream = new MemoryStream()
+    (packedSize, unpackedStream)
 
-        let packedSize =
-            Zlib.unpackObjectAndReturnPackedLength packedStream unpackedStream
-
-        (packedSize, unpackedStream)
-
+let rec calculateHashesRecursive (reader: BinaryReader) (object: VerifyPackObjectInfo) (baseDataStream: MemoryStream) (baseHash: string option) : unit =
     let calcHash (objectType: GitObjectType) (dataStream: MemoryStream) =
+        let sha1 = HashAlgorithm.Create("SHA1")
         let objectTypeName = getTypeName objectType
 
         let bytes =
@@ -68,6 +72,45 @@ let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectIn
 
         (bytes |> sha1.ComputeHash |> Convert.ToHexString)
             .ToLower()
+
+    reader.BaseStream.Seek(object.Offset, SeekOrigin.Begin)
+    |> ignore
+
+    let _, packedObjectType = getObjectMeta reader
+
+    if packedObjectType = PackedObjectType.OfsDelta then
+        getNegOffset reader |> ignore
+
+    if packedObjectType = PackedObjectType.RefDelta then
+        reader.ReadHash() |> ignore
+
+    let _, data = unpack reader object.Size
+
+    let dataToHash =
+        if object.Depth = 0 then
+            data
+        else
+            use nonDeltaReader =
+                new BinaryReader(baseDataStream, Encoding.UTF8, true)
+
+            data.Seek(0L, SeekOrigin.Begin) |> ignore
+            processDelta data nonDeltaReader object.Size
+
+    if object.Hash = "" then
+        object.Hash <- calcHash object.Type dataToHash
+
+    object.BaseHash <- baseHash
+
+    for child in object.Children do
+        calculateHashesRecursive reader child dataToHash (Some object.Hash)
+
+
+let calculateHashes (reader: BinaryReader) (objects: VerifyPackObjectInfo list) : unit =
+    for object in List.filter (fun (o: VerifyPackObjectInfo) -> o.Depth = 0) objects do
+        calculateHashesRecursive reader object (new MemoryStream()) None
+
+let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectInfo list =
+    let mutable parsedObjects = list.Empty
 
     while parsedObjects.Length <> objectsCount do
         let objectStart = reader.BaseStream.Position
@@ -90,16 +133,7 @@ let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectIn
                     | PackedObjectType.Blob -> GitObjectType.GitBlob
                     | _ -> failwith "Impossible!"
 
-                let hash = calcHash objectType unpackedStream
-
-                { Hash = hash
-                  Type = objectType
-                  PackedSize = packedSize + sizeBytesLength
-                  Size = unpackedStream.Length
-                  Offset = objectStart
-                  Depth = 0
-                  Data = unpackedStream.ToArray()
-                  BaseHash = None }
+                VerifyPackObjectInfo(objectType, packedSize + sizeBytesLength, unpackedStream.Length, objectStart, 0)
 
             | PackedObjectType.OfsDelta
             | PackedObjectType.RefDelta ->
@@ -108,10 +142,14 @@ let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectIn
                 let baseObj =
                     match packedObjectType with
                     | PackedObjectType.RefDelta ->
+                        calculateHashes reader parsedObjects
+
+                        reader.BaseStream.Seek(posBeforeBaseLocationRead, SeekOrigin.Begin)
+                        |> ignore
+
                         let hash = reader.ReadHash()
                         List.find (fun (i: VerifyPackObjectInfo) -> i.Hash = hash) parsedObjects
                     | PackedObjectType.OfsDelta ->
-
                         let baseOffset =
                             objectStart - int64 (getNegOffset reader)
 
@@ -124,31 +162,22 @@ let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectIn
 
                 let packedSize, unpackedStream = unpack reader size
 
-                use nonDeltaReader =
-                    new BinaryReader(new MemoryStream(baseObj.Data))
+                let obj =
+                    VerifyPackObjectInfo(
+                        baseObj.Type,
+                        packedSize
+                        + sizeBytesLength
+                        + baseObjectLocationSize,
+                        unpackedStream.Length,
+                        objectStart,
+                        baseObj.Depth + 1
+                    )
 
-                unpackedStream.Seek(0L, SeekOrigin.Begin)
-                |> ignore
-
-                let undeltifiedStream =
-                    processDelta unpackedStream nonDeltaReader size
-
-                let hash = calcHash baseObj.Type undeltifiedStream
-
-                { Hash = hash
-                  Type = baseObj.Type
-                  PackedSize =
-                      packedSize
-                      + sizeBytesLength
-                      + baseObjectLocationSize
-                  Size = unpackedStream.Length
-                  Offset = objectStart
-                  Depth = baseObj.Depth + 1
-                  Data = undeltifiedStream.ToArray()
-                  BaseHash = Some baseObj.Hash }
+                baseObj.AddChild obj
+                obj
             | o -> failwithf $"Cannot parse object type from a pack file: %A{o}"
 
-        if parsedObject.Size <> int64 size then
+        if parsedObject.Size <> size then
             failwith $"Size in packfile {parsedObject.Size} and real size {size} for {parsedObject.Hash} are different"
 
         reader.BaseStream.Seek(objectStart + parsedObject.PackedSize, SeekOrigin.Begin)
@@ -156,6 +185,7 @@ let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectIn
 
         parsedObjects <- parsedObject :: parsedObjects
 
+    calculateHashes reader parsedObjects
     List.rev parsedObjects
 
 let calcDepthDistribution (objects: VerifyPackObjectInfo list) : Map<int, int> =
@@ -174,13 +204,15 @@ let printObjects (objects: VerifyPackObjectInfo list) : seq<string> =
                   ""
     }
 
-let printHistogram (depths:Map<int, int>) : seq<string> =
+let printHistogram (depths: Map<int, int>) : seq<string> =
     let pluralise (i: int) = if i = 1 then "object" else "objects"
 
     seq {
         for depth, count in Map.toSeq depths |> Seq.sortBy fst do
-            if depth = 0 then $"non delta: {count} {pluralise count}"
-            else $"chain length = {depth}: {count} {pluralise count}"
+            if depth = 0 then
+                $"non delta: {count} {pluralise count}"
+            else
+                $"chain length = {depth}: {count} {pluralise count}"
     }
 
 
