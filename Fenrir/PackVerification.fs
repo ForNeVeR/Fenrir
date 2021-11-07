@@ -186,13 +186,34 @@ let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectIn
         parsedObjects <- parsedObject :: parsedObjects
 
     calculateHashes reader parsedObjects
-    List.rev parsedObjects
+    parsedObjects
 
 let calcDepthDistribution (objects: VerifyPackObjectInfo list) : Map<int, int> =
     objects
     |> Seq.groupBy (fun (o: VerifyPackObjectInfo) -> o.Depth)
     |> Seq.map (fun (k, v) -> k, Seq.length v)
     |> Map.ofSeq
+
+let verifyPackHash (reader: BinaryReader) (lastObject: VerifyPackObjectInfo) =
+    let objectsEnd =
+        lastObject.Offset + lastObject.PackedSize
+
+    reader.BaseStream.Seek(0L, SeekOrigin.Begin)
+    |> ignore
+
+    let sha1 = HashAlgorithm.Create("SHA1")
+
+    let hash =
+        reader.ReadBytes(int objectsEnd)
+        |> sha1.ComputeHash
+        |> Convert.ToHexString
+    let hashFromPack = reader.ReadHash()
+
+    if not (hash.Equals(hashFromPack, StringComparison.InvariantCultureIgnoreCase)) then
+        failwith "Packfile hash corrupted"
+
+    if reader.BaseStream.Position <> reader.BaseStream.Length then
+        failwith "Packfile has data after pack content"
 
 let printObjects (objects: VerifyPackObjectInfo list) : seq<string> =
     seq {
@@ -221,9 +242,11 @@ let verifyPack (reader: BinaryReader) (verbose: bool) : seq<string> =
     let objects = parseObjects reader objectsCount
     let depths = calcDepthDistribution objects
 
+    verifyPackHash reader objects.Head
+
     let objSeq =
         if verbose then
-            printObjects objects
+            printObjects (List.rev objects)
         else
             Seq.empty
 
