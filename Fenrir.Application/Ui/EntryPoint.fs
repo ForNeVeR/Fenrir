@@ -1,4 +1,4 @@
-﻿module Fenrir.Ui.EntryPoint
+module Fenrir.Ui.EntryPoint
 
 open System
 open System.IO
@@ -37,15 +37,15 @@ let run (path: string): unit =
 
     let repository = GitRepositoryModel path
     let refs = RefsViewModel repository
-    let refsWindow = loadFromXaml<Window> "Fenrir.Ui.RefsWindow.xaml" refs
+    let refsWindow = loadFromXaml<Window> "Fenrir.Application.Ui.RefsWindow.xaml" refs
     initializeViewModelOnActivate refs refsWindow
 
     let commits = CommitsViewModel(repository, refs)
-    let commitsWindow = loadFromXaml<Window> "Fenrir.Ui.CommitsWindow.xaml" commits
+    let commitsWindow = loadFromXaml<Window> "Fenrir.Application.Ui.CommitsWindow.xaml" commits
     initializeViewModelOnActivate commits commitsWindow
 
     let files = FilesViewModel(repository, commits)
-    let filesWindow = loadFromXaml<Window> "Fenrir.Ui.FilesWindow.xaml" files
+    let filesWindow = loadFromXaml<Window> "Fenrir.Application.Ui.FilesWindow.xaml" files
     initializeViewModelOnActivate files filesWindow
 
     let host = WindowsHost()
