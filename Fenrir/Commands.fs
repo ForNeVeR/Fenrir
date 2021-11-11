@@ -8,6 +8,7 @@ open System.Security.Cryptography
 
 open Fenrir.Metadata
 open Fenrir.Packing
+open Fenrir.PackVerification
 open Fenrir.Tools
 open Fenrir.Zlib
 
@@ -241,7 +242,7 @@ let writeTreeObjects (pathToRepo: string) (streams: TreeStreams): unit =
 let createEmptyRepo (pathWhereInit : string) :unit =
     if (Path.Combine(pathWhereInit,".git") |> Directory.Exists)
     then failwith(".git folder already exist in " + pathWhereInit + " directory")
-    
+
     let gitDir = Path.Combine(pathWhereInit,".git") |> Directory.CreateDirectory
 
     gitDir.Attributes <- FileAttributes.Directory ||| FileAttributes.Hidden
@@ -257,7 +258,7 @@ let createEmptyRepo (pathWhereInit : string) :unit =
     "\tignorecase = true"
     |])
 
-    let hooksDir = gitDir.CreateSubdirectory("hooks") 
+    let hooksDir = gitDir.CreateSubdirectory("hooks")
 
     let refsDir = gitDir.CreateSubdirectory("refs" )
     refsDir.CreateSubdirectory("heads") |> ignore
@@ -276,3 +277,7 @@ let createEmptyRepo (pathWhereInit : string) :unit =
     "# *.[oa]"
     "# *~"
     |])
+
+let verifyPack (pathToFile:string) (verbose: bool) : seq<string> =
+    use reader = new BinaryReader(File.Open(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+    verifyPack reader verbose

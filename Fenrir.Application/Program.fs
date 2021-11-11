@@ -237,6 +237,31 @@ let main (argv: string[]): int =
         Commands.updateObjectInTree rootTreeHash pathToDotGit filePath hashName |> Commands.writeTreeObjects pathToRepo
         ExitCodes.Success
 
+    | [|"verify-pack"; packPath|] ->
+        let packFileName = Path.ChangeExtension(packPath, ".pack")
+        if (not (File.Exists(packFileName))) then
+            printfn $"{packFileName} file not found"
+            ExitCodes.UnrecognizedArguments
+        else
+            Commands.verifyPack packFileName false
+            |> Seq.toArray
+            |> fun a -> String.Join(Environment.NewLine, a)
+            |> Console.WriteLine
+
+            ExitCodes.Success
+    | [|"verify-pack"; packPath; mode|] ->
+        let packFileName = Path.ChangeExtension(packPath, ".pack")
+        if (not (File.Exists(packFileName))) then
+            printfn $"{packFileName} file not found"
+            ExitCodes.UnrecognizedArguments
+        else
+            Commands.verifyPack packFileName (mode = "-v")
+            |> Seq.toArray
+            |> fun a -> String.Join(Environment.NewLine, a)
+            |> Console.WriteLine
+
+            ExitCodes.Success
+
     | [|"version"|] | [|"--version"|] ->
         printVersion()
         ExitCodes.Success
