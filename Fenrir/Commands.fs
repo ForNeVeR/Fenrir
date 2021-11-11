@@ -1,4 +1,4 @@
-﻿module Fenrir.Commands
+module Fenrir.Commands
 
 open System
 open System.Text
@@ -12,7 +12,14 @@ open Fenrir.Tools
 open Fenrir.Zlib
 
 let getRawObjectPath (gitDirectoryPath: string) (objectHash: string): string =
-    Path.Combine(gitDirectoryPath, "objects", objectHash.Substring(0, 2), objectHash.Substring(2, 38))
+    if objectHash.StartsWith("ref: ")
+    then
+        let ref = objectHash.Split(' ')
+        let pathToRef = Path.Combine(gitDirectoryPath, ref.[1])
+        let hash =  (File.ReadAllLines pathToRef).[0]        
+        Path.Combine(gitDirectoryPath, "objects", hash.Substring(0, 2), hash.Substring(2, 38))
+    else
+        Path.Combine(gitDirectoryPath, "objects", objectHash.Substring(0, 2), objectHash.Substring(2, 38))
 
 let readHeader(input: Stream): ObjectHeader =
     let bF = new BinaryReader(input, Encoding.ASCII)
