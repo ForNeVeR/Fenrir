@@ -79,5 +79,5 @@ let ``Verbose output equals get verify-pack -v out`` () : unit =
     let actual = String.Join("\n", strings)
 
     let expected = File.ReadAllText(Path.Combine(testDataRoot, "verify-pack-v_output.txt"))
-
+    Console.WriteLine expected
     Assert.Equal(actual, expected)

@@ -24,21 +24,28 @@ let verifyPackHeader (reader: BinaryReader) : int =
     reader.GetBigEndian()
 
 
+type BaseRef =
+    | Hash of string
+    | Offset of int64
+    | NotRef
 
-type VerifyPackObjectInfo(objType: GitObjectType, packedSize: int64, size: int64, offset: int64, depth: int) =
-    let mutable children: VerifyPackObjectInfo list = []
+type PackObjectInfo = {
+    Type: PackedObjectType
+    PackedSize: int64
+    Size: int64
+    Offset: int64
+    Ref: BaseRef
+}
 
-    member this.Type = objType
-    member this.Size = int size
-    member this.PackedSize = packedSize
-    member this.Offset = offset
-    member this.Depth = depth
-
-    member val Hash = "" with get, set
-    member val BaseHash: string option = None with get, set
-
-    member this.Children = children
-    member this.AddChild child = children <- child :: children
+type VerifyPackObjectInfo = {
+    Type: GitObjectType
+    Size: int64
+    PackedSize: int64
+    Offset: int64
+    Depth: int
+    Hash: string
+    BaseHash: string option
+}
 
 let getTypeName (objectType: GitObjectType) =
     match objectType with
@@ -58,9 +65,9 @@ let unpack (reader: BinaryReader) (size: int) =
 
     (packedSize, unpackedStream)
 
-let rec calculateHashesRecursive (reader: BinaryReader) (object: VerifyPackObjectInfo) (baseDataStream: MemoryStream) (baseHash: string option) : unit =
+let resoleDeltaChain (reader: BinaryReader) (root: PackObjectInfo) (refDeltas: PackObjectInfo list) (ofsDeltas: PackObjectInfo list): seq<VerifyPackObjectInfo> =
+    let sha1 = HashAlgorithm.Create("SHA1")
     let calcHash (objectType: GitObjectType) (dataStream: MemoryStream) =
-        let sha1 = HashAlgorithm.Create("SHA1")
         let objectTypeName = getTypeName objectType
 
         let bytes =
@@ -73,49 +80,71 @@ let rec calculateHashesRecursive (reader: BinaryReader) (object: VerifyPackObjec
         (bytes |> sha1.ComputeHash |> Convert.ToHexString)
             .ToLower()
 
-    reader.BaseStream.Seek(object.Offset, SeekOrigin.Begin)
-    |> ignore
+    let rec resolveObject (object: PackObjectInfo) (baseObject: VerifyPackObjectInfo option) (baseObjectData: MemoryStream) (depth: int) =
+        reader.BaseStream.Seek(object.Offset, SeekOrigin.Begin) |> ignore
+        getObjectMeta reader |> ignore
+        if object.Type = PackedObjectType.OfsDelta then getNegOffset reader |> ignore
+        if object.Type = PackedObjectType.RefDelta then reader.ReadHash() |> ignore
 
-    let _, packedObjectType = getObjectMeta reader
+        let objectType =
+            if Option.isSome baseObject
+            then baseObject.Value.Type
+            else match object.Type with
+                 | PackedObjectType.Commit
+                 | PackedObjectType.Tag -> GitObjectType.GitCommit
+                 | PackedObjectType.Tree -> GitObjectType.GitTree
+                 | PackedObjectType.Blob -> GitObjectType.GitBlob
+                 | _ -> failwith "Impossible!"
+        let _, data = unpack reader (int object.Size)
 
-    if packedObjectType = PackedObjectType.OfsDelta then
-        getNegOffset reader |> ignore
+        let dataToHash =
+            if depth = 0 then
+                data
+            else
+                use nonDeltaReader =
+                    new BinaryReader(baseObjectData, Encoding.UTF8, true)
 
-    if packedObjectType = PackedObjectType.RefDelta then
-        reader.ReadHash() |> ignore
+                data.Seek(0L, SeekOrigin.Begin) |> ignore
+                processDelta data nonDeltaReader (int object.Size)
 
-    let _, data = unpack reader object.Size
+        let obj: VerifyPackObjectInfo = {
+            Type = objectType
+            Size = object.Size
+            PackedSize = object.PackedSize
+            Offset = object.Offset
+            Depth = depth
+            Hash = calcHash objectType dataToHash
+            BaseHash = if Option.isSome baseObject then Some(baseObject.Value.Hash) else None
+        }
 
-    let dataToHash =
-        if object.Depth = 0 then
-            data
-        else
-            use nonDeltaReader =
-                new BinaryReader(baseDataStream, Encoding.UTF8, true)
+        let descendants = List.concat [List.filter (fun (o: PackObjectInfo) -> o.Ref = Hash obj.Hash) refDeltas
+                                       List.filter (fun (o: PackObjectInfo) -> o.Ref = Offset obj.Offset) ofsDeltas]
 
-            data.Seek(0L, SeekOrigin.Begin) |> ignore
-            processDelta data nonDeltaReader object.Size
-
-    if object.Hash = "" then
-        object.Hash <- calcHash object.Type dataToHash
-
-    object.BaseHash <- baseHash
-
-    for child in object.Children do
-        calculateHashesRecursive reader child dataToHash (Some object.Hash)
+        seq {
+            yield obj
+            for d in descendants do
+                yield! resolveObject d (Some obj) dataToHash (depth + 1)
+        }
 
 
-let calculateHashes (reader: BinaryReader) (objects: VerifyPackObjectInfo list) : unit =
-    for object in List.filter (fun (o: VerifyPackObjectInfo) -> o.Depth = 0) objects do
-        calculateHashesRecursive reader object (new MemoryStream()) None
+    seq {
+        yield! resolveObject root None (new MemoryStream()) 0
+    }
+
+let resolveDeltas (reader: BinaryReader) (nonDeltas: PackObjectInfo list) (refDeltas: PackObjectInfo list) (ofsDeltas: PackObjectInfo list) =
+    seq {
+        for nonDelta in nonDeltas do
+            yield! (resoleDeltaChain reader nonDelta refDeltas ofsDeltas)
+    }
 
 let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectInfo list =
-    let mutable parsedObjects = list.Empty
+    let mutable nonDeltas = list.Empty
+    let mutable refDeltas = list.Empty
+    let mutable ofsDeltas = list.Empty
 
-    while parsedObjects.Length <> objectsCount do
+    for _ in [1..objectsCount] do
         let objectStart = reader.BaseStream.Position
         let size, packedObjectType = getObjectMeta reader
-        let sizeBytesLength = reader.BaseStream.Position - objectStart
 
         let parsedObject =
             match packedObjectType with
@@ -123,70 +152,57 @@ let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectIn
             | PackedObjectType.Tree
             | PackedObjectType.Blob
             | PackedObjectType.Tag ->
+                let headerSize =reader.BaseStream.Position - objectStart
                 let packedSize, unpackedStream = unpack reader size
 
-                let objectType =
-                    match packedObjectType with
-                    | PackedObjectType.Commit
-                    | PackedObjectType.Tag -> GitObjectType.GitCommit
-                    | PackedObjectType.Tree -> GitObjectType.GitTree
-                    | PackedObjectType.Blob -> GitObjectType.GitBlob
-                    | _ -> failwith "Impossible!"
-
-                VerifyPackObjectInfo(objectType, packedSize + sizeBytesLength, unpackedStream.Length, objectStart, 0)
+                nonDeltas <-  {
+                    Type = packedObjectType
+                    PackedSize = packedSize + headerSize
+                    Size = unpackedStream.Length
+                    Offset = objectStart
+                    Ref = NotRef
+                }           ::nonDeltas
+                nonDeltas.Head
 
             | PackedObjectType.OfsDelta
             | PackedObjectType.RefDelta ->
-                let posBeforeBaseLocationRead = reader.BaseStream.Position
-
-                let baseObj =
+                let baseRef =
                     match packedObjectType with
                     | PackedObjectType.RefDelta ->
-                        calculateHashes reader parsedObjects
-
-                        reader.BaseStream.Seek(posBeforeBaseLocationRead, SeekOrigin.Begin)
-                        |> ignore
-
-                        let hash = reader.ReadHash()
-                        List.find (fun (i: VerifyPackObjectInfo) -> i.Hash = hash) parsedObjects
+                        Hash (reader.ReadHash())
                     | PackedObjectType.OfsDelta ->
-                        let baseOffset =
-                            objectStart - int64 (getNegOffset reader)
-
-                        List.find (fun (i: VerifyPackObjectInfo) -> i.Offset = baseOffset) parsedObjects
+                        Offset (objectStart - int64 (getNegOffset reader))
                     | _ -> failwith "Impossible!"
 
-                let baseObjectLocationSize =
-                    reader.BaseStream.Position
-                    - posBeforeBaseLocationRead
+                let headerSize = reader.BaseStream.Position - objectStart
 
                 let packedSize, unpackedStream = unpack reader size
 
-                let obj =
-                    VerifyPackObjectInfo(
-                        baseObj.Type,
-                        packedSize
-                        + sizeBytesLength
-                        + baseObjectLocationSize,
-                        unpackedStream.Length,
-                        objectStart,
-                        baseObj.Depth + 1
-                    )
+                let o = {
+                    Type = packedObjectType
+                    PackedSize = packedSize + headerSize
+                    Size = unpackedStream.Length
+                    Offset = objectStart
+                    Ref = baseRef
+                }
+                match packedObjectType with
+                    | PackedObjectType.RefDelta ->
+                        refDeltas <- o :: refDeltas
+                        o
+                    | PackedObjectType.OfsDelta ->
+                        ofsDeltas <- o :: ofsDeltas
+                        o
+                    | _ -> failwith "Impossible!"
 
-                baseObj.AddChild obj
-                obj
             | o -> failwithf $"Cannot parse object type from a pack file: %A{o}"
 
-        if parsedObject.Size <> size then
-            failwith $"Size in packfile {parsedObject.Size} and real size {size} for {parsedObject.Hash} are different"
+        if parsedObject.Size <> int64 size then
+            failwith $"Size in packfile {parsedObject.Size} and real size {size} for offset {parsedObject.Offset} are different"
 
         reader.BaseStream.Seek(objectStart + parsedObject.PackedSize, SeekOrigin.Begin)
         |> ignore
 
-        parsedObjects <- parsedObject :: parsedObjects
-
-    calculateHashes reader parsedObjects
-    parsedObjects
+    resolveDeltas reader nonDeltas refDeltas ofsDeltas |> Seq.sortBy (fun (i: VerifyPackObjectInfo) -> i.Offset) |> List.ofSeq
 
 let calcDepthDistribution (objects: VerifyPackObjectInfo list) : Map<int, int> =
     objects
@@ -242,11 +258,11 @@ let verifyPack (reader: BinaryReader) (verbose: bool) : seq<string> =
     let objects = parseObjects reader objectsCount
     let depths = calcDepthDistribution objects
 
-    verifyPackHash reader objects.Head
+    verifyPackHash reader (List.last objects)
 
     let objSeq =
         if verbose then
-            printObjects (List.rev objects)
+            printObjects objects
         else
             Seq.empty
 
