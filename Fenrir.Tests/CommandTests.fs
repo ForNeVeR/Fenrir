@@ -1,4 +1,4 @@
-﻿module Fenrir.Tests.CommandTests
+module Fenrir.Tests.CommandTests
 
 open System.IO
 open System.Text
@@ -78,6 +78,12 @@ let ``The program should parse commits properly``(): unit =
     Assert.Equal(cmt.Parents.[1], "62f4d4ce40041cd6295eb4a3d663724b4952e7b5")
     Assert.Equal(cmt.Parents.[0], "c0573616ea63dba6c4b13398058b0950c33a524c")
 
+[<Fact>]
+let ``The program should parse symbolyc ref properly``(): unit =
+    let cmt = Commands.parseCommitBody testDataRoot "ref: refs/remotes/origin/master"
+    Assert.Equal(cmt.Tree,"0ba2ef789f6245b6b6604f54706b1dce1d84907f")
+          
+    
 [<Fact>]
 let ``The program should parse trees properly``(): unit =
     let tr = Commands.parseTreeBody testDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
