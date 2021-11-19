@@ -1,4 +1,4 @@
-﻿module Fenrir.Commands
+module Fenrir.Commands
 
 open System
 open System.Text
@@ -237,3 +237,38 @@ let writeStreamToFile (pathToRepo: string) (stream: MemoryStream) (hash: String)
 
 let writeTreeObjects (pathToRepo: string) (streams: TreeStreams): unit =
     Array.iter2 (writeStreamToFile pathToRepo) streams.Streams streams.Hashes
+
+let createEmptyRepo (pathWhereInit : string) :unit =
+    let gitDir = Path.Combine(pathWhereInit,".git") |> Directory.CreateDirectory
+    //gitDir.Attributes = FileAttributes.Directory || FileAttributes.Hidden
+    File.WriteAllLines(Path.Combine(gitDir.FullName,"HEAD"),[|"ref: refs/heads/master"|])
+    File.WriteAllLines(Path.Combine(gitDir.FullName,"description"),[|"Unnamed repository; edit this file 'description' to name the repository."|])
+    File.WriteAllLines(Path.Combine(gitDir.FullName,"config"),[|
+    "[core]"
+    "\trepositoryformatversion = 0"
+    "\tfilemode = false"
+    "\tbare = false"
+    "\tlogallrefupdates = true"
+    "\tsymlinks = false"
+    "\tignorecase = true"
+    |])
+
+    let hooksDir = gitDir.CreateSubdirectory("hooks") 
+
+    let refsDir = gitDir.CreateSubdirectory("refs" )
+    refsDir.CreateSubdirectory("heads") |> ignore
+    refsDir.CreateSubdirectory("tags") |>ignore
+
+    let objDir = gitDir.CreateSubdirectory("objects")
+    objDir.CreateSubdirectory("info") |> ignore
+    objDir.CreateSubdirectory("pack") |> ignore
+
+    let infoDir = gitDir.CreateSubdirectory("info")
+    File.WriteAllLines(Path.Combine(infoDir.FullName,"exclude"),[|
+    "# git ls-files --others --exclude-from=.git/info/exclude"
+    "# Lines that start with '#' are comments."
+    "# For a project mostly in C, the following would be a good set of"
+    "# exclude patterns (uncomment them if you want to use them):"
+    "# *.[oa]"
+    "# *~"
+    |])

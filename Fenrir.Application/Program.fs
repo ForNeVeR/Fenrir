@@ -1,4 +1,4 @@
-﻿module Fenrir.Program
+module Fenrir.Program
 
 open System
 open System.IO
@@ -36,6 +36,9 @@ Usage:
 
   refs [<path to .git/ directory>]
     Shows branch list of repository.
+
+  init [<path>]
+    Create an empty Git repository or reinitialize an existing one
 
     If <path to .git/ directory> isn't passed, then current directory are used instead.
 
@@ -236,6 +239,11 @@ let main (argv: string[]): int =
 
     | [|"version"|] | [|"--version"|] ->
         printVersion()
+        ExitCodes.Success
+
+    | [|"init"|] ->
+        let currentDir = Directory.GetCurrentDirectory()
+        Commands.createEmptyRepo currentDir
         ExitCodes.Success
 
     | _ ->
