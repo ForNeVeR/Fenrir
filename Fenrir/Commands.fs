@@ -240,7 +240,7 @@ let writeTreeObjects (pathToRepo: string) (streams: TreeStreams): unit =
 
 let createEmptyRepo (pathWhereInit : string) :unit =
     let gitDir = Path.Combine(pathWhereInit,".git") |> Directory.CreateDirectory
-    //gitDir.Attributes = FileAttributes.Directory || FileAttributes.Hidden
+    gitDir.Attributes <- FileAttributes.Directory ||| FileAttributes.Hidden
     File.WriteAllLines(Path.Combine(gitDir.FullName,"HEAD"),[|"ref: refs/heads/master"|])
     File.WriteAllLines(Path.Combine(gitDir.FullName,"description"),[|"Unnamed repository; edit this file 'description' to name the repository."|])
     File.WriteAllLines(Path.Combine(gitDir.FullName,"config"),[|
