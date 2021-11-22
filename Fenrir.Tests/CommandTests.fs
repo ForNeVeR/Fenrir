@@ -290,4 +290,6 @@ let ``Init command should create empty git repository``(): unit =
     "# *~"
     |])
 
-    Directory.Delete(gitRepoPath,true)
+    Directory.Delete(tempFolderForTest,true)
+
+    

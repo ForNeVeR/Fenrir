@@ -239,7 +239,11 @@ let writeTreeObjects (pathToRepo: string) (streams: TreeStreams): unit =
     Array.iter2 (writeStreamToFile pathToRepo) streams.Streams streams.Hashes
 
 let createEmptyRepo (pathWhereInit : string) :unit =
+    if (Path.Combine(pathWhereInit,".git") |> Directory.Exists)
+    then failwith(".git folder already exist in " + pathWhereInit + " directory")
+    
     let gitDir = Path.Combine(pathWhereInit,".git") |> Directory.CreateDirectory
+
     gitDir.Attributes <- FileAttributes.Directory ||| FileAttributes.Hidden
     File.WriteAllLines(Path.Combine(gitDir.FullName,"HEAD"),[|"ref: refs/heads/master"|])
     File.WriteAllLines(Path.Combine(gitDir.FullName,"description"),[|"Unnamed repository; edit this file 'description' to name the repository."|])
