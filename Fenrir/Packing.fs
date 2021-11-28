@@ -26,7 +26,7 @@ let parseIndexOffset (path: String) (hash: String) : int =
     //skip header and fanout table
     idxReader.BaseStream.Position <- 1028L
     //last item in fanout table
-    let size = idxReader.GetBigEndian()
+    let size = idxReader.ReadBigEndianInt()
     //hashes extraction
     let hashes = Array.init size (fun _ -> idxReader.ReadHash())
     //position binary search of the hash
@@ -37,7 +37,7 @@ let parseIndexOffset (path: String) (hash: String) : int =
             idxReader.BaseStream.Position + int64 size * 4L
             + (int64 pos) * 4L
 
-        idxReader.GetBigEndian()
+        idxReader.ReadBigEndianInt()
     else
         -1
 

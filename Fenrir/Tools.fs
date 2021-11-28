@@ -43,7 +43,7 @@ let stringToByte (s: String): byte[] =
     | n -> failwithf "String of invalid length %d: %s" n s
 
 type BinaryReader with
-    member reader.GetBigEndian() : int =
+    member reader.ReadBigEndianInt() : int =
         reader.ReadInt32()
         |> Net.IPAddress.NetworkToHostOrder
 

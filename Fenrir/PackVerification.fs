@@ -15,13 +15,13 @@ let verifyPackHeader (reader: BinaryReader) : int =
     if reader.ReadBytes(4) <> "PACK"B then
         failwith "corrupted pack header signature"
 
-    let version = reader.GetBigEndian()
+    let version = reader.ReadBigEndianInt()
 
     if version <> 2 && version <> 3 then
         failwith "corrupted pack header version"
 
     // objects count
-    reader.GetBigEndian()
+    reader.ReadBigEndianInt()
 
 
 type BaseRef =
@@ -65,20 +65,20 @@ let unpack (reader: BinaryReader) (size: int) =
 
     (packedSize, unpackedStream)
 
-let resoleDeltaChain (reader: BinaryReader) (root: PackObjectInfo) (refDeltas: PackObjectInfo list) (ofsDeltas: PackObjectInfo list): seq<VerifyPackObjectInfo> =
-    let sha1 = HashAlgorithm.Create("SHA1")
+let resolveDeltaChain (reader: BinaryReader) (root: PackObjectInfo) (refDeltas: PackObjectInfo list) (ofsDeltas: PackObjectInfo list): seq<VerifyPackObjectInfo> =
     let calcHash (objectType: GitObjectType) (dataStream: MemoryStream) =
+        use sha1 = HashAlgorithm.Create("SHA1")
         let objectTypeName = getTypeName objectType
 
         let bytes =
-            [| Encoding.ASCII.GetBytes($"{objectTypeName} {dataStream.Length}\u0000")
+            [| Encoding.ASCII.GetBytes($"{objectTypeName} {string dataStream.Length}\u0000")
                dataStream.ToArray() |]
             |> Array.concat
 
         dataStream.Seek(0L, SeekOrigin.Begin) |> ignore
 
         (bytes |> sha1.ComputeHash |> Convert.ToHexString)
-            .ToLower()
+            .ToLowerInvariant()
 
     let rec resolveObject (object: PackObjectInfo) (baseObject: VerifyPackObjectInfo option) (baseObjectData: MemoryStream) (depth: int) =
         reader.BaseStream.Seek(object.Offset, SeekOrigin.Begin) |> ignore
@@ -134,7 +134,7 @@ let resoleDeltaChain (reader: BinaryReader) (root: PackObjectInfo) (refDeltas: P
 let resolveDeltas (reader: BinaryReader) (nonDeltas: PackObjectInfo list) (refDeltas: PackObjectInfo list) (ofsDeltas: PackObjectInfo list) =
     seq {
         for nonDelta in nonDeltas do
-            yield! (resoleDeltaChain reader nonDelta refDeltas ofsDeltas)
+            yield! (resolveDeltaChain reader nonDelta refDeltas ofsDeltas)
     }
 
 let parseObjects (reader: BinaryReader) (objectsCount: int) : VerifyPackObjectInfo list =
@@ -217,7 +217,7 @@ let verifyPackHash (reader: BinaryReader) (lastObject: VerifyPackObjectInfo) =
     reader.BaseStream.Seek(0L, SeekOrigin.Begin)
     |> ignore
 
-    let sha1 = HashAlgorithm.Create("SHA1")
+    use sha1 = HashAlgorithm.Create("SHA1")
 
     let hash =
         reader.ReadBytes(int objectsEnd)
@@ -232,26 +232,26 @@ let verifyPackHash (reader: BinaryReader) (lastObject: VerifyPackObjectInfo) =
         failwith "Packfile has data after pack content"
 
 let printObjects (objects: VerifyPackObjectInfo list) : seq<string> =
-    seq {
-        for object in objects do
+    objects
+    |> Seq.map
+        (fun object ->
             $"{object.Hash} %-6s{getTypeName object.Type} {object.Size} {object.PackedSize} {object.Offset}"
             + if Option.isSome object.BaseHash then
                   $" {object.Depth} {object.BaseHash.Value}"
               else
-                  ""
-    }
+                  "")
 
 let printHistogram (depths: Map<int, int>) : seq<string> =
     let pluralise (i: int) = if i = 1 then "object" else "objects"
 
-    seq {
-        for depth, count in Map.toSeq depths |> Seq.sortBy fst do
+    Map.toSeq depths
+    |> Seq.sortBy fst
+    |> Seq.map
+        (fun (depth, count) ->
             if depth = 0 then
                 $"non delta: {count} {pluralise count}"
             else
-                $"chain length = {depth}: {count} {pluralise count}"
-    }
-
+                $"chain length = {depth}: {count} {pluralise count}")
 
 let verifyPack (reader: BinaryReader) (verbose: bool) : seq<string> =
     let objectsCount = verifyPackHeader reader
