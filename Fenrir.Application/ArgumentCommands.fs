@@ -1,5 +1,6 @@
 ﻿module Fenrir.ArgumentCommands
 
+open System
 open System.IO
 
 open Fenrir.Metadata
@@ -42,3 +43,13 @@ If at any moment your repository has turned FUBAR, consider revising the results
             Refs.updateHead commitHash newCommitHash pathToDotGit
         Refs.updateAllRefs commitHash newCommitHash pathToDotGit
     ExitCodes.Success
+
+let verifyPack (packPath: string) (modeKey: string) =
+    let packFileName = Path.ChangeExtension(packPath, ".pack")
+    if (not (File.Exists(packPath))) then
+        printfn $"{packPath} file not found"
+        ExitCodes.UnrecognizedArguments
+    else
+        Commands.verifyPack packFileName (modeKey = "-v")
+        |> Seq.iter Console.WriteLine
+        ExitCodes.Success

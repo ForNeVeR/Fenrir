@@ -68,6 +68,9 @@ Usage:
 
     If <path to repository> isn't passed, then current directory are used instead.
 
+  verify-pack [<path to pack file>]
+    Checks pack file integrity and print info about packed object — distribution of delta chains. Use -v option to see all containing objects.
+
   (version | --version)
     Print the program version.
 "
@@ -238,29 +241,9 @@ let main (argv: string[]): int =
         ExitCodes.Success
 
     | [|"verify-pack"; packPath|] ->
-        let packFileName = Path.ChangeExtension(packPath, ".pack")
-        if (not (File.Exists(packFileName))) then
-            printfn $"{packFileName} file not found"
-            ExitCodes.UnrecognizedArguments
-        else
-            Commands.verifyPack packFileName false
-            |> Seq.toArray
-            |> fun a -> String.Join(Environment.NewLine, a)
-            |> Console.WriteLine
-
-            ExitCodes.Success
+        verifyPack packPath null
     | [|"verify-pack"; packPath; mode|] ->
-        let packFileName = Path.ChangeExtension(packPath, ".pack")
-        if (not (File.Exists(packFileName))) then
-            printfn $"{packFileName} file not found"
-            ExitCodes.UnrecognizedArguments
-        else
-            Commands.verifyPack packFileName (mode = "-v")
-            |> Seq.toArray
-            |> fun a -> String.Join(Environment.NewLine, a)
-            |> Console.WriteLine
-
-            ExitCodes.Success
+        verifyPack packPath mode
 
     | [|"version"|] | [|"--version"|] ->
         printVersion()
