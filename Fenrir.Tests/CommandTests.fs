@@ -236,3 +236,64 @@ let ``Files should be written after updating of the whole tree``(): unit =
     Assert.True(File.Exists(pathToSubTree))
     File.Delete(pathToParentTree)
     File.Delete(pathToSubTree)
+
+
+[<Fact>]
+let ``Init command should create empty git repository``(): unit =
+    doInTempDirectory (fun tempFolderForTest ->
+        Commands.createEmptyRepo tempFolderForTest
+        let gitRepoPath = Path.Combine(tempFolderForTest, ".git")
+        gitRepoPath |> Directory.Exists |> Assert.True
+
+        Path.Combine(gitRepoPath, "HEAD") |> File.Exists |> Assert.True
+        Path.Combine(gitRepoPath, "description") |> File.Exists |> Assert.True
+        Path.Combine(gitRepoPath, "config") |> File.Exists |> Assert.True
+
+        let headContent = Path.Combine(gitRepoPath, "HEAD") |> File.ReadAllLines
+        Assert.Equal<string>(headContent, [|"ref: refs/heads/master"|] )
+
+        let descriptionContent = Path.Combine(gitRepoPath, "description") |> File.ReadAllLines
+        Assert.Equal<string>(descriptionContent, [|"Unnamed repository; edit this file 'description' to name the repository."|] )
+
+        let configContent = Path.Combine(gitRepoPath, "config") |> File.ReadAllLines
+        Assert.Equal<string>(configContent, [|
+        "[core]"
+        "\trepositoryformatversion = 0"
+        "\tfilemode = false"
+        "\tbare = false"
+        "\tlogallrefupdates = true"
+        "\tsymlinks = false"
+        "\tignorecase = true"
+        |])
+
+        let hooksPath = Path.Combine(gitRepoPath, "hooks")
+        hooksPath |> Directory.Exists |> Assert.True
+
+        let refsPath = Path.Combine(gitRepoPath, "refs")
+        refsPath |> Directory.Exists |> Assert.True
+
+        Path.Combine(refsPath,"heads") |> Directory.Exists |> Assert.True
+        Path.Combine(refsPath,"tags") |> Directory.Exists |> Assert.True
+
+
+        let objectsPath = Path.Combine(gitRepoPath, "objects")
+        objectsPath |> Directory.Exists |> Assert.True
+
+        Path.Combine(objectsPath,"pack") |> Directory.Exists |> Assert.True
+        Path.Combine(objectsPath,"info") |> Directory.Exists |> Assert.True
+
+        let infoPath = Path.Combine(gitRepoPath, "info")
+        infoPath |> Directory.Exists |> Assert.True
+
+        Path.Combine(infoPath, "exclude") |> File.Exists |> Assert.True
+
+        let excludeContent = Path.Combine(infoPath, "exclude") |> File.ReadAllLines
+        Assert.Equal<string>(excludeContent, [|
+        "# git ls-files --others --exclude-from=.git/info/exclude"
+        "# Lines that start with '#' are comments."
+        "# For a project mostly in C, the following would be a good set of"
+        "# exclude patterns (uncomment them if you want to use them):"
+        "# *.[oa]"
+        "# *~"
+        |])
+    )

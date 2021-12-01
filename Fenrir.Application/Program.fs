@@ -1,4 +1,4 @@
-﻿module Fenrir.Program
+module Fenrir.Program
 
 open System
 open System.IO
@@ -37,6 +37,9 @@ Usage:
   refs [<path to .git/ directory>]
     Shows branch list of repository.
 
+  init [<path>]
+    Create an empty Git repository or reinitialize an existing one
+
     If <path to .git/ directory> isn't passed, then current directory are used instead.
 
   save [<input> [<path to repository>]]
@@ -64,6 +67,9 @@ Usage:
     Moreover, save new trees based on <id of root tree> tree and its subtrees to repository.
 
     If <path to repository> isn't passed, then current directory are used instead.
+
+  verify-pack [<path to pack file>]
+    Checks pack file integrity and print info about packed object — distribution of delta chains. Use -v option to see all containing objects.
 
   (version | --version)
     Print the program version.
@@ -234,8 +240,18 @@ let main (argv: string[]): int =
         Commands.updateObjectInTree rootTreeHash pathToDotGit filePath hashName |> Commands.writeTreeObjects pathToRepo
         ExitCodes.Success
 
+    | [|"verify-pack"; packPath|] ->
+        verifyPack packPath null
+    | [|"verify-pack"; packPath; mode|] ->
+        verifyPack packPath mode
+
     | [|"version"|] | [|"--version"|] ->
         printVersion()
+        ExitCodes.Success
+
+    | [|"init"|] ->
+        let currentDir = Directory.GetCurrentDirectory()
+        Commands.createEmptyRepo currentDir
         ExitCodes.Success
 
     | _ ->

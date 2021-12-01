@@ -2,10 +2,10 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
-	<Deterministic>true</Deterministic>
+    <TargetFramework>net6.0</TargetFramework>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <PackageId>Fenrir.Git</PackageId>
     <Version>0.1.0</Version>
@@ -39,6 +39,7 @@ Fixed:
     <Compile Include="PackDeltaMethods.fs" />
     <Compile Include="Metadata.fs" />
     <Compile Include="Packing.fs" />
+    <Compile Include="PackVerification.fs" />
     <Compile Include="Commands.fs" />
   </ItemGroup>
 

@@ -13,7 +13,7 @@ let getPackPath (gitPath: String) (packFile: String) (extension: String) : Strin
     Path.Combine(gitPath, "objects", "pack", packFile + extension)
 
 // https://git-scm.com/docs/pack-format
-type private PackedObjectType =
+type PackedObjectType =
     | Commit = 1
     | Tree = 2
     | Blob = 3
@@ -21,22 +21,14 @@ type private PackedObjectType =
     | OfsDelta = 6
     | RefDelta = 7
 
-let getBigEndian (reader: BinaryReader) : int =
-    reader.ReadInt32() |> Net.IPAddress.NetworkToHostOrder
-
-let readHash (reader: BinaryReader) : String =
-    reader.ReadBytes 20
-        |> Array.fold (fun acc elem ->
-            String.Concat(acc, sprintf "%02x" elem)) ""
-
 let parseIndexOffset (path: String) (hash: String) : int =
     use idxReader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
     //skip header and fanout table
     idxReader.BaseStream.Position <- 1028L
     //last item in fanout table
-    let size = getBigEndian idxReader
+    let size = idxReader.ReadBigEndianInt()
     //hashes extraction
-    let hashes = Array.init size (fun _ -> readHash idxReader)
+    let hashes = Array.init size (fun _ -> idxReader.ReadHash())
     //position binary search of the hash
     let pos = Array.BinarySearch(hashes, hash)
     //skipping crc table and getting offset location
@@ -45,11 +37,11 @@ let parseIndexOffset (path: String) (hash: String) : int =
             idxReader.BaseStream.Position + int64 size * 4L
             + (int64 pos) * 4L
 
-        getBigEndian idxReader
+        idxReader.ReadBigEndianInt()
     else
         -1
 
-let private getObjectKind(bits: BitArray): PackedObjectType =
+let getObjectKind(bits: BitArray): PackedObjectType =
     let array = Array.zeroCreate 1
     bits.CopyTo(array, 0)
     enum array.[0]
@@ -62,38 +54,35 @@ type PackedObjectInfo =
     interface IDisposable with
         member this.Dispose() = this.Stream.Dispose()
 
-let rec parsePackInfo (path: String) (offset: int): PackedObjectInfo =
-    let getStream (path: String) (hash: String): PackedObjectInfo =
-        let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
-                    |> Array.map Path.GetFileName
-                    |> Array.map ((fun count (str: String) -> str.[0..str.Length - count - 1]) 4)
-        let mutable offset = -1
+let getObjectMeta (reader: BinaryReader): int * PackedObjectType =
+    let sizeBytes = readWhileLast isMsbSet (uint64 reader.BaseStream.Length) reader
+    let bits = sizeBytes.[0] |> byteToBits
+    let mutable size = sliceBitArray bits 0 3 |> bitsToInt
 
-        let containingPack = packs |> Array.tryFind (fun item ->
-            offset <- parseIndexOffset
-                      <| getPackPath path item ".idx"
-                      <| hash
-            offset <> -1)
+    size <- estimateSize size 4 sizeBytes.[1..]
+    let objectMask = sliceBitArray bits 4 6
+    (size, getObjectKind objectMask)
 
-        match offset with
-            | -1 -> failwithf "git repo is corrupted"
-            | _ -> parsePackInfo
-                   <| getPackPath path (Option.toObj containingPack) ".pack"
-                   <| offset
+let getNegOffset (reader: BinaryReader): int =
+    let mutable additional = 0
+    let mutable offStep = 0
+    (readWhileLast isMsbSet (uint64 reader.BaseStream.Length) reader
+        |> Array.fold (fun acc elem ->
+            additional <- additional + (1 <<< offStep)
+            offStep <- offStep + 7
+            (acc <<< 7) ||| int (elem % 128uy)
+            ) 0
+        )
+        + additional - 1
 
+let rec parsePackInfo (path: String) (offset: int) (getPackedObject: String -> String -> PackedObjectInfo) : PackedObjectInfo =
     use packReader = new BinaryReader(File.Open(path,
                                                 FileMode.Open,
                                                 FileAccess.Read,
                                                 FileShare.Read))
     packReader.BaseStream.Position <- int64 offset
 
-    let sizeBytes = readWhileLast isMsbSet (uint64 packReader.BaseStream.Length) packReader
-    let bits = sizeBytes.[0] |> byteToBits
-    let mutable size = sliceBitArray bits 0 3 |> bitsToInt
-
-    size <- estimateSize size 4 sizeBytes.[1..]
-    let objectMask = sliceBitArray bits 4 6
-    let packedObjectType = getObjectKind objectMask
+    let size, packedObjectType = getObjectMeta packReader
     match packedObjectType with
     | PackedObjectType.Commit | PackedObjectType.Tree | PackedObjectType.Blob | PackedObjectType.Tag ->
         let stream = new MemoryStream(size + 20 |> packReader.ReadBytes) |> getDecodedStream
@@ -106,34 +95,27 @@ let rec parsePackInfo (path: String) (offset: int): PackedObjectInfo =
         { ObjectType = objectType
           Stream = stream }
 
-    | PackedObjectType.OfsDelta ->
-        let mutable additional = 0
-        let mutable offStep = 0
-        let negOffset = (readWhileLast isMsbSet (uint64 packReader.BaseStream.Length) packReader
-                        |> Array.fold (fun acc elem ->
-                            additional <- additional + (1 <<< offStep)
-                            offStep <- offStep + 7
-                            (acc <<< 7) ||| int (elem % 128uy)
-                            ) 0
-                        )
-                        + additional - 1
+    | PackedObjectType.OfsDelta | PackedObjectType.RefDelta->
+        use deltifiedEntity =
+            match packedObjectType with
+            | PackedObjectType.OfsDelta ->
+                let negOffset = getNegOffset packReader
+                parsePackInfo path (offset - negOffset) getPackedObject
+            | PackedObjectType.RefDelta ->
+                let hash = packReader.ReadHash()
+                getPackedObject path hash
+            | _ -> failwith $"Can't get deltified entry for non delta object type {packedObjectType}"
 
-        use deltifiedEntity = parsePackInfo path (offset - negOffset)
         use nonDeltaReader = new BinaryReader(deltifiedEntity.Stream)
+        use stream = new MemoryStream(size + 20 |> packReader.ReadBytes) |> getDecodedStream
         { deltifiedEntity with
-            Stream = processDelta packReader nonDeltaReader size }
-    | PackedObjectType.RefDelta ->
-        let hash = packReader |> readHash
-        use deltifiedEntity = getStream path hash
-        use nonDeltaReader = new BinaryReader(deltifiedEntity.Stream)
-        { deltifiedEntity with
-            Stream = processDelta packReader nonDeltaReader size }
+            Stream = processDelta stream nonDeltaReader size }
     | o -> failwithf "Cannot parse object type from a pack file: %A" o
 
-let getPackedObject (path: String) (hash: String): PackedObjectInfo =
+let rec getPackedObject (path: String) (hash: String): PackedObjectInfo =
     let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
                 |> Array.map Path.GetFileName
-                |> Array.map ((fun count (str : String) -> str.[0..str.Length - count - 1]) 4)
+                |> Array.map ((fun count (str : string) -> str.[0..str.Length - count - 1]) 4)
     let mutable offset = -1
 
     let containingPack = packs |> Array.tryFind (fun item ->
@@ -143,7 +125,8 @@ let getPackedObject (path: String) (hash: String): PackedObjectInfo =
         offset <> -1)
 
     match offset with
-        | -1 -> failwithf "pack source not found, git repo is corrupted"
+        | -1 -> failwith $"pack source for {hash} not found, git repo is corrupted"
         | _ -> parsePackInfo
                <| getPackPath path (Option.toObj containingPack) ".pack"
                <| offset
+               <| getPackedObject
