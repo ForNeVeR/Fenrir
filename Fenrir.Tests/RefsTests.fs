@@ -20,7 +20,7 @@ let ``Ref list should be read properly``():unit =
     let expectedRefs = [|
         { Name = "refs/heads/feature/feature-name"; CommitObjectId = "cc07136d669554cf46ca4e9ef1eab7361336e1c8" }
         { Name = "refs/heads/master"; CommitObjectId = "cc07136d669554cf46ca4e9ef1eab7361336e1c8" }
-        { Name = "refs/remotes/origin/HEAD";  CommitObjectId = "ref: refs/remotes/origin/master" }
+        { Name = "refs/remotes/origin/HEAD";  CommitObjectId = "cc07136d669554cf46ca4e9ef1eab7361336e1c8" }
         { Name = "refs/remotes/origin/master"; CommitObjectId = "cc07136d669554cf46ca4e9ef1eab7361336e1c8" }
         { Name = "refs/tags/apr2016"; CommitObjectId = "953b93514f32c580081b81be9e2918214e9891a2" }
         { Name = "refs/tags/apr2017"; CommitObjectId = "77969da813b975ff6b7805814bb3c959cbcc1d6c" }
