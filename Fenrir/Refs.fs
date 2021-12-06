@@ -17,17 +17,26 @@ module Refs =
     let private prependName name ref =
         { ref with Name = sprintf "%s/%s" name ref.Name }
 
-    let rec private readRefsRecursively path =
+    let private resolveSymbolicReference (gitDirectoryPath : string) (symbolicRef: string) : string=
+        let pathToRef = Path.Combine(gitDirectoryPath, symbolicRef)
+        (File.ReadAllLines pathToRef).[0]
+
+    let rec private readRefsRecursively path repositoryPath =
         Directory.EnumerateFileSystemEntries path
         |> Seq.collect(fun entry ->
             let name = Path.GetFileName entry
             if Directory.Exists entry then
-                readRefsRecursively entry
+                readRefsRecursively entry repositoryPath
                 |> Seq.map(prependName name)
             else
                 let commitId = File.ReadLines entry |> Seq.head
-                Seq.singleton { Name = name; CommitObjectId = commitId }
-        )
+                if commitId.StartsWith("ref: ") then
+                    let ref = commitId.Split(' ')
+                    let resolvedCommitId = resolveSymbolicReference repositoryPath ref.[1]
+                    Seq.singleton { Name = name; CommitObjectId = resolvedCommitId }
+                else
+                     Seq.singleton { Name = name; CommitObjectId = commitId }
+                     )
 
 
     let private readPackedRefs (repositoryPath:string) :Ref seq=
@@ -48,7 +57,7 @@ module Refs =
         let refsDirectory = Path.Combine(repositoryPath, "refs")
         let packedRefs = readPackedRefs repositoryPath
 
-        readRefsRecursively refsDirectory
+        readRefsRecursively refsDirectory repositoryPath
         |> Seq.map(prependName "refs")
         |> Seq.append packedRefs
         |> Seq.sortBy(fun ref -> ref.Name)
