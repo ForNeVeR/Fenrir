@@ -10,11 +10,13 @@
     <ItemGroup>
         <Content Include="Data\**\*" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Data2\**\*" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Sha1CollisionData\**\*" CopyToOutputDirectory="PreserveNewest" />
         <Compile Include="TestUtils.fs" />
         <Compile Include="CommandTests.fs" />
         <Compile Include="RefsTests.fs" />
         <Compile Include="PackTests.fs" />
         <Compile Include="VerifyPackTests.fs" />
+        <Compile Include="Sha1Tests.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

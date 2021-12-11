@@ -5,13 +5,15 @@ open System.IO
 open System.Text
 open System.Reflection
 
-let testDataRoot: string =
+let executingAssemblyDirectory: string =
     let location = Assembly.GetExecutingAssembly().Location
-    Path.Combine(Path.GetDirectoryName(location), "Data")
+    Path.GetDirectoryName(location)
+
+let testDataRoot: string =
+    Path.Combine(executingAssemblyDirectory, "Data")
 
 let testMoreDateRoot: string =
-    let location = Assembly.GetExecutingAssembly().Location
-    Path.Combine(Path.GetDirectoryName(location), "Data2")
+    Path.Combine(executingAssemblyDirectory, "Data2")
 
 let toString (arr: byte array) =
     (arr |> Encoding.ASCII.GetString).Replace(Environment.NewLine, "\n")
