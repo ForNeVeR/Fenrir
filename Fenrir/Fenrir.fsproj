@@ -33,6 +33,7 @@ Fixed:
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="UbcCheck.fs" />
     <Compile Include="Sha1.fs" />
     <Compile Include="Refs.fs" />
     <Compile Include="Tools.fs" />
