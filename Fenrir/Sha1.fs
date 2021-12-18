@@ -1,3 +1,9 @@
+(***
+ * Copyright 2017 Marc Stevens <marc@marc-stevens.nl>, Dan Shumow (danshu@microsoft.com)
+ * Distributed under the MIT Software License.
+ * See accompanying file THIRD-PARTY-LICENSES.txt or copy at
+ * https://opensource.org/licenses/MIT
+ ***)
 module Fenrir.Sha1
 
 open System
@@ -163,7 +169,7 @@ let inline runBackward (fromStep: int) (w: uint32 array) (initialValue: HashValu
     for i = fromStep downto 0 do
         b <- rotateRight b 30
         getCoefs &f &k i b c d
-        
+
         tmp <- e - ((rotateLeft a 5) + f + k + w[i])
         e <- a
         a <- b
@@ -181,12 +187,12 @@ let inline runBackward (fromStep: int) (w: uint32 array) (initialValue: HashValu
 let calcChunk (bytes: ReadOnlySpan<byte>) (context: CalcHashContext) =
     for i = 0 to 79 do
         context.W[i] <- 0u
-        
+
     for i = 0 to 15 do
         context.W[i] <- BinaryPrimitives.ReverseEndianness(BitConverter.ToUInt32(bytes.Slice(i * 4, 4)))
     for i = 16 to 79 do
         context.W[i] <- rotateLeft (context.W[i - 3] ^^^ context.W[i - 8] ^^^ context.W[i - 14] ^^^ context.W[i - 16]) 1
-    
+
     let hash = runForward 0 context.W context.HashValue true context
 
     context.HashValue <- sum context.HashValue hash
@@ -234,7 +240,7 @@ let processTail (context: CalcHashContext) (bytesCount: int64) (tail: Span<byte>
         let fillWithZerosSlice = tail.Slice(significantBytesLeft + 1, 55 - significantBytesLeft)
         fillWithZerosSlice.Fill(0uy)
         setSizeToSpan tail bytesCount
-        calcChunkWithCollisionCheck tail context 
+        calcChunkWithCollisionCheck tail context
     else
         let fillWithZerosSlice = tail.Slice(significantBytesLeft + 1)
         fillWithZerosSlice.Fill(0uy)
@@ -242,7 +248,7 @@ let processTail (context: CalcHashContext) (bytesCount: int64) (tail: Span<byte>
         tail.Fill(0uy)
         setSizeToSpan tail bytesCount
         calcChunkWithCollisionCheck tail context
-        
+
 let calcSHA1Hash (data: Stream): byte array =
     let mutable context: CalcHashContext = {
         HashValue = initialValue ()
@@ -253,7 +259,7 @@ let calcSHA1Hash (data: Stream): byte array =
         W = Array.zeroCreate<uint32> 80
         W2 = null
     }
-    
+
     let chunk = Array.zeroCreate<byte> 64
     let chunkSpan = Span<byte>(chunk)
     let mutable l = 0;
@@ -262,10 +268,10 @@ let calcSHA1Hash (data: Stream): byte array =
         l <- readCount + l
         calcChunkWithCollisionCheck chunkSpan context
         readCount <- data.Read(chunkSpan)
-    
-    processTail context data.Length chunkSpan 
+
+    processTail context data.Length chunkSpan
     let res = Array.zeroCreate<byte> 20
     let hash = [| context.HashValue.A; context.HashValue.B; context.HashValue.C; context.HashValue.D; context.HashValue.E |]
                |> Array.map BinaryPrimitives.ReverseEndianness
     Buffer.BlockCopy(hash, 0, res, 0, 20)
-    res 
+    res

@@ -1,8 +1,9 @@
-// Copyright 2017 Marc Stevens <marc@marc-stevens.nl>, Dan Shumow <danshu@microsoft.com>
-// Distributed under the MIT Software License.
-// See accompanying file LICENSE.txt or copy at
-// https://opensource.org/licenses/MIT
-
+(***
+ * Copyright 2017 Marc Stevens <marc@marc-stevens.nl>, Dan Shumow (danshu@microsoft.com)
+ * Distributed under the MIT Software License.
+ * See accompanying file THIRD-PARTY-LICENSES.txt or copy at
+ * https://opensource.org/licenses/MIT
+ ***)
 module Fenrir.UbcCheck
 
 //https://github.com/cr-marcstevens/sha1collisiondetection/blob/master/lib/ubc_check.c
@@ -40,7 +41,7 @@ let DV_II_55_0_bit = 1u <<< 30
 let DV_II_56_0_bit = 1u <<< 31
 
 
-let runUbcCheck (W: uint32 array): uint32 = 
+let runUbcCheck (W: uint32 array): uint32 =
     let mutable mask = ~~~(0u)
     mask <- mask &&& (((((W[44] ^^^ W[45]) >>> 29) &&& 1u) - 1u) ||| ~~~(DV_I_48_0_bit ||| DV_I_51_0_bit ||| DV_I_52_0_bit ||| DV_II_45_0_bit ||| DV_II_46_0_bit ||| DV_II_50_0_bit ||| DV_II_51_0_bit))
     mask <- mask &&& (((((W[49] ^^^ W[50]) >>> 29) &&& 1u) - 1u) ||| ~~~(DV_I_46_0_bit ||| DV_II_45_0_bit ||| DV_II_50_0_bit ||| DV_II_51_0_bit ||| DV_II_55_0_bit ||| DV_II_56_0_bit))
@@ -170,7 +171,7 @@ let runUbcCheck (W: uint32 array): uint32 =
     if (mask &&& (DV_I_51_0_bit ||| DV_II_47_0_bit) <> 0u) then
         mask <- mask &&& ((((W[35] ^^^ (W[39] >>> 25)) &&& (1u <<< 3)) - (1u <<< 3)) ||| ~~~(DV_I_51_0_bit ||| DV_II_47_0_bit))
 
-    if (mask <> 0u) then 
+    if (mask <> 0u) then
         if ((mask &&& DV_I_43_0_bit) <> 0u) then
              if (((W[61] ^^^ (W[62] >>> 5)) &&& (1u <<< 1) = 0u) || ((W[59] ^^^ (W[63] >>> 25)) &&& (1u <<< 5) <> 0u) || ((W[58] ^^^ (W[63] >>> 30)) &&& (1u <<< 0)) = 0u) then
                 mask <- mask &&& ~~~DV_I_43_0_bit
