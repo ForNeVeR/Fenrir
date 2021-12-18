@@ -8,7 +8,7 @@ Build
 
 ### Prerequisites
 
-- [.NET SDK][dotnet-sdk] 5.0 or later
+- [.NET SDK][dotnet-sdk] 6.0 or later
 
 ### Build
 
