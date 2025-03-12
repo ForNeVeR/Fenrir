@@ -17,6 +17,7 @@ jobs:
     strategy:
       matrix:
         image: [macos-14, ubuntu-24.04, windows-2022]
+      fail-fast: false
     env:
       NUGET_PACKAGES: ${{ github.workspace }}/.github/nuget-packages
     steps:
