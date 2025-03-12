@@ -36,7 +36,7 @@ jobs:
         run: dotnet publish --configuration Release --output publish ./Fenrir/Fenrir.fsproj
 
       - name: Upload Distribution
-        if: matrix.image == 'ubuntu-18.04'
+        if: runner.os == 'Linux'
         uses: actions/upload-artifact@v1.0.0
         with:
           name: distribution
