@@ -1,4 +1,8 @@
-﻿name: Main
+﻿# SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
+#
+# SPDX-License-Identifier: MIT
+
+name: Main
 on:
   push:
     branches:
@@ -41,3 +45,12 @@ jobs:
         with:
           name: distribution
           path: publish
+
+  encoding:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the sources
+        uses: actions/checkout@v4
+      - name: Verify encoding
+        shell: pwsh
+        run: scripts/Test-Encoding.ps1

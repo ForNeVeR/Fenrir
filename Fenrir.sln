@@ -13,9 +13,14 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fenrir.Application", "Fenri
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3066AB95-F91A-4C05-8179-DAF6F35C0194}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{3E0C38E9-D75F-4E37-BE5F-DEBE72DA8B55}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{37868304-DAEC-46B7-AEE7-03B0B117A051}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\Test-Encoding.ps1 = scripts\Test-Encoding.ps1
+	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{9DE8F533-BEDB-48D0-8502-26D8DB9BCEAC}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{153DB267-A8D5-4621-A2E3-8DCFB73EC587}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{103D6203-641C-4866-A259-D81ADC1EEA8A}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\main.yml = .github\workflows\main.yml
 		.github\workflows\nuget.yml = .github\workflows\nuget.yml
@@ -51,6 +56,6 @@ Global
 		SolutionGuid = {4D034E21-8156-4D69-8EC2-37DB062067BF}
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{9DE8F533-BEDB-48D0-8502-26D8DB9BCEAC} = {3E0C38E9-D75F-4E37-BE5F-DEBE72DA8B55}
+		{103D6203-641C-4866-A259-D81ADC1EEA8A} = {153DB267-A8D5-4621-A2E3-8DCFB73EC587}
 	EndGlobalSection
 EndGlobal
