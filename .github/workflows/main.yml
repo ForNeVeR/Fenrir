@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.image }}
     strategy:
       matrix:
-        image: [macos-latest , ubuntu-latest, windows-latest ]
+        image: [macos-14, ubuntu-24.04, windows-2022]
     env:
       NUGET_PACKAGES: ${{ github.workspace }}/.github/nuget-packages
     steps:
