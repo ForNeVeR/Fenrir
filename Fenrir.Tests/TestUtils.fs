@@ -16,7 +16,7 @@ let testMoreDateRoot: string =
     Path.Combine(executingAssemblyDirectory, "Data2")
 
 let toString (arr: byte array) =
-    (arr |> Encoding.ASCII.GetString).Replace(Environment.NewLine, "\n")
+    (arr |> Encoding.UTF8.GetString).Replace(Environment.NewLine, "\n")
 
 let doInTempDirectory<'a>(action: string -> 'a): 'a =
     let tempDirectory = Path.GetTempFileName()
