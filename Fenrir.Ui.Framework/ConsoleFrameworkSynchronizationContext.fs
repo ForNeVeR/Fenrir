@@ -1,4 +1,4 @@
-﻿module Fenrir.Ui.Framework.ConsoleFrameworkSynchronizationContext
+module Fenrir.Ui.Framework.ConsoleFrameworkSynchronizationContext
 
 open System.Threading
 

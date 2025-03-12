@@ -1,4 +1,4 @@
-﻿module Fenrir.Metadata
+module Fenrir.Metadata
 
 type GitObjectType =
     | GitCommit = 0

@@ -1,4 +1,4 @@
-﻿module Fenrir.ArgumentCommands
+module Fenrir.ArgumentCommands
 
 open System
 open System.IO

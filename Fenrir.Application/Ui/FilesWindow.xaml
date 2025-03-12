@@ -1,4 +1,4 @@
-﻿<c:Window xmlns:c="clr-namespace:ConsoleFramework.Controls;assembly=ConsoleFramework"
+<c:Window xmlns:c="clr-namespace:ConsoleFramework.Controls;assembly=ConsoleFramework"
           xmlns:x="clr-namespace:ConsoleFramework.Xaml;assembly=ConsoleFramework"
           xmlns:controls="clr-namespace:Fenrir.Ui.Framework.Controls;assembly=Fenrir.Ui.Framework"
           MinHeight="10" MinWidth="25"

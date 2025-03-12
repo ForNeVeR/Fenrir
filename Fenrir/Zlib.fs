@@ -1,4 +1,4 @@
-﻿module Fenrir.Zlib
+module Fenrir.Zlib
 
 open System.IO
 open ICSharpCode.SharpZipLib.Zip.Compression

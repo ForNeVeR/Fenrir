@@ -1,4 +1,4 @@
-﻿namespace Fenrir.Ui.Framework.Controls
+namespace Fenrir.Ui.Framework.Controls
 
 open ConsoleFramework.Controls
 

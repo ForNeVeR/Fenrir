@@ -1,4 +1,4 @@
-﻿namespace Fenrir.Ui.Models
+namespace Fenrir.Ui.Models
 
 open System
 open System.Collections.Generic

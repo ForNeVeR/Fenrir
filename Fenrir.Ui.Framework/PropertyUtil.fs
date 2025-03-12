@@ -1,4 +1,4 @@
-﻿module Fenrir.Ui.Framework.PropertyUtil
+module Fenrir.Ui.Framework.PropertyUtil
 
 open System.ComponentModel
 

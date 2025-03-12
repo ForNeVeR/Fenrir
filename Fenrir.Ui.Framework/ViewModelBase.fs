@@ -1,4 +1,4 @@
-﻿namespace Fenrir.Ui.Framework
+namespace Fenrir.Ui.Framework
 
 open System.ComponentModel
 open System.Runtime.CompilerServices

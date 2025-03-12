@@ -1,4 +1,4 @@
-﻿module Fenrir.Tools
+module Fenrir.Tools
 
 open System
 open System.IO

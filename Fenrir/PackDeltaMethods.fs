@@ -1,4 +1,4 @@
-﻿module Fenrir.DeltaCommands
+module Fenrir.DeltaCommands
 
 open System.Collections
 open System.IO

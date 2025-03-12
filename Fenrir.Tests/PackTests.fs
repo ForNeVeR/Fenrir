@@ -1,4 +1,4 @@
-﻿module Fenrir.Tests.PackTests
+module Fenrir.Tests.PackTests
 
 open System.IO
 open Xunit

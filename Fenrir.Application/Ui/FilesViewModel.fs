@@ -1,4 +1,4 @@
-﻿namespace Fenrir.Ui
+namespace Fenrir.Ui
 
 open System.Collections.Generic
 open Binding.Observables

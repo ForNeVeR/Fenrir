@@ -1,4 +1,4 @@
-﻿module Fenrir.Ui.Framework.Native.Windows
+module Fenrir.Ui.Framework.Native.Windows
 
 open System
 open System.ComponentModel

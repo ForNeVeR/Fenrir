@@ -1,4 +1,4 @@
-﻿module Fenrir.Packing
+module Fenrir.Packing
 
 open System
 open System.Collections

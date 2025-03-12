@@ -1,4 +1,4 @@
-﻿module Fenrir.Tests.RefsTests
+module Fenrir.Tests.RefsTests
 
 open Xunit
 

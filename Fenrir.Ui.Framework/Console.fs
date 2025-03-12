@@ -1,4 +1,4 @@
-﻿module Fenrir.Ui.Framework.Console
+module Fenrir.Ui.Framework.Console
 
 open System
 

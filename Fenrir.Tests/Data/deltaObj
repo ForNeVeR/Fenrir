@@ -1,4 +1,4 @@
-﻿module Fenrir.Program
+module Fenrir.Program
 
 open System
 open System.IO

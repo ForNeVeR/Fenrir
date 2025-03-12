@@ -1,4 +1,4 @@
-﻿Third Party License List
+Third Party License List
 ========================
 The software using the following licenses is part of the Fenrir source code, and, accordingly, its binary artifacts.
 

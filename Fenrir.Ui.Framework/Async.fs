@@ -1,4 +1,4 @@
-﻿module Fenrir.Ui.Framework.Async
+module Fenrir.Ui.Framework.Async
 
 open System
 
