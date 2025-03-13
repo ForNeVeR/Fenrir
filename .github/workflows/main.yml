@@ -37,15 +37,6 @@ jobs:
         run: dotnet build --configuration Release
       - name: Test
         run: dotnet test --configuration Release
-      - name: Publish Distribution
-        run: dotnet publish --configuration Release --output publish ./Fenrir/Fenrir.fsproj
-
-      - name: Upload Distribution
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: distribution
-          path: publish
 
   licenses:
     runs-on: ubuntu-24.04
