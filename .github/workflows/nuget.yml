@@ -8,7 +8,6 @@ on:
     tags:
       - 'v*'
 
-
 jobs:
   nuget-push:
     runs-on: ubuntu-24.04
@@ -35,8 +34,6 @@ jobs:
 
     - name: Set up .NET SDK
       uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '5.0.x'
 
     - name: Prepare a NuGet package
       run: dotnet pack ./Fenrir/Fenrir.fsproj --configuration Release -p:Version=${{ steps.version.outputs.version }}

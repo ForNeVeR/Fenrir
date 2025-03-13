@@ -32,8 +32,6 @@ jobs:
           key: ${{ runner.os }}.nuget.${{ hashFiles('**/*.fsproj') }}
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
 
       - name: Build .NET Assemblies
         run: dotnet build --configuration Release
