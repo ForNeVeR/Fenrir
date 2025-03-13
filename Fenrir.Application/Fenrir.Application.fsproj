@@ -28,7 +28,7 @@ SPDX-License-Identifier: MIT
 
   <ItemGroup>
     <ProjectReference Include="..\Fenrir.Ui.Framework\Fenrir.Ui.Framework.fsproj" />
-    <ProjectReference Include="..\Fenrir\Fenrir.fsproj" />
+    <ProjectReference Include="..\Fenrir.Git\Fenrir.Git.fsproj" />
   </ItemGroup>
 
 </Project>

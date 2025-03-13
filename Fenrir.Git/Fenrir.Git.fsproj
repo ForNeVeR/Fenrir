@@ -13,18 +13,7 @@ SPDX-License-Identifier: MIT
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Fenrir.Git</PackageId>
-    <Title>Fenrir.Git</Title>
-    <AssemblyTitle>Fenrir.Git</AssemblyTitle>
-    <PackageReleaseNotes>Changed:
-Added:
-- #-1: Initial test
-
-Fixed:
-- #-2: Initial test 2
-    </PackageReleaseNotes>
-    <Description>Fenrir is a tool for inline modification of Git repositories.</Description>
-
+    <Description>Fenrir is a fully-managed toolset for working with Git repositories.</Description>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
@@ -45,6 +34,7 @@ Fixed:
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="ChangelogAutomation.MSBuild" Version="2.0.0" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
   </ItemGroup>
 
