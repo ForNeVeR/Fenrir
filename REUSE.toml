@@ -1,0 +1,17 @@
+version = 1
+SPDX-PackageName = "Fenrir"
+SPDX-PackageSupplier = "Fenrir contributors <https://github.com/ForNeVeR/Fenrir>"
+SPDX-PackageDownloadLocation = "https://github.com/ForNeVeR/Fenrir"
+
+[[annotations]]
+path = ["Fenrir.Tests/Data/**/*", "Fenrir.Tests/Data2/**/*"]
+precedence = "override"
+SPDX-FileCopyrightText = "2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["Fenrir.Tests/Sha1CollisionData/shattered-1.pdf", "Fenrir.Tests/Sha1CollisionData/shattered-2.pdf"]
+precedence = "override"
+SPDX-FileCopyrightText = "Copyright (c) 2017:\nMarc Stevens\nCryptology Group\nCentrum Wiskunde & Informatica\nP.O. Box 94079, 1090 GB Amsterdam, Netherlands\nmarc@marc-stevens.nl\n\nDan Shumow\nMicrosoft Research\ndanshu@microsoft.com"
+SPDX-License-Identifier = "MIT"
+

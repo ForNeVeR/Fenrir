@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
+//
+// SPDX-License-Identifier: MIT
+
 module Fenrir.Tests.RefsTests
 
 open Xunit

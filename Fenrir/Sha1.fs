@@ -1,9 +1,7 @@
-(***
- * Copyright 2017 Marc Stevens <marc@marc-stevens.nl>, Dan Shumow (danshu@microsoft.com)
- * Distributed under the MIT Software License.
- * See accompanying file THIRD-PARTY-LICENSES.txt or copy at
- * https://opensource.org/licenses/MIT
- ***)
+// SPDX-FileCopyrightText: 2017 Marc Stevens <marc@marc-stevens.nl>, Dan Shumow (danshu@microsoft.com)
+// SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
+//
+// SPDX-License-Identifier: MIT
 module Fenrir.Sha1
 
 open System

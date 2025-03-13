@@ -1,10 +1,13 @@
+// SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
+//
+// SPDX-License-Identifier: MIT
+
 module Fenrir.DeltaCommands
 
 open System.Collections
 open System.IO
 open System.Text
 open Fenrir.Tools
-open Fenrir.Zlib
 
 //checks if MSB (a.k.a. Most Significant Byte) is set to 1
 let isMsbSet (b: byte): bool =

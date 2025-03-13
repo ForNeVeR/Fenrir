@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
+//
+// SPDX-License-Identifier: MIT
+
 module Fenrir.PackVerification
 // https://git-scm.com/docs/pack-format
 

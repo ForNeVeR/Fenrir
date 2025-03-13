@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2021-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
+
+SPDX-License-Identifier: MIT
+-->
+
 # Changelog
 All notable changes to this project will be documented in this file.
 
