@@ -6,42 +6,41 @@ SPDX-License-Identifier: MIT
 
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
-    <Deterministic>true</Deterministic>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <Deterministic>true</Deterministic>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <Description>Fenrir is a fully-managed toolset for working with Git repositories.</Description>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-  </PropertyGroup>
+    <PropertyGroup>
+        <Description>Fenrir is a fully-managed toolset for working with Git repositories.</Description>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="UbcCheck.fs" />
-    <Compile Include="Sha1.fs" />
-    <Compile Include="Refs.fs" />
-    <Compile Include="Tools.fs" />
-    <Compile Include="Zlib.fs" />
-    <Compile Include="PackDeltaMethods.fs" />
-    <Compile Include="Metadata.fs" />
-    <Compile Include="Packing.fs" />
-    <Compile Include="PackVerification.fs" />
-    <Compile Include="Commands.fs" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Include="UbcCheck.fs" />
+        <Compile Include="Sha1.fs" />
+        <Compile Include="Refs.fs" />
+        <Compile Include="Tools.fs" />
+        <Compile Include="Zlib.fs" />
+        <Compile Include="PackDeltaMethods.fs" />
+        <Compile Include="Metadata.fs" />
+        <Compile Include="Packing.fs" />
+        <Compile Include="PackVerification.fs" />
+        <Compile Include="Commands.fs" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="ChangelogAutomation.MSBuild" Version="2.0.0" />
-    <PackageReference Include="SharpZipLib" Version="1.4.2" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="ChangelogAutomation.MSBuild" Version="2.0.0" />
+        <PackageReference Include="SharpZipLib" Version="1.4.2" />
+    </ItemGroup>
 
-  <ItemGroup Label="Packaging">
-    <None Include="..\CHANGELOG.md" Pack="true" PackagePath="\" />
-    <None Include="..\README.md" Pack="true" PackagePath="\" />
-  </ItemGroup>
+    <ItemGroup Label="Packaging">
+        <None Include="..\CHANGELOG.md" Pack="true" PackagePath="\" />
+        <None Include="..\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
 
 </Project>
-
