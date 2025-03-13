@@ -1,11 +1,31 @@
 <!--
-SPDX-FileCopyrightText: 2024-2025 Friedrich von Never <friedrich@fornever.me>
+SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
 
 SPDX-License-Identifier: MIT
 -->
 
 Contributor Guide
 =================
+
+Prerequisites
+-------------
+- [.NET SDK][dotnet-sdk] 9.0 or later.
+
+Build
+-----
+```console
+$ dotnet build
+```
+
+### Run From Sources
+```console
+$ dotnet run --project Fenrir -- [arguments...]
+```
+
+### Test
+```console
+$ dotnet test
+```
 
 License Automation
 ------------------
@@ -24,4 +44,5 @@ If the CI asks you to update the file licenses, follow one of these:
 
 (Feel free to attribute the changes to the "Fenrir contributors <https://github.com/ForNeVeR/Fenrir>" instead of your name in a multi-author file, or if you don't want your name to be mentioned in the project's source: this doesn't mean you'll lose the copyright.)
 
+[dotnet-sdk]: https://dot.net/
 [reuse]: https://reuse.software/

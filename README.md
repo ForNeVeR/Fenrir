@@ -9,31 +9,6 @@ Fenrir
 
 Fenrir is a tool for inline modification of Git repositories. More later.
 
-Build
------
-
-### Prerequisites
-
-- [.NET SDK][dotnet-sdk] 9.0 or later.
-
-### Build
-
-```console
-$ dotnet build
-```
-
-### Run
-
-```console
-$ dotnet run --project Fenrir -- [arguments...]
-```
-
-### Test
-
-```console
-$ dotnet test
-```
-
 Documentation
 -------------
 - [Changelog][docs.changelog]
@@ -50,5 +25,4 @@ The license indication in the project's sources is compliant with the [REUSE spe
 [docs.contributing]: CONTRIBUTING.md
 [docs.license]: LICENSE.txt
 [docs.maintaining]: MAINTAINING.md
-[dotnet-sdk]: https://dot.net/
 [reuse.spec]: https://reuse.software/spec-3.3/
