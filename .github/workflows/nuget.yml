@@ -53,7 +53,7 @@ jobs:
 
     - name: Publish for all os
       run: |
-        dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj --configuration Release
+        dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj --configuration Release --output publish
 
     - name: Package the application
       run: |
