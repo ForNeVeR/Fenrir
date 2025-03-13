@@ -14,12 +14,7 @@ SPDX-License-Identifier: MIT
 
   <PropertyGroup>
     <PackageId>Fenrir.Git</PackageId>
-    <Version>0.1.0</Version>
     <Title>Fenrir.Git</Title>
-    <Authors>ForNeVeR</Authors>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/ForNeVeR/Fenrir</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/ForNeVeR/Fenrir.git</RepositoryUrl>
     <AssemblyTitle>Fenrir.Git</AssemblyTitle>
     <PackageReleaseNotes>Changed:
 Added:
@@ -28,9 +23,7 @@ Added:
 Fixed:
 - #-2: Initial test 2
     </PackageReleaseNotes>
-    <PackageTags>Git;F#</PackageTags>
     <Description>Fenrir is a tool for inline modification of Git repositories.</Description>
-    <Copyright>TODO: create copyright</Copyright>
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>

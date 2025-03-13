@@ -5,8 +5,16 @@
 name: NuGet
 on:
   push:
+    branches:
+      - master
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: 0 0 * * 6
+  workflow_dispatch:
 
 jobs:
   nuget-push:
@@ -21,10 +29,10 @@ jobs:
     - name: Clone repo
       uses: actions/checkout@v4
 
-    - name: Read version from ref
-      id: version
+    - id: version
+      name: Get version
       shell: pwsh
-      run: Write-Output "::set-output name=version::$($env:GITHUB_REF -replace '^refs/tags/v', '')"
+      run: echo "version=$(scripts/Get-Version.ps1 -RefName $env:GITHUB_REF)" >> $env:GITHUB_OUTPUT
 
     - name: NuGet cache
       uses: actions/cache@v4
@@ -35,16 +43,33 @@ jobs:
     - name: Set up .NET SDK
       uses: actions/setup-dotnet@v4
 
+    - name: Read changelog
+      uses: ForNeVeR/ChangelogAutomation.action@v2
+      with:
+        output: ./release-notes.md
+
     - name: Prepare a NuGet package
       run: dotnet pack ./Fenrir/Fenrir.fsproj --configuration Release -p:Version=${{ steps.version.outputs.version }}
 
-    - name: Read changelog
-      id: changelog
-      uses: mindsers/changelog-reader-action@v2
-      with:
-        version: ${{ steps.version.outputs.version }}
+    - name: Publish for all os
+      run: |
+        dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj --configuration Release
 
-    - name: Create release
+    - name: Package the application
+      run: |
+        zip -r Fenrir.Application.${{ steps.version.outputs.version }}.zip ./publish/*
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        path: |-
+          ./release-notes.md
+          ./Fenrir/bin/Release/Fenrir.Git.${{ steps.version.outputs.version }}.nupkg
+          ./Fenrir/bin/Release/Fenrir.Git.${{ steps.version.outputs.version }}.snupkg
+          ./Fenrir.Application.${{ steps.version.outputs.version }}.zip
+
+    - if: startsWith(github.ref, 'refs/tags/v')
+      name: Create release
       id: release
       uses: actions/create-release@v1
       env:
@@ -54,68 +79,6 @@ jobs:
         release_name: Fenrir v${{ steps.version.outputs.version }}
         body: ${{ steps.changelog.outputs.changes }}
 
-    - name: Upload .nupkg file
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_name: Fenrir.${{ steps.version.outputs.version }}.nupkg
-        asset_path: ./Fenrir/bin/Release/Fenrir.Git.${{ steps.version.outputs.version }}.nupkg
-        asset_content_type: application/zip
-
-    - name: Upload .snupkg file
-      uses: actions/upload-release-asset@v1
-      env:
-         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-          upload_url: ${{ steps.release.outputs.upload_url }}
-          asset_name: Fenrir.${{ steps.version.outputs.version }}.snupkg
-          asset_path: ./Fenrir/bin/Release/Fenrir.Git.${{ steps.version.outputs.version }}.snupkg
-          asset_content_type: application/zip
-
-
-    - name: Publish for all os
-      run: |
-        dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj -c Release -o ./publish-win -r win-x64 --self-contained false
-        dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj -c Release -o ./publish-lin -r linux-x64 --self-contained false
-        dotnet publish ./Fenrir.Application/Fenrir.Application.fsproj -c Release -o ./publish-osx -r osx-x64 --self-contained false
-
-    - name: Archive all publish folders
-      run: |
-          zip -r publish-win.zip ./publish-win/*
-          zip -r publish-lin.zip ./publish-lin/*
-          zip -r publish-osx.zip ./publish-osx/*
-
-    - name: Upload windows publish archive
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_name: Fenrir.Application.windows.zip
-        asset_path: ./publish-win.zip
-        asset_content_type: application/zip
-
-    - name: Upload linux publish archive
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_name: Fenrir.Application.linux.zip
-        asset_path: ./publish-lin.zip
-        asset_content_type: application/zip
-
-    - name: Upload osx publish archive
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_name: Fenrir.Application.osx.zip
-        asset_path: ./publish-osx.zip
-        asset_content_type: application/zip
-
-#    - name: Push a package to NuGet
-#      run: dotnet nuget push ./Fenrir/bin/Release/Fenrir.${{ steps.version.outputs.version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_TOKEN }}
+    - if: startsWith(github.ref, 'refs/tags/v')
+      name: Push a package to NuGet
+      run: dotnet nuget push ./Fenrir/bin/Release/Fenrir.${{ steps.version.outputs.version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_TOKEN }}

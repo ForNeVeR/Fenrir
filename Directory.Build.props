@@ -1,0 +1,24 @@
+<!--
+SPDX-FileCopyrightText: 2024-2025 Friedrich von Never <friedrich@fornever.me>
+
+SPDX-License-Identifier: MIT
+-->
+
+<Project>
+    <PropertyGroup Label="Packaging">
+        <Version>0.1.0</Version>
+        <!-- REUSE-IgnoreStart -->
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Copyright>2020 Fenrir contributors &lt;https://github.com/ForNeVeR/Fenrir&gt;</Copyright>
+        <Authors>Fenrir contributors</Authors>
+        <PackageProjectUrl>https://github.com/ForNeVeR/Fenrir</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/ForNeVeR/Fenrir.git</RepositoryUrl>
+        <PackageTags>Git;F#</PackageTags>
+        <!-- REUSE-IgnoreEnd -->
+    </PropertyGroup>
+
+    <PropertyGroup Label="Build">
+        <Nullable>enable</Nullable>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+</Project>
