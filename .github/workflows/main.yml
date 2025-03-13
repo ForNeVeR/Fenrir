@@ -30,7 +30,7 @@ jobs:
         with:
           path: ${{ env.NUGET_PACKAGES }}
           key: ${{ runner.os }}.nuget.${{ hashFiles('**/*.fsproj') }}
-      - name: Setup .NET Core SDK
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
 
       - name: Build .NET Assemblies
