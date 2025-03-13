@@ -22,7 +22,7 @@ type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
             |> Seq.tryItem (commit.Rest.Length - 2)
             |> Option.filter (not << String.IsNullOrWhiteSpace)
             |> Option.defaultValue "[NO MESSAGE]"
-        // TODO: Properly gather commit messages
+        // TODO[#88]: Properly gather commit messages
 
     let mutable commits: IReadOnlyList<CommitBody> = upcast Array.empty
     let mutable selectedCommitIndex: Nullable<int32> = Unchecked.defaultof<_>
@@ -44,7 +44,7 @@ type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
 
     override this.Initialize() =
         PropertyUtil.onPropertyChange refs (nameof refs.SelectedRef) (fun () ->
-            // TODO: Cancel previous request if it wasn't applied yet
+            // TODO[#89]: Cancel previous request if it wasn't applied yet
             this.IsLoading <- true
             match refs.SelectedRef with
             | None ->
