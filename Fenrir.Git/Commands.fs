@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-module Fenrir.Commands
+module Fenrir.Git.Commands
 
 open System
 open System.Text
@@ -10,11 +10,11 @@ open System.Globalization
 open System.IO
 open System.Security.Cryptography
 
-open Fenrir.Metadata
-open Fenrir.Packing
-open Fenrir.PackVerification
-open Fenrir.Tools
-open Fenrir.Zlib
+open Fenrir.Git.Metadata
+open Fenrir.Git.Packing
+open Fenrir.Git.PackVerification
+open Fenrir.Git.Tools
+open Fenrir.Git.Zlib
 
 let getRawObjectPath (gitDirectoryPath: string) (objectHash: string): string =
     Path.Combine(gitDirectoryPath, "objects", objectHash.Substring(0, 2), objectHash.Substring(2, 38))

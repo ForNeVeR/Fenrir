@@ -50,6 +50,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{531E2CF1-7
 		docs\docfx.json = docs\docfx.json
 		docs\index.md = docs\index.md
 		docs\toc.yml = docs\toc.yml
+		docs\Fenrir.Git.namespace.md = docs\Fenrir.Git.namespace.md
 	EndProjectSection
 EndProject
 Global

@@ -6,7 +6,7 @@ module Fenrir.Tests.VerifyPackTests
 
 open System
 open System.IO
-open Fenrir.PackVerification
+open Fenrir.Git.PackVerification
 open Xunit
 
 open Fenrir.Tests.TestUtils

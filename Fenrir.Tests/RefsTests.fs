@@ -6,7 +6,7 @@ module Fenrir.Tests.RefsTests
 
 open Xunit
 
-open Fenrir
+open Fenrir.Git
 open Fenrir.Tests.TestUtils
 
 [<Fact>]
@@ -17,7 +17,7 @@ let ``Attached head should be recognized properly``(): unit =
 let ``Detached head should be recognized properly``(): unit =
     Assert.True(Refs.isHeadDetached("Data2"))
 
-    
+
 [<Fact>]
 let ``Ref list should be read properly``():unit =
     let refs = Refs.readRefs testDataRoot
@@ -32,7 +32,7 @@ let ``Ref list should be read properly``():unit =
 
     |]
     Assert.Equal<Ref>(expectedRefs, refs)
-    
+
 
 [<Fact>]
 let ``Refs should be identified properly``(): unit =

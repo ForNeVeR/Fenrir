@@ -9,7 +9,7 @@ open System.Collections.Generic
 
 open Binding.Observables
 
-open Fenrir.Metadata
+open Fenrir.Git.Metadata
 open Fenrir.Ui.Framework
 open Fenrir.Ui.Models
 

@@ -2,13 +2,13 @@
 // SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
 //
 // SPDX-License-Identifier: MIT
-module Fenrir.Sha1
+module Fenrir.Git.Sha1
 
 open System
 open System.Buffers.Binary
 open System.IO
 open Microsoft.FSharp.Core
-open Fenrir.UbcCheck
+open Fenrir.Git.UbcCheck
 #nowarn "3391" // implicit conversion from Span to ReadOnlySpan
 
 type HashValue = {

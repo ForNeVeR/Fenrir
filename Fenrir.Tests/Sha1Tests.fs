@@ -8,7 +8,7 @@ open System
 open System.IO
 open System.Security.Cryptography
 open Xunit
-open Fenrir.Sha1
+open Fenrir.Git.Sha1
 open Fenrir.Tests.TestUtils
 
 let calcHashByImplementation (data: byte array) =
@@ -59,7 +59,7 @@ let ``Run shattered with collision fix`` () : unit =
     let hash1 = calcHashByImplementation pdf1
     let hash2 = calcHashByImplementation pdf2
 
-    
+
     Assert.NotEqual<string>(hash1, hash2)
     Assert.Equal("16e96b70000dd1e7c85b8368ee197754400e58ec", hash1, true, false, false)
     Assert.Equal("e1761773e6a35916d99f891b77663e6405313587", hash2, true, false, false)

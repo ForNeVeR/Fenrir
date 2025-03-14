@@ -23,12 +23,8 @@
         ]
       }
     ],
-    "resource": [
-      {
-        "files": [
-          "images/**"
-        ]
-      }
+    "overwrite": [
+      "*.namespace.md"
     ],
     "output": "_site",
     "template": [

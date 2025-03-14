@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-module Fenrir.Zlib
+module Fenrir.Git.Zlib
 
 open System.IO
 open ICSharpCode.SharpZipLib.Zip.Compression

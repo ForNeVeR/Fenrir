@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: MIT
 
-module Fenrir.DeltaCommands
+module Fenrir.Git.DeltaCommands
 
 open System.Collections
 open System.IO
 open System.Text
-open Fenrir.Tools
+open Fenrir.Git.Tools
 
 //checks if MSB (a.k.a. Most Significant Byte) is set to 1
 let isMsbSet (b: byte): bool =

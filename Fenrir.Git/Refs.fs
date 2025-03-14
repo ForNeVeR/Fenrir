@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-namespace Fenrir
+namespace Fenrir.Git
 
 open System
 
@@ -66,8 +66,8 @@ module Refs =
         |> Seq.append packedRefs
         |> Seq.sortBy(fun ref -> ref.Name)
 
-        
-        
+
+
 
 
     let identifyRefs (commitHash: string) (repositoryPath: string): Ref seq =

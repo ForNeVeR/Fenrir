@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-module Fenrir.Tools
+module Fenrir.Git.Tools
 
 open System
 open System.IO

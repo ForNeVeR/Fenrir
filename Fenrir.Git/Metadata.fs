@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-module Fenrir.Metadata
+module Fenrir.Git.Metadata
 
 type GitObjectType =
     | GitCommit = 0

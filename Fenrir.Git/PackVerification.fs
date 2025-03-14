@@ -2,17 +2,17 @@
 //
 // SPDX-License-Identifier: MIT
 
-module Fenrir.PackVerification
+module Fenrir.Git.PackVerification
 // https://git-scm.com/docs/pack-format
 
 open System
 open System.IO
 open System.Security.Cryptography
 open System.Text
-open Fenrir.Metadata
-open Fenrir.DeltaCommands
-open Fenrir.Tools
-open Fenrir.Packing
+open Fenrir.Git.Metadata
+open Fenrir.Git.DeltaCommands
+open Fenrir.Git.Tools
+open Fenrir.Git.Packing
 open Microsoft.FSharp.Core
 
 let verifyPackHeader (reader: BinaryReader) : int =

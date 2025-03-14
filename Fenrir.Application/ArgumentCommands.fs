@@ -7,7 +7,8 @@ module Fenrir.ArgumentCommands
 open System
 open System.IO
 
-open Fenrir.Metadata
+open Fenrir.Git
+open Fenrir.Git.Metadata
 
 module ExitCodes =
     let Success = 0

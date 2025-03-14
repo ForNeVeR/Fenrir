@@ -7,9 +7,9 @@ namespace Fenrir.Ui.Models
 open System
 open System.Collections.Generic
 
-open Fenrir
-open Fenrir.Commands
-open Fenrir.Metadata
+open Fenrir.Git
+open Fenrir.Git.Commands
+open Fenrir.Git.Metadata
 
 type GitRepositoryModel(gitDirectoryPath: string) =
     let rec readTreeRecursively(hash: string) =

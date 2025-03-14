@@ -2,16 +2,16 @@
 //
 // SPDX-License-Identifier: MIT
 
-module Fenrir.Packing
+module Fenrir.Git.Packing
 
 open System
 open System.Collections
 open System.IO
 
-open Fenrir.DeltaCommands
-open Fenrir.Metadata
-open Fenrir.Tools
-open Fenrir.Zlib
+open Fenrir.Git.DeltaCommands
+open Fenrir.Git.Metadata
+open Fenrir.Git.Tools
+open Fenrir.Git.Zlib
 
 let getPackPath (gitPath: String) (packFile: String) (extension: String) : String =
     Path.Combine(gitPath, "objects", "pack", packFile + extension)

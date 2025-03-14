@@ -8,7 +8,7 @@ open System.IO
 open Xunit
 
 open Fenrir.Tests.TestUtils
-open Fenrir.Packing
+open Fenrir.Git.Packing
 
 let private packTest (bom: bool) (hash: string) (source: string): unit =
     // Some of our test data objects include UTF-8 BOM due to historical reasons, while actual text has been cleaned up.

@@ -8,9 +8,9 @@ open System
 open System.IO
 open System.Reflection
 
-open Fenrir
+open Fenrir.Git
 open Fenrir.ArgumentCommands
-open Fenrir.Metadata
+open Fenrir.Git.Metadata
 
 let private printVersion() =
     let version = Assembly.GetExecutingAssembly().GetName().Version
