@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
         <Authors>Fenrir contributors</Authors>
         <PackageProjectUrl>https://github.com/ForNeVeR/Fenrir</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ForNeVeR/Fenrir.git</RepositoryUrl>
-        <PackageTags>Git;F#</PackageTags>
+        <PackageTags>Git</PackageTags>
         <!-- REUSE-IgnoreEnd -->
     </PropertyGroup>
 

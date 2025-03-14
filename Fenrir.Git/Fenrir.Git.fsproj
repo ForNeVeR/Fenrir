@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
     </PropertyGroup>
 
     <PropertyGroup>
-        <Description>Fenrir is a fully-managed toolset for working with Git repositories.</Description>
+        <Description>Fenrir is a .NET library to work with Git repositories. It provides functions to read Git objects, traverse the commit graph, extract trees and files from any commit, etc. Essentially, it provides tools to create your own Git client, or transform a repository in any way.</Description>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <IncludeSymbols>true</IncludeSymbols>
