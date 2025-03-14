@@ -86,7 +86,7 @@ Usage:
     Print the program version.
 ```
 
-If you are looking for some usage examples, check the `GitRepositoryModel` file, or see [the API documentation][docs.api].
+If you are looking for some usage examples, check [the `GitRepositoryModel.fs` file][examples.git-repository-model], or see [the API documentation][docs.api].
 
 Versioning Policy
 -----------------
@@ -109,6 +109,7 @@ The license indication in the project's sources is compliant with the [REUSE spe
 [docs.contributing]: CONTRIBUTING.md
 [docs.license]: LICENSE.txt
 [docs.maintaining]: MAINTAINING.md
+[examples.git-repository-model]: Fenrir.Application/Ui/Models/GitRepositoryModel.fs
 [nuget]: https://www.nuget.org/packages/Fenrir.Git
 [releases]: https://github.com/ForNeVeR/Fenrir/releases
 [reuse.spec]: https://reuse.software/spec-3.3/
