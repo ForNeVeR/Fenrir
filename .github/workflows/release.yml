@@ -64,20 +64,20 @@ jobs:
       with:
         path: |-
           ./release-notes.md
-          ./Fenrir/bin/Release/Fenrir.Git.${{ steps.version.outputs.version }}.nupkg
-          ./Fenrir/bin/Release/Fenrir.Git.${{ steps.version.outputs.version }}.snupkg
+          ./Fenrir.Git/bin/Release/Fenrir.Git.${{ steps.version.outputs.version }}.nupkg
+          ./Fenrir.Git/bin/Release/Fenrir.Git.${{ steps.version.outputs.version }}.snupkg
           ./Fenrir.Application.${{ steps.version.outputs.version }}.zip
 
     - if: startsWith(github.ref, 'refs/tags/v')
-      name: Create release
-      id: release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      name: Create a release
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Fenrir v${{ steps.version.outputs.version }}
-        body: ${{ steps.changelog.outputs.changes }}
+        name: Fenrir v${{ steps.version.outputs.version }}
+        body_path: ./release-notes.md
+        files: |-
+          ./Fenrir.Git/bin/Release/Fenrir.Git.${{ steps.version.outputs.version }}.nupkg
+          ./Fenrir.Git/bin/Release/Fenrir.Git.${{ steps.version.outputs.version }}.snupkg
+          ./Fenrir.Application.${{ steps.version.outputs.version }}.zip
 
     - if: startsWith(github.ref, 'refs/tags/v')
       name: Push a package to NuGet
