@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
         <OutputType>Library</OutputType>
         <TargetFramework>net9.0</TargetFramework>
         <Deterministic>true</Deterministic>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup>

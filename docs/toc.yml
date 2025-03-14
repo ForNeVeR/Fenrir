@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Friedrich von Never <friedrich@fornever.me>
+#
+# SPDX-License-Identifier: MIT
+
+- name: API
+  href: api/Fenrir.Git.yml

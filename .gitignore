@@ -2,13 +2,18 @@
 #
 # SPDX-License-Identifier: MIT
 
-/.idea/
-
+# The build system items:
 bin/
 obj/
 
+# ReSharper/Rider:
+/.idea/
 *.DotSettings.user
 
-# VS files and dirs
+# Visual Studio:
 .vs/
 *.user
+
+# Documentation generator:
+/docs/_site/
+/docs/api/

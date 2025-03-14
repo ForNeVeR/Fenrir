@@ -27,6 +27,16 @@ $ dotnet run --project Fenrir -- [arguments...]
 $ dotnet test
 ```
 
+Documentation Generator
+-----------------------
+To open the generated project documentation site locally, use the following shell commands:
+```console
+$ dotnet tool restore
+$ dotnet docfx docs/docfx.json --serve
+```
+
+Then, open http://localhost:8080/ and browse the documentation.
+
 License Automation
 ------------------
 If the CI asks you to update the file licenses, follow one of these:
