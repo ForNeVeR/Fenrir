@@ -25,4 +25,6 @@ Basically, the repository consists of [_refs_](api/Fenrir.Git.Refs.yml), each of
 
 Fenrir provides tools to navigate the commit graph and get any data on the Git objects, and some tools for working on refs.
 
+Proceed to the documentation on @Fenrir.Git namespace to read more.
+
 [git-book.section-10]: https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
