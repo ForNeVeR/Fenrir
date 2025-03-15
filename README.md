@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeV
 SPDX-License-Identifier: MIT
 -->
 
-Fenrir
+Fenrir [![NuGet package][nuget.badge]][nuget.page]
 ======
 Fenrir is a .NET library to work with Git repositories. It provides functions to read Git objects, traverse the commit graph, extract trees and files from any commit, etc. Essentially, it provides tools to create your own Git client, or transform a repository in any way.
 
@@ -110,6 +110,8 @@ The license indication in the project's sources is compliant with the [REUSE spe
 [docs.license]: LICENSE.txt
 [docs.maintaining]: MAINTAINING.md
 [examples.git-repository-model]: Fenrir.Application/Ui/Models/GitRepositoryModel.fs
+[nuget.badge]: https://img.shields.io/nuget/v/Fenrir.Git
+[nuget.page]: https://www.nuget.org/packages/Fenrir.Git
 [nuget]: https://www.nuget.org/packages/Fenrir.Git
 [releases]: https://github.com/ForNeVeR/Fenrir/releases
 [reuse.spec]: https://reuse.software/spec-3.3/
