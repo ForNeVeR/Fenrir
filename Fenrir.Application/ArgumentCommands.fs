@@ -15,7 +15,7 @@ module ExitCodes =
     let UnrecognizedArguments = 1
 
 let private printUnrecognizedArguments argv =
-    printfn "Arguments were not recognized: %A" argv
+    printfn $"Arguments were not recognized: %A{argv}."
 
 let unrecognizedArgs(argv: string[]): int =
     printUnrecognizedArguments argv
@@ -36,7 +36,7 @@ If at any moment your repository has turned FUBAR, consider revising the results
         let blobHash = Commands.headifyStream GitObjectType.GitBlob inputBlob headedBlob
         Commands.writeStreamToFile pathToRepo headedBlob blobHash
         use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
-        let newRootTreeHash = treeStreams.Hashes.[0]
+        let newRootTreeHash = treeStreams.Hashes[0]
         let newCommit = Commands.changeHashInCommit oldCommit (newRootTreeHash |> Tools.stringToByte)
         use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
         use headedCommit = new MemoryStream()
@@ -49,8 +49,8 @@ If at any moment your repository has turned FUBAR, consider revising the results
         Refs.updateAllRefs commitHash newCommitHash pathToDotGit
     ExitCodes.Success
 
-let verifyPack (packPath: string) (modeKey: string) =
-    let packFileName = Path.ChangeExtension(packPath, ".pack")
+let verifyPack (packPath: string) (modeKey: string | null) =
+    let packFileName = nonNull <| Path.ChangeExtension(packPath, ".pack")
     if (not (File.Exists(packPath))) then
         printfn $"{packPath} file not found"
         ExitCodes.UnrecognizedArguments

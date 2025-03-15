@@ -20,7 +20,9 @@ let private loadFromXaml<'a when 'a :> Control> resourceName (dataContext: obj) 
     // This function was copied from ConsoleFramework.ConsoleApplication.LoadFromXaml, but uses the current assembly
     // instead of the entry one.
     use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream resourceName
-    if isNull stream then failwithf "Could not load resource %s" resourceName
+    match stream with
+    | null -> failwithf $"Could not load resource \"{resourceName}\"."
+    | stream ->
 
     use reader = new StreamReader(stream)
     let control = XamlParser.CreateFromXaml<'a>(reader.ReadToEnd(), dataContext, ResizeArray())
