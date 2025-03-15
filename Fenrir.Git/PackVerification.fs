@@ -71,7 +71,7 @@ let unpack (reader: BinaryReader) (size: int) =
 
 let resolveDeltaChain (reader: BinaryReader) (root: PackObjectInfo) (refDeltas: PackObjectInfo list) (ofsDeltas: PackObjectInfo list): seq<VerifyPackObjectInfo> =
     let calcHash (objectType: GitObjectType) (dataStream: MemoryStream) =
-        use sha1 = HashAlgorithm.Create("SHA1")
+        use sha1 = SHA1.Create()
         let objectTypeName = getTypeName objectType
 
         let bytes =
@@ -221,7 +221,7 @@ let verifyPackHash (reader: BinaryReader) (lastObject: VerifyPackObjectInfo) =
     reader.BaseStream.Seek(0L, SeekOrigin.Begin)
     |> ignore
 
-    use sha1 = HashAlgorithm.Create("SHA1")
+    use sha1 = SHA1.Create()
 
     let hash =
         reader.ReadBytes(int objectsEnd)

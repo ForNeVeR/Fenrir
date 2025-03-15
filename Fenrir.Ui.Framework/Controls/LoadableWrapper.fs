@@ -18,7 +18,7 @@ type LoadableWrapper() as this =
 
     [<VolatileField>]
     let mutable loading = true
-    let mutable content: Control = null
+    let mutable content: Control | null = null
     let children = Control.UIElementCollection(this) // used for UI event propagation to the child control
 
     member this.Content with get() = content
@@ -29,20 +29,26 @@ type LoadableWrapper() as this =
         children.Add value |> ignore
 
     member _.IsLoading with get() = loading
-    member this.IsLoading with set(value) =
+    member this.IsLoading with set value =
         loading <- value
-        if not <| isNull content then
+        let content = content
+        match content with
+        | null -> ()
+        | content ->
             content.Visibility <- if value then Visibility.Collapsed else Visibility.Visible
         this.Invalidate()
 
     override this.MeasureOverride(availableSize) =
         if loading then Size(loadingText.Length, 1)
         else
+            let content = nullArgCheck (nameof content) content
             content.Measure availableSize
             content.DesiredSize
 
     override this.ArrangeOverride(finalSize) =
-        if not loading then content.Arrange(Rect(finalSize))
+        if not loading then
+            let content = nullArgCheck (nameof content) content
+            content.Arrange(Rect(finalSize))
         finalSize
 
     member private this.RenderLoadingPlaceholder(buffer: RenderingBuffer) =
@@ -57,10 +63,12 @@ type LoadableWrapper() as this =
         for x in 0..actualWidth do
             for y in 0..actualHeight do
                 if y = 0 && x < loadingText.Length then
-                    buffer.SetPixel(offset.X + x, offset.Y + y, loadingText.[x], attr)
+                    buffer.SetPixel(offset.X + x, offset.Y + y, loadingText[x], attr)
 
         buffer.SetOpacityRect(0, 0, actualWidth, actualHeight, 3)
 
     override this.Render(buffer) =
         if loading then this.RenderLoadingPlaceholder buffer
-        else content.Render buffer
+        else
+            let content = nullArgCheck (nameof content) content
+            content.Render buffer

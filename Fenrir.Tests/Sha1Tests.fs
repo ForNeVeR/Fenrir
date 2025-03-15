@@ -16,7 +16,7 @@ let calcHashByImplementation (data: byte array) =
     calcSHA1Hash ms |> Convert.ToHexString
 
 let calcBuiltinHash (data: byte array) =
-    use sha1 = HashAlgorithm.Create("SHA1")
+    use sha1 = SHA1.Create()
     sha1.ComputeHash(data) |> Convert.ToHexString
 
 [<Fact>]

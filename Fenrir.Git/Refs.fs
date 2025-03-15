@@ -31,7 +31,7 @@ module Refs =
     let rec private readRefsRecursively path repositoryPath =
         Directory.EnumerateFileSystemEntries path
         |> Seq.collect(fun entry ->
-            let name = Path.GetFileName entry
+            let name = nonNull <| Path.GetFileName entry
             if Directory.Exists entry then
                 readRefsRecursively entry repositoryPath
                 |> Seq.map(prependName name)

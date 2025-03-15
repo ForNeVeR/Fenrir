@@ -11,7 +11,6 @@ open System
 open System.Text
 open System.Globalization
 open System.IO
-open System.Security.Cryptography
 
 open Fenrir.Git.Metadata
 open Fenrir.Git.Packing
@@ -72,11 +71,11 @@ let refsCommand(path: string): unit =
     |> Seq.iter(fun ref -> printfn "%s: %s" ref.Name ref.CommitObjectId)
 
 let getHeadlessCommitBody (decodedInput: MemoryStream): CommitBody =
-    let enc = System.Text.Encoding.UTF8
+    let enc = Encoding.UTF8
     use sr = new StreamReader(decodedInput, enc)
-    let tree = sr.ReadLine().Substring(5)
+    let tree = nonNull(sr.ReadLine()).Substring(5)
     let rec parseParents (s : StreamReader) (P : String list) : (String list * String[]) =
-        let str = s.ReadLine()
+        let str = nonNull <| s.ReadLine()
         match str.Substring(0, 7) with
             | "parent " -> parseParents s (List.append P [str.Substring(7, 40)])
             | _         -> (P, [|str|])
@@ -89,7 +88,7 @@ let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
         | GitObjectType.GitTree   -> failwithf "Found tree file instead of commit file"
         | GitObjectType.GitBlob   -> failwithf "Found blob file instead of commit file"
         | GitObjectType.GitCommit -> getHeadlessCommitBody decodedInput
-
+        | x -> failwithf $"Unknown Git object type: {x}."
 
 let parseCommitBody (path : String) (hash : String) : CommitBody =
     let pathToFile = getRawObjectPath path hash
@@ -119,6 +118,7 @@ let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
         | GitObjectType.GitCommit   -> failwithf "Found commit file instead of tree file"
         | GitObjectType.GitBlob     -> failwithf "Found blob file instead of tree file"
         | GitObjectType.GitTree     -> getHeadlessTreeBody hd.Size decodedInput
+        | x -> failwithf $"Unknown Git object type: {x}."
 
 /// <summary>Parses a tree object information.</summary>
 /// <param name="path">Path to a repository's <c>.git</c> folder.</param>
@@ -150,9 +150,9 @@ let doAndRewind (action: Stream -> unit): MemoryStream =
     output.Position <- 0L
     output
 
-let SHA1 (input: Stream): byte[] =
+let rec SHA1 (input: Stream): byte[] =
     use tempStream = input.CopyTo |> doAndRewind
-    use sha = new SHA1CryptoServiceProvider()
+    use sha = System.Security.Cryptography.SHA1.Create()
     sha.ComputeHash(tempStream.ToArray())
 
 let headifyStream (tp: GitObjectType) (input: Stream) (headed: MemoryStream): String =

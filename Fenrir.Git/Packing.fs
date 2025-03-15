@@ -118,8 +118,9 @@ let rec parsePackInfo (path: String) (offset: int) (getPackedObject: String -> S
 
 let rec getPackedObject (path: String) (hash: String): PackedObjectInfo =
     let packs = Directory.GetFiles(Path.Combine(path, "objects", "pack"), "*.idx")
-                |> Array.map Path.GetFileName
-                |> Array.map ((fun count (str : string) -> str.[0..str.Length - count - 1]) 4)
+                |> Seq.map (fun x -> Path.GetFileName x |> nonNull)
+                |> Seq.map ((fun count (str : string) -> str.[0..str.Length - count - 1]) 4)
+                |> Seq.toArray
     let mutable offset = -1
 
     let containingPack = packs |> Array.tryFind (fun item ->
@@ -131,6 +132,6 @@ let rec getPackedObject (path: String) (hash: String): PackedObjectInfo =
     match offset with
         | -1 -> failwith $"pack source for {hash} not found, git repo is corrupted"
         | _ -> parsePackInfo
-               <| getPackPath path (Option.toObj containingPack) ".pack"
+               <| getPackPath path (Option.get containingPack) ".pack"
                <| offset
                <| getPackedObject

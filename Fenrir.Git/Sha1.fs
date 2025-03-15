@@ -29,7 +29,7 @@ let inline sum (lhs: HashValue) (rhs: HashValue) = {
 
 type CalcHashContext = {
     W: uint32 array
-    mutable W2: uint32 array
+    mutable W2: uint32 array | null
     // store only this states because it defined in https://github.com/cr-marcstevens/sha1collisiondetection/blob/master/lib/ubc_check.h#L39
     State58: HashValue
     State65: HashValue
@@ -196,8 +196,9 @@ let calcChunk (bytes: ReadOnlySpan<byte>) (context: CalcHashContext) =
     context.HashValue <- sum context.HashValue hash
 
 let recompress (fromStep: int) (context: CalcHashContext) (initialValue: HashValue): HashValue =
-    context.HashValue2 <- runBackward (fromStep - 1) context.W2 initialValue
-    let hash = runForward fromStep context.W2 initialValue false context
+    let w2 = nullArgCheck (nameof context.W2) context.W2
+    context.HashValue2 <- runBackward (fromStep - 1) w2 initialValue
+    let hash = runForward fromStep w2 initialValue false context
     sum context.HashValue2 hash
 
 let calcChunkWithCollisionCheck (bytes: ReadOnlySpan<byte>) (context: CalcHashContext): unit =
@@ -215,11 +216,15 @@ let calcChunkWithCollisionCheck (bytes: ReadOnlySpan<byte>) (context: CalcHashCo
     for i = 0 to 31 do
         if (dvMask &&& (1u <<< SHA1DVs[i].maskb) <> 0u) then
             let dvInfo = SHA1DVs[i]
-            if (context.W2 = null) then
-                context.W2 <- Array.zeroCreate<uint32> 80
+            let w2 =
+                match context.W2 with
+                | null ->
+                    context.W2 <- Array.zeroCreate<uint32> 80
+                    nonNull context.W2
+                | w2 -> w2
 
             for j = 0 to 79 do
-                context.W2[j] <- context.W[j] ^^^ dvInfo.dm[j]
+                w2[j] <- context.W[j] ^^^ dvInfo.dm[j]
 
             let tmpHash = recompress dvInfo.testt context (if (dvInfo.testt = 58) then context.State58 else context.State65)
             if (0u = ((tmpHash.A ^^^ context.HashValue.A) ||| (tmpHash.B ^^^ context.HashValue.B) ||| (tmpHash.C ^^^ context.HashValue.C) ||| (tmpHash.D ^^^ context.HashValue.D) ||| (tmpHash.E ^^^ context.HashValue.E))) then

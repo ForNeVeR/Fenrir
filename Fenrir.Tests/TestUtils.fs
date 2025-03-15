@@ -11,7 +11,7 @@ open System.Reflection
 
 let executingAssemblyDirectory: string =
     let location = Assembly.GetExecutingAssembly().Location
-    Path.GetDirectoryName(location)
+    Path.GetDirectoryName(location) |> nonNull
 
 let testDataRoot: string =
     Path.Combine(executingAssemblyDirectory, "Data")
