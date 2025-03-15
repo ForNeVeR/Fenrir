@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017 Marc Stevens <marc@marc-stevens.nl>, Dan Shumow (danshu@microsoft.com)
+// SPDX-FileCopyrightText: 2017 Marc Stevens <marc@marc-stevens.nl>, Dan Shumow <danshu@microsoft.com>
 // SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
 //
 // SPDX-License-Identifier: MIT
