@@ -6,7 +6,12 @@ name: Docs
 on:
   push:
     branches:
-      - main
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: 0 0 * * 6
   workflow_dispatch:
 
 permissions:
@@ -50,6 +55,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: 'docs/_site'
-      - name: Deploy to GitHub Pages
+      - if: github.ref == 'master'
+        name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
