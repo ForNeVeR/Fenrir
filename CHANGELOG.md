@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog][keep-a-changelog]. See [the README file][docs.readme] for more details on how the project is versioned.
 
 ## [Unreleased] (0.1.0)
-This is the first library release.
+This is the first library release. It includes various functions, mainly to be able to read the repository's reference list, access commits attached to each reference, and read and parse any Git object's contents.
 
 [docs.readme]: README.md
 [keep-a-changelog]: https://keepachangelog.com/en/1.1.0/
