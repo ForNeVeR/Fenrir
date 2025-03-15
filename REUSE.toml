@@ -4,6 +4,12 @@ SPDX-PackageSupplier = "Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
 SPDX-PackageDownloadLocation = "https://github.com/ForNeVeR/Fenrir"
 
 [[annotations]]
+path = [".idea/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "2025 Friedrich von Never <friedrich@fornever.me>"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
 path = ["Fenrir.Tests/Data/**/*", "Fenrir.Tests/Data2/**/*"]
 precedence = "override"
 SPDX-FileCopyrightText = "2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>"

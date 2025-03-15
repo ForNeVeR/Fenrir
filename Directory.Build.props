@@ -9,7 +9,10 @@ SPDX-License-Identifier: MIT
         <Version>0.1.0</Version>
         <!-- REUSE-IgnoreStart -->
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <Copyright>2020 Fenrir contributors &lt;https://github.com/ForNeVeR/Fenrir&gt;</Copyright>
+        <Copyright>
+            2017 Marc Stevens &lt;marc@marc-stevens.nl&gt;, Dan Shumow &lt;danshu@microsoft.com&gt;
+            2020-2025 Fenrir contributors &lt;https://github.com/ForNeVeR/Fenrir&gt;
+        </Copyright>
         <Authors>Fenrir contributors</Authors>
         <PackageProjectUrl>https://github.com/ForNeVeR/Fenrir</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ForNeVeR/Fenrir.git</RepositoryUrl>
