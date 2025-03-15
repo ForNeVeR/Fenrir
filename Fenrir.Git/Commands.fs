@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: MIT
 
+/// Various (relatively) high-level commands to operate on a Git repository.
+// TODO: Separate the commands only useful in the application (e.g. those that print something) and store them outside
+// of the library.
 module Fenrir.Git.Commands
 
 open System
@@ -37,6 +40,9 @@ let readHeader(input: Stream): ObjectHeader =
 
     {Type = tp; Size = sz}
 
+/// <summary>Reads the header of any object in the Git storage.</summary>
+/// <param name="gitDirectoryPath">Path to the repository's <c>.git</c> directory.</param>
+/// <param name="objectHash">Hash of the object.</param>
 let readObjectHeader (gitDirectoryPath: string) (objectHash: string): ObjectHeader =
     let rawObjectPath = getRawObjectPath gitDirectoryPath objectHash
     if File.Exists rawObjectPath
@@ -114,6 +120,9 @@ let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
         | GitObjectType.GitBlob     -> failwithf "Found blob file instead of tree file"
         | GitObjectType.GitTree     -> getHeadlessTreeBody hd.Size decodedInput
 
+/// <summary>Parses a tree object information.</summary>
+/// <param name="path">Path to a repository's <c>.git</c> folder.</param>
+/// <param name="hash">Hash of the tree object.</param>
 let parseTreeBody (path : String) (hash : String) : TreeBody =
     let pathToFile = getRawObjectPath path hash
     match File.Exists(pathToFile) with

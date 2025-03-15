@@ -11,6 +11,9 @@ type Ref = {
     CommitObjectId: string
 }
 
+/// <summary>
+/// Functions to operate on Git <a href="https://git-scm.com/book/en/v2/Git-Internals-Git-References">references</a>.
+/// </summary>
 module Refs =
     open System.IO
 
@@ -57,6 +60,9 @@ module Refs =
             Seq.empty
 
 
+    /// <summary>Reads the list of references available in a repository.</summary>
+    /// <param name="repositoryPath">Path to a repository's <c>.git</c> directory.</param>
+    /// <remarks>This function supports both packed and unpacked refs.</remarks>
     let rec readRefs(repositoryPath: string): Ref seq =
         let refsDirectory = Path.Combine(repositoryPath, "refs")
         let packedRefs = readPackedRefs repositoryPath
