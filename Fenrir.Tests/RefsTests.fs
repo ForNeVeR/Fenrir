@@ -4,6 +4,9 @@
 
 module Fenrir.Tests.RefsTests
 
+open System.IO
+open System.Threading.Tasks
+open TruePath
 open Xunit
 
 open Fenrir.Git
@@ -40,3 +43,58 @@ let ``Refs should be identified properly``(): unit =
     let refs = Refs.identifyRefs commitHash testMoreDateRoot
     Assert.Equal(2, Seq.length refs)
     refs |> Seq.iter (fun item -> Assert.Equal<string>(item.CommitObjectId, commitHash))
+
+let private DoWithTestRepo(headFileContent: string, testBranchName: string | null, testBranchFileContent: string | null)
+                          (check: AbsolutePath -> Task) = task {
+    let testRepoBase = Temporary.CreateTempFolder()
+    let testRepoGitDir = testRepoBase / ".git"
+    try
+        let headFile = testRepoGitDir / "HEAD"
+        Directory.CreateDirectory(headFile.Parent.Value.Value) |> ignore
+        do! File.WriteAllTextAsync(headFile.Value, headFileContent)
+
+        match testBranchName with
+        | null -> ()
+        | testBranchName ->
+            let testBranchFile = testRepoGitDir / testBranchName
+            Directory.CreateDirectory(testBranchFile.Parent.Value.Value) |> ignore
+            do! File.WriteAllTextAsync(testBranchFile.Value, testBranchFileContent)
+
+        do! check testRepoGitDir
+    finally
+        Directory.Delete(testRepoGitDir.Value, recursive = true)
+}
+
+[<Fact>]
+let ``Normal branch HEAD is read correctly``(): Task =
+    DoWithTestRepo
+        ("ref: refs/heads/main", "refs/heads/main", "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62")
+        (fun gitDir -> task {
+            let! ref = Refs.ReadHeadRef(LocalPath gitDir)
+            Assert.Equal(
+                { Name = "refs/heads/main"; CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" },
+                nonNull ref
+            )
+        })
+
+[<Fact>]
+let ``Detached HEAD is read correctly``(): Task =
+    DoWithTestRepo("7c650bc240cbeccbb347a7338e3dd83f3e2a0c62", null, null) (fun gitDir -> task {
+        let! ref = Refs.ReadHeadRef(LocalPath gitDir)
+        Assert.Equal(
+            { Name = null; CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" },
+            nonNull ref
+        )
+    })
+
+[<Fact>]
+let ``Abnormal HEAD (extra spaces) is read correctly``(): Task =
+    DoWithTestRepo
+        ("ref:   refs/heads/main   ", "refs/heads/main", "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62")
+        (fun gitDir -> task {
+            let! ref = Refs.ReadHeadRef(LocalPath gitDir)
+            Assert.Equal(
+                { Name = "refs/heads/main"; CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" },
+                nonNull ref
+            )
+        })

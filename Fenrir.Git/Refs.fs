@@ -5,9 +5,13 @@
 namespace Fenrir.Git
 
 open System
+open System.Collections.Generic
+open System.Threading.Tasks
+open TruePath
 
 type Ref = {
-    Name: string
+    /// <summary>Reference name. Might be <c>null</c> in case of detached commit.</summary>
+    Name: string | null
     CommitObjectId: string
 }
 
@@ -24,6 +28,35 @@ module Refs =
     let private prependName name ref =
         { ref with Name = sprintf "%s/%s" name ref.Name }
 
+    /// <remarks>
+    /// See
+    /// <a href="https://github.com/git/git/blob/028f618658e34230e1d65678f14b6876e0f9856d/refs/files-backend.c#L608"><c>parse_loose_ref_contents</c></a>
+    /// in Git's code.
+    /// </remarks>
+    let private ParseSymbolicRef(symbolicRef: string): ValueOption<string> =
+        // https://en.cppreference.com/w/c/string/byte/isspace
+        let isAnsiSpace =
+            let ansiSpaces = HashSet([|
+                ' '
+                '\u000c' // \f
+                '\u000a' // \n
+                '\u000d' // \r
+                '\u0009' // \t
+                '\u000b' // \v
+            |])
+            ansiSpaces.Contains
+
+        if symbolicRef.StartsWith("ref:") then
+            let mutable span = symbolicRef.AsSpan().Slice("ref:".Length)
+            while span.Length > 0 && isAnsiSpace span[0] do
+                span <- span.Slice 1
+
+            if span.IsEmpty then
+                failwithf $"Cannot read symbolic ref from content: \"{symbolicRef}\"."
+
+            ValueSome <| String(span).TrimEnd()
+        else ValueNone
+
     let private resolveSymbolicReference (gitDirectoryPath : string) (symbolicRef: string) : string=
         let pathToRef = Path.Combine(gitDirectoryPath, symbolicRef)
         (File.ReadAllLines pathToRef).[0]
@@ -36,14 +69,14 @@ module Refs =
                 readRefsRecursively entry repositoryPath
                 |> Seq.map(prependName name)
             else
-                let commitId = File.ReadLines entry |> Seq.head
-                if commitId.StartsWith("ref: ") then
-                    let ref = commitId.Split(' ')
-                    let resolvedCommitId = resolveSymbolicReference repositoryPath ref.[1]
-                    Seq.singleton { Name = name; CommitObjectId = resolvedCommitId }
-                else
-                     Seq.singleton { Name = name; CommitObjectId = commitId }
-                     )
+                let commitOrRef = File.ReadLines entry |> Seq.head
+                let commitId =
+                    ParseSymbolicRef commitOrRef
+                    |> ValueOption.map(resolveSymbolicReference repositoryPath)
+                    |> ValueOption.defaultValue commitOrRef
+
+                Seq.singleton { Name = name; CommitObjectId = commitId }
+        )
 
 
     let private readPackedRefs (repositoryPath:string) :Ref seq=
@@ -72,9 +105,23 @@ module Refs =
         |> Seq.append packedRefs
         |> Seq.sortBy(fun ref -> ref.Name)
 
+    /// <summary>Reads a reference from the <c>HEAD</c> file in the repository.</summary>
+    /// <param name="gitDirectory">Path to the repository's <c>.git</c> directory.</param>
+    /// <returns>Reference if it's resolved, <c>null</c> if the <c>HEAD</c> file doesn't exist.</returns>
+    let ReadHeadRef(gitDirectory: LocalPath): Task<Ref | null> = task {
+        let headFile = gitDirectory / "HEAD"
+        if not <| File.Exists headFile.Value then return null
+        else
 
-
-
+        let! headFileContent = File.ReadAllTextAsync headFile.Value
+        return
+            ParseSymbolicRef headFileContent
+            |> ValueOption.map(fun ref ->
+                let commitHash = resolveSymbolicReference gitDirectory.Value ref
+                { Name = ref; CommitObjectId = commitHash }
+            )
+            |> ValueOption.defaultWith(fun() -> { Name = null; CommitObjectId = headFileContent.TrimEnd() })
+    }
 
     let identifyRefs (commitHash: string) (repositoryPath: string): Ref seq =
         readRefs repositoryPath
@@ -87,7 +134,7 @@ module Refs =
         | false -> ()
 
     let updateRef (newCommit: string) (pathDotGit: string) (ref: Ref) : unit =
-        let splitName = ref.Name.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries)
+        let splitName = (nonNull ref.Name).Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries)
                             |> List.ofArray
         let pathToRef = Path.Combine(pathDotGit::splitName |> Array.ofList)
         File.WriteAllText(pathToRef, newCommit)
