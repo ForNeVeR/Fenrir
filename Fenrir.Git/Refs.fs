@@ -25,8 +25,8 @@ module Refs =
         let pathToHead = Path.Combine(pathDotGit, "HEAD")
         not <| File.ReadAllText(pathToHead).StartsWith("ref: refs/heads/")
 
-    let private prependName name ref =
-        { ref with Name = sprintf "%s/%s" name ref.Name }
+    let private prependName (name: string) ref =
+        { ref with Name = $"{name}/{ref.Name}" }
 
     /// <remarks>
     /// See
@@ -59,7 +59,7 @@ module Refs =
 
     let private resolveSymbolicReference (gitDirectoryPath : string) (symbolicRef: string) : string=
         let pathToRef = Path.Combine(gitDirectoryPath, symbolicRef)
-        (File.ReadAllLines pathToRef).[0]
+        (File.ReadAllLines pathToRef)[0]
 
     let rec private readRefsRecursively path repositoryPath =
         Directory.EnumerateFileSystemEntries path
@@ -87,7 +87,7 @@ module Refs =
             Array.filter (fun (str : string) -> not(str.StartsWith('#') || str.StartsWith('^'))) packedRefsLines
             |> Seq.collect (fun entryString ->
             let commitAndName = entryString.Split(' ')
-            Seq.singleton {Name = commitAndName.[1]; CommitObjectId = commitAndName.[0]}
+            Seq.singleton {Name = commitAndName[1]; CommitObjectId = commitAndName[0]}
             )
         else
             Seq.empty
