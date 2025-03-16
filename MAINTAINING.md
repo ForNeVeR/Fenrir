@@ -9,7 +9,7 @@ Maintainer Guide
 
 Publish a New Version
 ---------------------
-1. Choose the new version according the project's versioning scheme.
+1. Choose the new version according to the project's versioning scheme.
 2. Update the project's status in the `README.md` file, if required.
 3. Update the `<Copyright>` statement and `<PackageLicenseExpression>` field in the `Directory.Build.props`, if required.
 4. Update the copyright statement in the `LICENSE.txt` file, if required.
@@ -21,7 +21,8 @@ Publish a New Version
 
 Rotate NuGet Publishing Key
 ---------------------------
-CI relies on NuGet API key being added to the secrets. From time to time, this key requires maintenance: it will become obsolete and will have to be updated.
+CI relies on a NuGet API key being added to the secrets.
+From time to time, this key requires maintenance: it will become obsolete and will have to be updated.
 
 To update the key:
 
