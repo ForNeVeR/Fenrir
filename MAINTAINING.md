@@ -30,7 +30,8 @@ To update the key:
 2. Go to the [API keys][nuget.api-keys] section.
 3. Update the existing or create a new key named `fenrir.git.github` with a permission to **Push only new package versions** and only allowed to publish the package **Fenrir.Git**.
 
-   (If this is the first publication of a new package, upload a temporary short-living key with permission to add new packages, and rotate it afterward.)
+   (If this is the first publication of a new package,
+   upload a temporary short-living key with permission to add new packages and rotate it afterward.)
 4. Paste the generated key to the `NUGET_TOKEN` variable on the [action secrets][github.secrets] section of GitHub settings.
 
 [github.secrets]: https://github.com/ForNeVeR/Fenrir/settings/secrets/actions
