@@ -20,6 +20,8 @@ let private packTest (bom: bool) (hash: string) (source: string): unit =
         yield! File.ReadAllBytes <| Path.Combine(testDataRoot, source)
     |]
     let expected = expectedBytes |> toString
+    Assert.Equal(0L, packedObject.Stream.Position)
+
     let actual = packedObject.Stream.ToArray() |> toString
     Assert.Equal(expected, actual)
 

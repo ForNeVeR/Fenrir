@@ -88,4 +88,5 @@ let processDelta (decodedStream: MemoryStream) (nonDelta: BinaryReader) (size: i
             applyDelta()
 
     applyDelta()
+    result.Position <- 0L
     result

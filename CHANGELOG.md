@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
 ### Added
 - [#105](https://github.com/ForNeVeR/Fenrir/issues/105): `Refs.ReadHeadRef` function to read the contents of the `HEAD` file in the repository.
 
+### Fixed
+- [#106](https://github.com/ForNeVeR/Fenrir/issues/106): broken reading of objects packed using delta encoding.
+
 ### Changed
 - `Ref.Name` property is now nullable (to handle detached HEAD state).
 

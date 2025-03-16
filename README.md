@@ -67,6 +67,9 @@ Usage:
 
     If any of the <input> or <output> parameters isn't defined, then standard input and/or standard output are used instead.
 
+  read-commit <path to .git/ directory> <commit-hash>
+    Read a commit from a repository and print its metadata.
+
   update-commit <id of commit> [<path to repository>] <path of file>
     Read updated text file from <path to repository>/<path of file> and save it as new object file to repository.
     Moreover, save new trees based on <id of commit> parent tree, its subtrees to repository and commit file.

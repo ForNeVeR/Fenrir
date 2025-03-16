@@ -60,6 +60,9 @@ Usage:
 
     If any of the <input> or <output> parameters isn't defined, then standard input and/or standard output are used instead.
 
+  read-commit <path to .git/ directory> <commit-hash>
+    Read a commit from a repository and print its metadata.
+
   update-commit <id of commit> [<path to repository>] <path of file>
     Read updated text file from <path to repository>/<path of file> and save it as new object file to repository.
     Moreover, save new trees based on <id of commit> parent tree, its subtrees to repository and commit file.
@@ -191,6 +194,11 @@ let main (argv: string[]): int =
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
         Zlib.unpackObject input output
+        ExitCodes.Success
+
+    | [|"read-commit"; repoPath; commitHash|] ->
+        let commit = Commands.parseCommitBody repoPath commitHash
+        printfn $"%A{commit}"
         ExitCodes.Success
 
     | [|"update-commit"; commitHash; filePath|] ->
