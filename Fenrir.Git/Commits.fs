@@ -1,6 +1,7 @@
 /// Functions to manipulate Git commits.
 module Fenrir.Git.Commits
 
+open System.Collections.Generic
 open System.IO
 open System.Text
 open System.Threading.Tasks
@@ -14,7 +15,7 @@ let private GetHeadlessCommitBody(decodedInput: MemoryStream): CommitBody =
     let enc = Encoding.UTF8
     use sr = new StreamReader(decodedInput, enc)
     let tree = nonNull(sr.ReadLine()).Substring(5)
-    let rec parseParents (s : StreamReader) (P : string list) : (string list * string[]) =
+    let rec parseParents (s : StreamReader) (P : string list) : string list * string[] =
         let str = nonNull <| s.ReadLine()
         match str.Substring(0, 7) with
             | "parent " -> parseParents s (List.append P [str.Substring(7, 40)])
@@ -49,10 +50,19 @@ let ReadCommit(gitDirectory: LocalPath, hash: string): Task<Commit> =
 
 /// <summary>
 /// Starting with commit <paramref name="headCommitHash"/>, will enumerate all its parents. The enumeration order
-/// between unrelated commits is unspecified, but any commit is guaranteed to be returned <i>before</i> any of its
-/// parents.
+/// between commits not related via parent-child relationship is unspecified, but any commit is guaranteed to be
+/// returned <i>before</i> any of its parents.
 /// </summary>
 /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
 /// <param name="headCommitHash">Hash of the starting commit.</param>
 let TraverseCommits(gitDirectory: LocalPath, headCommitHash: string): System.Collections.Generic.IAsyncEnumerable<Commit> =
-    AsyncSeq.empty |> AsyncSeq.toAsyncEnum
+    asyncSeq {
+        let visitedCommits = HashSet()
+        let currentCommits = Stack [| headCommitHash |]
+        while currentCommits.Count > 0 do
+            let commitHash = currentCommits.Pop()
+            if visitedCommits.Add commitHash then
+                let! commit = Async.AwaitTask <| ReadCommit(gitDirectory, commitHash)
+                yield commit
+                commit.Body.Parents |> Array.iter currentCommits.Push
+    } |> AsyncSeq.toAsyncEnum
