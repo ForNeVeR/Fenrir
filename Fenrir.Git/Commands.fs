@@ -70,37 +70,6 @@ let refsCommand(path: string): unit =
     Refs.readRefs path
     |> Seq.iter(fun ref -> printfn "%s: %s" ref.Name ref.CommitObjectId)
 
-let getHeadlessCommitBody (decodedInput: MemoryStream): CommitBody =
-    let enc = Encoding.UTF8
-    use sr = new StreamReader(decodedInput, enc)
-    let tree = nonNull(sr.ReadLine()).Substring(5)
-    let rec parseParents (s : StreamReader) (P : String list) : (String list * String[]) =
-        let str = nonNull <| s.ReadLine()
-        match str.Substring(0, 7) with
-            | "parent " -> parseParents s (List.append P [str.Substring(7, 40)])
-            | _         -> (P, [|str|])
-    let (p, r) = parseParents sr []
-    let rr = (sr.ReadToEnd()).Split "\n" |> Array.append r
-    {Tree = tree; Parents = (Array.ofList p); Rest = rr}
-
-let streamToCommitBody (decodedInput: MemoryStream): CommitBody =
-    match (readHeader decodedInput).Type with
-        | GitObjectType.GitTree   -> failwithf "Found tree file instead of commit file"
-        | GitObjectType.GitBlob   -> failwithf "Found blob file instead of commit file"
-        | GitObjectType.GitCommit -> getHeadlessCommitBody decodedInput
-        | x -> failwithf $"Unknown Git object type: {x}."
-
-let parseCommitBody (path : String) (hash : String) : CommitBody =
-    let pathToFile = getRawObjectPath path hash
-    match File.Exists(pathToFile) with
-        | true ->
-            use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
-            use decodedInput = input |> getDecodedStream
-            decodedInput |> streamToCommitBody
-        | false ->
-            use packedObject = getPackedObject path hash
-            packedObject.Stream |> getHeadlessCommitBody
-
 let getHeadlessTreeBody (size: uint64) (decodedInput: MemoryStream): TreeBody =
     let bF = new BinaryReader(decodedInput, Encoding.ASCII)
     let rec makeList (n:int): TreeAtom list =

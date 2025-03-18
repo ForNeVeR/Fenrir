@@ -8,13 +8,15 @@ open System
 open System.IO
 open System.Reflection
 
+open System.Threading.Tasks
 open Fenrir.Git
 open Fenrir.ArgumentCommands
 open Fenrir.Git.Metadata
+open TruePath
 
 let private printVersion() =
     let version = Assembly.GetExecutingAssembly().GetName().Version
-    printfn "v%A" version
+    printfn $"v{version}"
 
 let private printUsage() =
     printf @"
@@ -82,6 +84,12 @@ Usage:
     Print the program version.
 "
 
+type Task with
+    static member RunSynchronously(task: Task): unit =
+        task.GetAwaiter().GetResult()
+    static member RunSynchronously(task: Task<'a>): 'a =
+        task.GetAwaiter().GetResult()
+
 [<EntryPoint>]
 let main (argv: string[]): int =
     match argv with
@@ -92,7 +100,7 @@ let main (argv: string[]): int =
         Zlib.unpackObject input decodedInput
         decodedInput.Position <- 0L
         let n = Commands.guillotineObject decodedInput output
-        printfn "%A bytes have been written" n
+        printfn $"{string n} bytes have been written"
         ExitCodes.Success
     | [|"guillotine"; inputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
@@ -101,7 +109,7 @@ let main (argv: string[]): int =
         decodedInput.Position <- 0L
         use output = Console.OpenStandardOutput()
         let n = Commands.guillotineObject decodedInput output
-        printfn "%A bytes have been written" n
+        printfn $"{string n} bytes have been written"
         ExitCodes.Success
     | [|"guillotine"; inputPath; outputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
@@ -110,7 +118,7 @@ let main (argv: string[]): int =
         decodedInput.Position <- 0L
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
         let n = Commands.guillotineObject decodedInput output
-        printfn "%A bytes have been written" n
+        printfn $"{string n} bytes have been written"
         ExitCodes.Success
 
     | [|"help"|] | [|"--help"|] | [||] ->
@@ -120,12 +128,12 @@ let main (argv: string[]): int =
     | [|"object-type"|] ->
         use input = Console.OpenStandardInput()
         let header = Commands.readHeader input
-        printfn "%A" header
+        printfn $"{header}"
         ExitCodes.Success
     | [|"object-type"; inputFilePath|] ->
         use input = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
         let header = Commands.readHeader input
-        printfn "%A" header
+        printfn $"{header}"
         ExitCodes.Success
 
     | [|"pack"|] ->
@@ -197,13 +205,18 @@ let main (argv: string[]): int =
         ExitCodes.Success
 
     | [|"read-commit"; repoPath; commitHash|] ->
-        let commit = Commands.parseCommitBody repoPath commitHash
+        let commit = Commits.ReadCommit(LocalPath repoPath, commitHash)
         printfn $"%A{commit}"
         ExitCodes.Success
+
+    | [|"print-commits"; gitDir|] ->
+        PrintAllCommits(LocalPath gitDir)
+        |> Task.RunSynchronously
 
     | [|"update-commit"; commitHash; filePath|] ->
         let pathToRepo = Directory.GetCurrentDirectory()
         updateCommitOp commitHash pathToRepo filePath false
+        |> Task.RunSynchronously
 
     | [|"update-commit"; commitHash; filePath; repoOrForce|] ->
         match repoOrForce.Equals "--force" with
@@ -212,10 +225,11 @@ let main (argv: string[]): int =
             updateCommitOp commitHash pathToRepo filePath true
         | false ->
             updateCommitOp commitHash repoOrForce filePath false
+        |> Task.RunSynchronously
 
     | [|"update-commit"; commitHash; filePath; pathToRepo; forceKey|] ->
         match forceKey.Equals "--force" with
-        | true -> updateCommitOp commitHash pathToRepo filePath true
+        | true -> updateCommitOp commitHash pathToRepo filePath true |> Task.RunSynchronously
         | false -> unrecognizedArgs(argv)
 
     | [|"update-with-trees"; rootTreeHash; filePath|] ->

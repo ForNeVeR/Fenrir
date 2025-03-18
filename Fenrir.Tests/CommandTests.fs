@@ -15,9 +15,9 @@ open Fenrir.Tests.TestUtils
 
 [<Fact>]
 let ``Deflate decompression should read the file properly``(): unit =
-    let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
+    let objectFilePath = TestDataRoot / "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
     let actualObjectContents = "blob 10\x00Test file\n"
-    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
     use output = new MemoryStream()
     Zlib.unpackObject input output
 
@@ -35,8 +35,8 @@ let ``Deflate compression should write the file properly``(): unit =
 
 [<Fact>]
 let ``Blob object header should be read``(): unit =
-    let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
-    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    let objectFilePath = TestDataRoot / "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
+    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
     use output = Zlib.unpackObject input |> Commands.doAndRewind
 
     let header = Commands.readHeader output
@@ -45,8 +45,8 @@ let ``Blob object header should be read``(): unit =
 
 [<Fact>]
 let ``Tree object header should be read``(): unit =
-    let objectFilePath = Path.Combine(testDataRoot, "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
-    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    let objectFilePath = TestDataRoot / "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
     use output = Zlib.unpackObject input |> Commands.doAndRewind
 
     let header = Commands.readHeader output
@@ -55,8 +55,8 @@ let ``Tree object header should be read``(): unit =
 
 [<Fact>]
 let ``Commit object header should be read``(): unit =
-    let objectFilePath = Path.Combine(testDataRoot, "cc07136d669554cf46ca4e9ef1eab7361336e1c8")
-    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    let objectFilePath = TestDataRoot / "cc07136d669554cf46ca4e9ef1eab7361336e1c8"
+    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
     use output = Zlib.unpackObject input |> Commands.doAndRewind
 
     let header = Commands.readHeader output
@@ -65,9 +65,9 @@ let ``Commit object header should be read``(): unit =
 
 [<Fact>]
 let ``Cutting off header should write file properly``(): unit =
-    let objectFilePath = Path.Combine(testDataRoot, "524acfffa760fd0b8c1de7cf001f8dd348b399d8")
+    let objectFilePath = TestDataRoot / "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
     let actualObjectContents = "Test file\n"
-    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
     use decodedInput = Zlib.unpackObject input |> Commands.doAndRewind
     use output = new MemoryStream()
     let n = Commands.guillotineObject decodedInput output
@@ -76,25 +76,17 @@ let ``Cutting off header should write file properly``(): unit =
     Assert.Equal(n, actualObjectContents.Length)
 
 [<Fact>]
-let ``The program should parse commits properly``(): unit =
-    let cmt = Commands.parseCommitBody testDataRoot "3cb4a57f644f322c852201a68d2211026912a228"
-    Assert.Equal(cmt.Tree, "25e78c44e06b1e5c9c9e39a6a827734eee784066")
-    Assert.Equal(cmt.Parents.[1], "62f4d4ce40041cd6295eb4a3d663724b4952e7b5")
-    Assert.Equal(cmt.Parents.[0], "c0573616ea63dba6c4b13398058b0950c33a524c")
-
-
-[<Fact>]
 let ``The program should parse trees properly``(): unit =
-    let tr = Commands.parseTreeBody testDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let tr = Commands.parseTreeBody TestDataRoot.Value "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let hashFile = "e2af08e76b2408a88f13d2c64ca89f2d03c98385" |> Tools.stringToByte
     let hashTree = "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05" |> Tools.stringToByte
     Assert.Equal(tr.Length, 2)
-    Assert.Equal(tr.[0].Mode, 100644UL)
-    Assert.Equal(tr.[0].Name, "README")
-    Assert.Equal<byte>(tr.[0].Hash, hashFile)
-    Assert.Equal(tr.[1].Mode, 40000UL)
-    Assert.Equal(tr.[1].Name, "ex")
-    Assert.Equal<byte>(tr.[1].Hash, hashTree)
+    Assert.Equal(tr[0].Mode, 100644UL)
+    Assert.Equal(tr[0].Name, "README")
+    Assert.Equal<byte>(tr[0].Hash, hashFile)
+    Assert.Equal(tr[1].Mode, 40000UL)
+    Assert.Equal(tr[1].Name, "ex")
+    Assert.Equal<byte>(tr[1].Hash, hashTree)
 
 [<Fact>]
 let ``Hasher should calculate file name properly``(): unit =
@@ -122,39 +114,18 @@ let ``Restoring head should work properly``(): unit =
 
 [<Fact>]
 let ``Program should change and find hash of file in tree properly``(): unit =
-    let tr = Commands.parseTreeBody testDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let tr = Commands.parseTreeBody TestDataRoot.Value "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let newHash = "0000000000000000000000000000000000000000" |> Tools.stringToByte
     let newTr = Commands.changeHashInTree tr newHash "README"
     Assert.Equal<byte>(Commands.hashOfObjectInTree newTr "README", newHash)
 
 [<Fact>]
 let ``Printing of parsed tree should not change the content``(): unit =
-    let tr = Commands.parseTreeBody testDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let tr = Commands.parseTreeBody TestDataRoot.Value "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     use outputPrinted = Commands.treeBodyToStream tr |> Commands.doAndRewind
 
-    let objectFilePath = Path.Combine(testDataRoot, "objects", "0b", "a2ef789f6245b6b6604f54706b1dce1d84907f")
-    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use tempStream = Zlib.unpackObject input |> Commands.doAndRewind
-    use outputActual = new MemoryStream()
-    Commands.guillotineObject tempStream outputActual |> ignore
-    outputActual.Position <- 0L
-
-    Assert.Equal<byte>(outputPrinted.ToArray(), outputActual.ToArray())
-
-[<Fact>]
-let ``Program should change and find hash of parent tree in commit properly``(): unit =
-    let cmt = Commands.parseCommitBody testDataRoot "3cb4a57f644f322c852201a68d2211026912a228"
-    let newHash = "0000000000000000000000000000000000000000" |> Tools.stringToByte
-    let newCmt = Commands.changeHashInCommit cmt newHash
-    Assert.Equal<byte>(newCmt.Tree |> Tools.stringToByte, newHash)
-
-[<Fact>]
-let ``Printing of parsed commit should not change the content``(): unit =
-    let cmt = Commands.parseCommitBody testDataRoot "3cb4a57f644f322c852201a68d2211026912a228"
-    use outputPrinted = Commands.commitBodyToStream cmt |> Commands.doAndRewind
-
-    let objectFilePath = Path.Combine(testDataRoot, "objects", "3c", "b4a57f644f322c852201a68d2211026912a228")
-    use input = new FileStream(objectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
+    let objectFilePath = TestDataRoot / "objects" / "0b" / "a2ef789f6245b6b6604f54706b1dce1d84907f"
+    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
     use tempStream = Zlib.unpackObject input |> Commands.doAndRewind
     use outputActual = new MemoryStream()
     Commands.guillotineObject tempStream outputActual |> ignore
@@ -170,26 +141,26 @@ let ``updateObjectInTree should not change the whole tree if blob wasn't changed
     let readmeHash = "e2af08e76b2408a88f13d2c64ca89f2d03c98385"
 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
-    use treeStreams = Commands.updateObjectInTree parentHash testDataRoot pathToFile oldBlobHash
+    use treeStreams = Commands.updateObjectInTree parentHash TestDataRoot.Value pathToFile oldBlobHash
 
-    Assert.Equal(treeStreams.Hashes.[0], parentHash)
-    Assert.Equal(treeStreams.Hashes.[1], subTreeHash)
+    Assert.Equal(treeStreams.Hashes[0], parentHash)
+    Assert.Equal(treeStreams.Hashes[1], subTreeHash)
 
-    let tr = Commands.streamToTreeBody treeStreams.Streams.[0]
-    let subTr = Commands.streamToTreeBody treeStreams.Streams.[1]
+    let tr = Commands.streamToTreeBody treeStreams.Streams[0]
+    let subTr = Commands.streamToTreeBody treeStreams.Streams[1]
 
     Assert.Equal(tr.Length, 2)
-    Assert.Equal(tr.[0].Mode, 100644UL)
-    Assert.Equal(tr.[0].Name, "README")
-    Assert.Equal<byte>(tr.[0].Hash, readmeHash |> Tools.stringToByte)
-    Assert.Equal(tr.[1].Mode, 40000UL)
-    Assert.Equal(tr.[1].Name, "ex")
-    Assert.Equal<byte>(tr.[1].Hash, subTreeHash |> Tools.stringToByte)
+    Assert.Equal(tr[0].Mode, 100644UL)
+    Assert.Equal(tr[0].Name, "README")
+    Assert.Equal<byte>(tr[0].Hash, readmeHash |> Tools.stringToByte)
+    Assert.Equal(tr[1].Mode, 40000UL)
+    Assert.Equal(tr[1].Name, "ex")
+    Assert.Equal<byte>(tr[1].Hash, subTreeHash |> Tools.stringToByte)
 
     Assert.Equal(subTr.Length, 1)
-    Assert.Equal(subTr.[0].Mode, 100644UL)
-    Assert.Equal(subTr.[0].Name, "FIGHTTHEMACHINE")
-    Assert.Equal<byte>(subTr.[0].Hash, oldBlobHash |> Tools.stringToByte)
+    Assert.Equal(subTr[0].Mode, 100644UL)
+    Assert.Equal(subTr[0].Name, "FIGHTTHEMACHINE")
+    Assert.Equal<byte>(subTr[0].Hash, oldBlobHash |> Tools.stringToByte)
 
 [<Fact>]
 let ``updateObjectInTree should change the whole tree properly``(): unit =
@@ -200,42 +171,41 @@ let ``updateObjectInTree should change the whole tree properly``(): unit =
     let readmeHash = "e2af08e76b2408a88f13d2c64ca89f2d03c98385"
 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
-    use treeStreams = Commands.updateObjectInTree oldParentHash testDataRoot pathToFile newBlobHash
+    use treeStreams = Commands.updateObjectInTree oldParentHash TestDataRoot.Value pathToFile newBlobHash
 
-    Assert.Equal(treeStreams.Hashes.[0], newParentHash)
-    Assert.Equal(treeStreams.Hashes.[1], newSubTreeHash)
+    Assert.Equal(treeStreams.Hashes[0], newParentHash)
+    Assert.Equal(treeStreams.Hashes[1], newSubTreeHash)
 
-    let tr = Commands.streamToTreeBody treeStreams.Streams.[0]
-    let subTr = Commands.streamToTreeBody treeStreams.Streams.[1]
+    let tr = Commands.streamToTreeBody treeStreams.Streams[0]
+    let subTr = Commands.streamToTreeBody treeStreams.Streams[1]
 
     Assert.Equal(tr.Length, 2)
-    Assert.Equal(tr.[0].Mode, 100644UL)
-    Assert.Equal(tr.[0].Name, "README")
-    Assert.Equal<byte>(tr.[0].Hash, readmeHash |> Tools.stringToByte)
-    Assert.Equal(tr.[1].Mode, 40000UL)
-    Assert.Equal(tr.[1].Name, "ex")
-    Assert.Equal<byte>(tr.[1].Hash, newSubTreeHash |> Tools.stringToByte)
+    Assert.Equal(tr[0].Mode, 100644UL)
+    Assert.Equal(tr[0].Name, "README")
+    Assert.Equal<byte>(tr[0].Hash, readmeHash |> Tools.stringToByte)
+    Assert.Equal(tr[1].Mode, 40000UL)
+    Assert.Equal(tr[1].Name, "ex")
+    Assert.Equal<byte>(tr[1].Hash, newSubTreeHash |> Tools.stringToByte)
 
     Assert.Equal(subTr.Length, 1)
-    Assert.Equal(subTr.[0].Mode, 100644UL)
-    Assert.Equal(subTr.[0].Name, "FIGHTTHEMACHINE")
-    Assert.Equal<byte>(subTr.[0].Hash, newBlobHash |> Tools.stringToByte)
+    Assert.Equal(subTr[0].Mode, 100644UL)
+    Assert.Equal(subTr[0].Name, "FIGHTTHEMACHINE")
+    Assert.Equal<byte>(subTr[0].Hash, newBlobHash |> Tools.stringToByte)
 
 [<Fact>]
 let ``Files should be written after updating of the whole tree``(): unit =
     let oldParentHash = "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let newBlobHash = "724978a20d84133868886a8e580f59c6f8586733"
-    let pathToParentTree = Path.Combine(testDataRoot, ".git", "objects", "a3", "ecc1b7fb40831db85596a4f6d2b5e0a1070292")
-    let pathToSubTree = Path.Combine(testDataRoot, ".git", "objects", "b6", "c6d6bca44755db41e85040189d86c0dbec691e")
+    let pathToParentTree = TestDataRoot / ".git" / "objects" / "a3" / "ecc1b7fb40831db85596a4f6d2b5e0a1070292"
+    let pathToSubTree = TestDataRoot / ".git" / "objects" / "b6" / "c6d6bca44755db41e85040189d86c0dbec691e"
 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
-    use treeStreams = Commands.updateObjectInTree oldParentHash testDataRoot pathToFile newBlobHash
-    Commands.writeTreeObjects testDataRoot treeStreams
-    Assert.True(File.Exists(pathToParentTree))
-    Assert.True(File.Exists(pathToSubTree))
-    File.Delete(pathToParentTree)
-    File.Delete(pathToSubTree)
-
+    use treeStreams = Commands.updateObjectInTree oldParentHash TestDataRoot.Value pathToFile newBlobHash
+    Commands.writeTreeObjects TestDataRoot.Value treeStreams
+    Assert.True(File.Exists(pathToParentTree.Value))
+    Assert.True(File.Exists(pathToSubTree.Value))
+    File.Delete(pathToParentTree.Value)
+    File.Delete(pathToSubTree.Value)
 
 [<Fact>]
 let ``Init command should create empty git repository``(): unit =

@@ -8,13 +8,14 @@ open System
 open System.IO
 open System.Text
 open System.Reflection
+open TruePath
 
 let executingAssemblyDirectory: string =
     let location = Assembly.GetExecutingAssembly().Location
     Path.GetDirectoryName(location) |> nonNull
 
-let testDataRoot: string =
-    Path.Combine(executingAssemblyDirectory, "Data")
+let TestDataRoot: LocalPath =
+    LocalPath(Path.Combine(executingAssemblyDirectory, "Data"))
 
 let testMoreDateRoot: string =
     Path.Combine(executingAssemblyDirectory, "Data2")
