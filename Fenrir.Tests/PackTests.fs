@@ -11,13 +11,14 @@ open Fenrir.Tests.TestUtils
 open Fenrir.Git.Packing
 
 let private packTest (bom: bool) (hash: string) (source: string): unit =
-    // Some of our test data objects include UTF-8 BOM due to historical reasons, while actual text has been cleaned up.
+    // Some of our test data objects include UTF-8 BOM due to historical reasons, while the actual text has been cleaned
+    // up.
     // Work around that by appending BOM if required.
     // If you ever update the test data objects, please drop the BOM from them altogether.
-    use packedObject = getPackedObject testDataRoot hash
+    use packedObject = getPackedObject TestDataRoot.Value hash
     let expectedBytes = [|
         if bom then yield! [| 0xEFuy; 0xBBuy; 0xBFuy |] // UTF-8 BOM
-        yield! File.ReadAllBytes <| Path.Combine(testDataRoot, source)
+        yield! File.ReadAllBytes((TestDataRoot / source).Value)
     |]
     let expected = expectedBytes |> toString
     Assert.Equal(0L, packedObject.Stream.Position)

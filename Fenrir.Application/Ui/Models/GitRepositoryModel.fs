@@ -10,6 +10,7 @@ open System.Collections.Generic
 open Fenrir.Git
 open Fenrir.Git.Commands
 open Fenrir.Git.Metadata
+open TruePath
 
 type GitRepositoryModel(gitDirectoryPath: string) =
     let rec readTreeRecursively(hash: string) =
@@ -32,16 +33,16 @@ type GitRepositoryModel(gitDirectoryPath: string) =
                        |> Seq.toArray)
     }
 
-    member _.ReadCommitsAsync(ref: Ref): Async<IReadOnlyList<CommitBody>> = async {
-        return upcast [|
-            let mutable currentCommitId = Some ref.CommitObjectId
-            while Option.isSome currentCommitId do
-                let body = Commands.parseCommitBody gitDirectoryPath currentCommitId.Value
-                yield body
-                currentCommitId <- Array.tryHead body.Parents
-        |]
+    member _.ReadCommitsAsync(ref: Ref): Async<IReadOnlyList<Commit>> = async {
+        let commits = ResizeArray()
+        let mutable currentCommitId = Some ref.CommitObjectId
+        while Option.isSome currentCommitId do
+            let! commit = Async.AwaitTask <| Commits.ReadCommit(LocalPath gitDirectoryPath, currentCommitId.Value)
+            commits.Add commit
+            currentCommitId <- Array.tryHead commit.Body.Parents
+        return commits
     }
 
-    member _.ReadFilesAsync(commit: CommitBody): Async<IReadOnlyList<TreeItemModel>> = async {
-        return upcast readTreeRecursively commit.Tree
+    member _.ReadFilesAsync(commit: Commit): Async<IReadOnlyList<TreeItemModel>> = async {
+        return upcast readTreeRecursively commit.Body.Tree
     }

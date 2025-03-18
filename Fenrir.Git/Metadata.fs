@@ -27,6 +27,11 @@ type CommitBody = {
     Rest: string[]
 }
 
+type Commit = {
+    Hash: string
+    Body: CommitBody
+}
+
 type TreeAtom = {
     Mode: uint64
     Name: string

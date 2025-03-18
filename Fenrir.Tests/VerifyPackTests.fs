@@ -7,21 +7,21 @@ module Fenrir.Tests.VerifyPackTests
 open System
 open System.IO
 open Fenrir.Git.PackVerification
+open TruePath
 open Xunit
 
 open Fenrir.Tests.TestUtils
 
 type GetReaderInput =
     | Bytes of byte array array
-    | Path of string
+    | Path of LocalPath
 
 let getReader (input: GetReaderInput) : BinaryReader =
     match input with
     | Bytes bytes -> new BinaryReader(new MemoryStream(Array.concat bytes))
-    | Path path -> new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+    | Path path -> new BinaryReader(File.Open(path.Value, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-let packPath =
-    Path.Combine(testDataRoot, "objects", "pack", "pack-07a2498901f9e70c9056ae89d11aba80b3402616.pack")
+let private packPath = TestDataRoot / "objects" / "pack" / "pack-07a2498901f9e70c9056ae89d11aba80b3402616.pack"
 
 [<Fact>]
 let ``Verify bad pack header signature should fail`` () : unit =
@@ -82,6 +82,6 @@ let ``Verbose output equals get verify-pack -v out`` () : unit =
     let strings = verifyPack reader true |> Seq.toArray
     let actual = String.Join("\n", strings)
 
-    let expected = File.ReadAllText(Path.Combine(testDataRoot, "verify-pack-v_output.txt"))
+    let expected = File.ReadAllText((TestDataRoot / "verify-pack-v_output.txt").Value)
     Console.WriteLine expected
     Assert.Equal(actual, expected)
