@@ -11,6 +11,7 @@ open System.Reflection
 open ConsoleFramework
 open ConsoleFramework.Controls
 open ConsoleFramework.Events
+open TruePath
 open global.Xaml
 
 open Fenrir.Ui.Framework
@@ -38,7 +39,7 @@ let private initializeViewModelOnActivate (vm: ViewModelBase) (window: Window): 
     )
     EventManager.AddHandler(window, Window.ActivatedEvent, handler)
 
-let run (path: string): unit =
+let run (path: LocalPath): unit =
     Console.initialize()
 
     let repository = GitRepositoryModel path

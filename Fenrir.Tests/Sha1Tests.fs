@@ -31,14 +31,10 @@ let ``Sha1 impl returns same hash as builtin`` () : unit =
 
 [<Fact>]
 let ``Simple sha1 vulnerable to shattered attack`` () : unit =
-    let pdfsDir =
-        Path.Combine(executingAssemblyDirectory, "Sha1CollisionData")
+    let pdfsDir = ExecutingAssemblyDirectory / "Sha1CollisionData"
 
-    let pdf1 =
-        File.ReadAllBytes(Path.Combine(pdfsDir, "shattered-1.pdf"))
-
-    let pdf2 =
-        File.ReadAllBytes(Path.Combine(pdfsDir, "shattered-2.pdf"))
+    let pdf1 = File.ReadAllBytes((pdfsDir / "shattered-1.pdf").Value)
+    let pdf2 = File.ReadAllBytes((pdfsDir / "shattered-2.pdf").Value)
 
     let hash1 = calcBuiltinHash pdf1
     let hash2 = calcBuiltinHash pdf2
@@ -47,14 +43,10 @@ let ``Simple sha1 vulnerable to shattered attack`` () : unit =
 
 [<Fact>]
 let ``Run shattered with collision fix`` () : unit =
-    let pdfsDir =
-        Path.Combine(executingAssemblyDirectory, "Sha1CollisionData")
+    let pdfsDir = ExecutingAssemblyDirectory / "Sha1CollisionData"
 
-    let pdf1 =
-        File.ReadAllBytes(Path.Combine(pdfsDir, "shattered-1.pdf"))
-
-    let pdf2 =
-        File.ReadAllBytes(Path.Combine(pdfsDir, "shattered-2.pdf"))
+    let pdf1 = File.ReadAllBytes((pdfsDir / "shattered-1.pdf").Value)
+    let pdf2 = File.ReadAllBytes((pdfsDir / "shattered-2.pdf").Value)
 
     let hash1 = calcHashByImplementation pdf1
     let hash2 = calcHashByImplementation pdf2

@@ -156,39 +156,39 @@ let main (argv: string[]): int =
         ExitCodes.Success
 
     | [|"refs"|] ->
-        let pathToRepo = Path.Combine(Directory.GetCurrentDirectory(), ".git")
-        Commands.refsCommand pathToRepo
+        let pathToRepo = AbsolutePath.CurrentWorkingDirectory / ".git"
+        Commands.refsCommand(LocalPath pathToRepo)
         ExitCodes.Success
     | [|"refs"; pathToRepo|] ->
-        Commands.refsCommand pathToRepo
+        Commands.refsCommand(LocalPath pathToRepo)
         ExitCodes.Success
 
     | [|"save"|] ->
-        let pathToRepo = Directory.GetCurrentDirectory()
+        let pathToRepo = AbsolutePath.CurrentWorkingDirectory
         use input = Console.OpenStandardInput()
         use headed = new MemoryStream()
         let hashName = Commands.headifyStream GitObjectType.GitBlob input headed
-        Commands.writeStreamToFile pathToRepo headed hashName
+        Commands.writeStreamToFile (LocalPath pathToRepo) headed hashName
         ExitCodes.Success
     | [|"save"; inputPath|] ->
-        let pathToRepo = Directory.GetCurrentDirectory()
+        let pathToRepo = AbsolutePath.CurrentWorkingDirectory
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
         let hashName = Commands.headifyStream GitObjectType.GitBlob input headed
-        Commands.writeStreamToFile pathToRepo headed hashName
+        Commands.writeStreamToFile (LocalPath pathToRepo) headed hashName
         ExitCodes.Success
     | [|"save"; inputPath; pathToRepo|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
         let hashName = Commands.headifyStream GitObjectType.GitBlob input headed
-        Commands.writeStreamToFile pathToRepo headed hashName
+        Commands.writeStreamToFile (LocalPath pathToRepo) headed hashName
         ExitCodes.Success
 
     | [|"ui"; path|] ->
-        Ui.EntryPoint.run path
+        Ui.EntryPoint.run(LocalPath path)
         ExitCodes.Success
     | [|"ui"|] ->
-        Ui.EntryPoint.run(Path.Combine(Environment.CurrentDirectory, ".git"))
+        Ui.EntryPoint.run(LocalPath(AbsolutePath.CurrentWorkingDirectory / ".git"))
         ExitCodes.Success
 
     | [|"unpack"|] ->
@@ -208,65 +208,78 @@ let main (argv: string[]): int =
         ExitCodes.Success
 
     | [|"read-commit"; repoPath; commitHash|] ->
-        let commit = Commits.ReadCommit(LocalPath repoPath, commitHash)
-        printfn $"%A{commit}"
-        ExitCodes.Success
+        task {
+            let repoPath = LocalPath repoPath
+            let index = PackIndex repoPath
+            let! commit = Commits.ReadCommit(index, repoPath, commitHash)
+            printfn $"%A{commit}"
+            return ExitCodes.Success
+        } |> Task.RunSynchronously
 
     | [|"print-commits"; gitDir|] ->
         PrintAllCommits(LocalPath gitDir)
         |> Task.RunSynchronously
 
     | [|"update-commit"; commitHash; filePath|] ->
-        let pathToRepo = Directory.GetCurrentDirectory()
+        let pathToRepo = LocalPath AbsolutePath.CurrentWorkingDirectory
         updateCommitOp commitHash pathToRepo filePath false
         |> Task.RunSynchronously
 
     | [|"update-commit"; commitHash; filePath; repoOrForce|] ->
         match repoOrForce.Equals "--force" with
         | true ->
-            let pathToRepo = Directory.GetCurrentDirectory()
+            let pathToRepo = LocalPath AbsolutePath.CurrentWorkingDirectory
             updateCommitOp commitHash pathToRepo filePath true
         | false ->
-            updateCommitOp commitHash repoOrForce filePath false
+            updateCommitOp commitHash (LocalPath repoOrForce) filePath false
         |> Task.RunSynchronously
 
     | [|"update-commit"; commitHash; filePath; pathToRepo; forceKey|] ->
         match forceKey.Equals "--force" with
-        | true -> updateCommitOp commitHash pathToRepo filePath true |> Task.RunSynchronously
+        | true -> updateCommitOp commitHash (LocalPath pathToRepo) filePath true |> Task.RunSynchronously
         | false -> unrecognizedArgs(argv)
 
     | [|"update-with-trees"; rootTreeHash; filePath|] ->
-        let pathToRepo = Directory.GetCurrentDirectory()
-        let pathToDotGit = Path.Combine(pathToRepo, ".git")
-        let fullPathToFile = Path.Combine(pathToRepo, filePath)
-        use input = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        let pathToRepo = LocalPath AbsolutePath.CurrentWorkingDirectory
+        let pathToDotGit = pathToRepo / ".git"
+        let fullPathToFile = pathToRepo / filePath
+        use input = new FileStream(fullPathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
         Commands.writeObjectHeader GitObjectType.GitBlob input headed
         input.CopyTo headed
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Tools.byteToString
         headed.Position <- 0L
-        let pathToBlob = Commands.getRawObjectPath (Path.Combine(pathToRepo, ".git")) hashName
-        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
-        use output = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
+        let pathToBlob = Commands.getRawObjectPath pathToDotGit hashName
+        Directory.CreateDirectory((pathToDotGit / "objects" / hashName.Substring(0, 2)).Value) |> ignore
+        use output = new FileStream(pathToBlob.Value, FileMode.CreateNew, FileAccess.Write)
         Zlib.packObject headed output
-        Commands.updateObjectInTree rootTreeHash pathToDotGit filePath hashName |> Commands.writeTreeObjects pathToRepo
+        let index = PackIndex pathToDotGit
+        let tree =
+            Commands.updateObjectInTree index rootTreeHash pathToDotGit filePath hashName
+            |> Task.RunSynchronously
+        Commands.writeTreeObjects pathToRepo tree
         ExitCodes.Success
     | [|"update-with-trees"; rootTreeHash; pathToRepo; filePath|] ->
-        let pathToDotGit = Path.Combine(pathToRepo, ".git")
-        let fullPathToFile = Path.Combine(pathToRepo, filePath)
-        use input = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        let pathToDotGit = (LocalPath pathToRepo) / ".git"
+        let fullPathToFile = (LocalPath pathToRepo) / filePath
+        use input = new FileStream(fullPathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
         Commands.writeObjectHeader GitObjectType.GitBlob input headed
         input.CopyTo headed
         headed.Position <- 0L
         let hashName = Commands.SHA1 headed |> Tools.byteToString
         headed.Position <- 0L
-        let pathToBlob = Commands.getRawObjectPath (Path.Combine(pathToRepo, ".git")) hashName
-        Directory.CreateDirectory(Path.Combine(pathToRepo, ".git", "objects", hashName.Substring(0, 2))) |> ignore
-        use output = new FileStream(pathToBlob, FileMode.CreateNew, FileAccess.Write)
+        let pathToBlob = Commands.getRawObjectPath pathToDotGit hashName
+        Directory.CreateDirectory((pathToDotGit / "objects" / hashName.Substring(0, 2)).Value) |> ignore
+        use output = new FileStream(pathToBlob.Value, FileMode.CreateNew, FileAccess.Write)
         Zlib.packObject headed output
-        Commands.updateObjectInTree rootTreeHash pathToDotGit filePath hashName |> Commands.writeTreeObjects pathToRepo
+        let tree =
+            let index = PackIndex pathToDotGit
+            Commands.updateObjectInTree index rootTreeHash pathToDotGit filePath hashName
+            |> Task.RunSynchronously
+
+        Commands.writeTreeObjects(LocalPath pathToRepo) tree
         ExitCodes.Success
 
     | [|"verify-pack"; packPath|] ->

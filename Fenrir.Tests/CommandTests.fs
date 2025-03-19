@@ -7,6 +7,7 @@ module Fenrir.Tests.CommandTests
 open System.IO
 open System.Text
 
+open System.Threading.Tasks
 open Xunit
 
 open Fenrir.Git
@@ -76,8 +77,9 @@ let ``Cutting off header should write file properly``(): unit =
     Assert.Equal(n, actualObjectContents.Length)
 
 [<Fact>]
-let ``The program should parse trees properly``(): unit =
-    let tr = Commands.parseTreeBody TestDataRoot.Value "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+let ``The program should parse trees properly``(): Task = task {
+    let index = PackIndex TestDataRoot
+    let! tr = Commands.ParseTreeBody index TestDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let hashFile = "e2af08e76b2408a88f13d2c64ca89f2d03c98385" |> Tools.stringToByte
     let hashTree = "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05" |> Tools.stringToByte
     Assert.Equal(tr.Length, 2)
@@ -87,6 +89,7 @@ let ``The program should parse trees properly``(): unit =
     Assert.Equal(tr[1].Mode, 40000UL)
     Assert.Equal(tr[1].Name, "ex")
     Assert.Equal<byte>(tr[1].Hash, hashTree)
+}
 
 [<Fact>]
 let ``Hasher should calculate file name properly``(): unit =
@@ -113,15 +116,18 @@ let ``Restoring head should work properly``(): unit =
     Assert.Equal<byte>(actualObjectContents, output.ToArray())
 
 [<Fact>]
-let ``Program should change and find hash of file in tree properly``(): unit =
-    let tr = Commands.parseTreeBody TestDataRoot.Value "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+let ``Program should change and find hash of file in tree properly``(): Task = task {
+    let index = PackIndex TestDataRoot
+    let! tr = Commands.ParseTreeBody index TestDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let newHash = "0000000000000000000000000000000000000000" |> Tools.stringToByte
     let newTr = Commands.changeHashInTree tr newHash "README"
     Assert.Equal<byte>(Commands.hashOfObjectInTree newTr "README", newHash)
+}
 
 [<Fact>]
-let ``Printing of parsed tree should not change the content``(): unit =
-    let tr = Commands.parseTreeBody TestDataRoot.Value "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+let ``Printing of parsed tree should not change the content``(): Task = task {
+    let index = PackIndex TestDataRoot
+    let! tr = Commands.ParseTreeBody index TestDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     use outputPrinted = Commands.treeBodyToStream tr |> Commands.doAndRewind
 
     let objectFilePath = TestDataRoot / "objects" / "0b" / "a2ef789f6245b6b6604f54706b1dce1d84907f"
@@ -132,16 +138,19 @@ let ``Printing of parsed tree should not change the content``(): unit =
     outputActual.Position <- 0L
 
     Assert.Equal<byte>(outputPrinted.ToArray(), outputActual.ToArray())
+}
 
 [<Fact>]
-let ``updateObjectInTree should not change the whole tree if blob wasn't changed``(): unit =
+let ``updateObjectInTree should not change the whole tree if blob wasn't changed``(): Task = task {
     let parentHash = "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let subTreeHash = "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05"
     let oldBlobHash = "b5c9fc36bc435a3addb76b0115e8763c75eedf2a"
     let readmeHash = "e2af08e76b2408a88f13d2c64ca89f2d03c98385"
 
+    let index = PackIndex TestDataRoot
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
-    use treeStreams = Commands.updateObjectInTree parentHash TestDataRoot.Value pathToFile oldBlobHash
+    let! treeStreams = Commands.updateObjectInTree index parentHash TestDataRoot pathToFile oldBlobHash
+    use _ = treeStreams
 
     Assert.Equal(treeStreams.Hashes[0], parentHash)
     Assert.Equal(treeStreams.Hashes[1], subTreeHash)
@@ -161,9 +170,10 @@ let ``updateObjectInTree should not change the whole tree if blob wasn't changed
     Assert.Equal(subTr[0].Mode, 100644UL)
     Assert.Equal(subTr[0].Name, "FIGHTTHEMACHINE")
     Assert.Equal<byte>(subTr[0].Hash, oldBlobHash |> Tools.stringToByte)
+}
 
 [<Fact>]
-let ``updateObjectInTree should change the whole tree properly``(): unit =
+let ``updateObjectInTree should change the whole tree properly``(): Task = task {
     let oldParentHash = "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let newParentHash = "a3ecc1b7fb40831db85596a4f6d2b5e0a1070292"
     let newSubTreeHash = "b6c6d6bca44755db41e85040189d86c0dbec691e"
@@ -171,7 +181,9 @@ let ``updateObjectInTree should change the whole tree properly``(): unit =
     let readmeHash = "e2af08e76b2408a88f13d2c64ca89f2d03c98385"
 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
-    use treeStreams = Commands.updateObjectInTree oldParentHash TestDataRoot.Value pathToFile newBlobHash
+    let index = PackIndex TestDataRoot
+    let! treeStreams = Commands.updateObjectInTree index oldParentHash TestDataRoot pathToFile newBlobHash
+    use _ = treeStreams
 
     Assert.Equal(treeStreams.Hashes[0], newParentHash)
     Assert.Equal(treeStreams.Hashes[1], newSubTreeHash)
@@ -191,21 +203,25 @@ let ``updateObjectInTree should change the whole tree properly``(): unit =
     Assert.Equal(subTr[0].Mode, 100644UL)
     Assert.Equal(subTr[0].Name, "FIGHTTHEMACHINE")
     Assert.Equal<byte>(subTr[0].Hash, newBlobHash |> Tools.stringToByte)
+}
 
 [<Fact>]
-let ``Files should be written after updating of the whole tree``(): unit =
+let ``Files should be written after updating of the whole tree``(): Task = task {
     let oldParentHash = "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let newBlobHash = "724978a20d84133868886a8e580f59c6f8586733"
     let pathToParentTree = TestDataRoot / ".git" / "objects" / "a3" / "ecc1b7fb40831db85596a4f6d2b5e0a1070292"
     let pathToSubTree = TestDataRoot / ".git" / "objects" / "b6" / "c6d6bca44755db41e85040189d86c0dbec691e"
 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
-    use treeStreams = Commands.updateObjectInTree oldParentHash TestDataRoot.Value pathToFile newBlobHash
-    Commands.writeTreeObjects TestDataRoot.Value treeStreams
+    let index = PackIndex TestDataRoot
+    let! treeStreams = Commands.updateObjectInTree index oldParentHash TestDataRoot pathToFile newBlobHash
+    use _ = treeStreams
+    Commands.writeTreeObjects TestDataRoot treeStreams
     Assert.True(File.Exists(pathToParentTree.Value))
     Assert.True(File.Exists(pathToSubTree.Value))
     File.Delete(pathToParentTree.Value)
     File.Delete(pathToSubTree.Value)
+}
 
 [<Fact>]
 let ``Init command should create empty git repository``(): unit =

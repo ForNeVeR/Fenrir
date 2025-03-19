@@ -21,9 +21,9 @@ type Ref = {
 module Refs =
     open System.IO
 
-    let isHeadDetached (pathDotGit: string): bool =
-        let pathToHead = Path.Combine(pathDotGit, "HEAD")
-        not <| File.ReadAllText(pathToHead).StartsWith("ref: refs/heads/")
+    let isHeadDetached (pathDotGit: LocalPath): bool =
+        let pathToHead = pathDotGit / "HEAD"
+        not <| File.ReadAllText(pathToHead.Value).StartsWith("ref: refs/heads/")
 
     let private prependName (name: string) ref =
         { ref with Name = $"{name}/{ref.Name}" }
@@ -57,16 +57,16 @@ module Refs =
             ValueSome <| String(span).TrimEnd()
         else ValueNone
 
-    let private resolveSymbolicReference (gitDirectoryPath : string) (symbolicRef: string) : string=
-        let pathToRef = Path.Combine(gitDirectoryPath, symbolicRef)
-        (File.ReadAllLines pathToRef)[0]
+    let private resolveSymbolicReference (gitDirectoryPath: LocalPath) (symbolicRef: string) : string=
+        let pathToRef = gitDirectoryPath / symbolicRef
+        (File.ReadAllLines pathToRef.Value)[0]
 
-    let rec private readRefsRecursively path repositoryPath =
-        Directory.EnumerateFileSystemEntries path
+    let rec private readRefsRecursively (path: LocalPath) (repositoryPath: LocalPath) =
+        Directory.EnumerateFileSystemEntries path.Value
         |> Seq.collect(fun entry ->
             let name = nonNull <| Path.GetFileName entry
             if Directory.Exists entry then
-                readRefsRecursively entry repositoryPath
+                readRefsRecursively (LocalPath entry) repositoryPath
                 |> Seq.map(prependName name)
             else
                 let commitOrRef = File.ReadLines entry |> Seq.head
@@ -79,11 +79,11 @@ module Refs =
         )
 
 
-    let private readPackedRefs (repositoryPath:string) :Ref seq=
-        let pathToPackedRefs = Path.Combine(repositoryPath, "packed-refs")
-        if File.Exists pathToPackedRefs
+    let private readPackedRefs(repositoryPath: LocalPath): Ref seq =
+        let pathToPackedRefs = repositoryPath / "packed-refs"
+        if File.Exists pathToPackedRefs.Value
         then
-            let packedRefsLines =  File.ReadAllLines(pathToPackedRefs)
+            let packedRefsLines = File.ReadAllLines pathToPackedRefs.Value
             Array.filter (fun (str : string) -> not(str.StartsWith('#') || str.StartsWith('^'))) packedRefsLines
             |> Seq.collect (fun entryString ->
             let commitAndName = entryString.Split(' ')
@@ -96,8 +96,8 @@ module Refs =
     /// <summary>Reads the list of references available in a repository.</summary>
     /// <param name="repositoryPath">Path to a repository's <c>.git</c> directory.</param>
     /// <remarks>This function supports both packed and unpacked refs.</remarks>
-    let rec readRefs(repositoryPath: string): Ref seq =
-        let refsDirectory = Path.Combine(repositoryPath, "refs")
+    let rec readRefs(repositoryPath: LocalPath): Ref seq =
+        let refsDirectory = repositoryPath / "refs"
         let packedRefs = readPackedRefs repositoryPath
 
         readRefsRecursively refsDirectory repositoryPath
@@ -117,20 +117,20 @@ module Refs =
         return
             ParseSymbolicRef headFileContent
             |> ValueOption.map(fun ref ->
-                let commitHash = resolveSymbolicReference gitDirectory.Value ref
+                let commitHash = resolveSymbolicReference gitDirectory ref
                 { Name = ref; CommitObjectId = commitHash }
             )
             |> ValueOption.defaultWith(fun() -> { Name = null; CommitObjectId = headFileContent.TrimEnd() })
     }
 
-    let identifyRefs (commitHash: string) (repositoryPath: string): Ref seq =
+    let identifyRefs (commitHash: string) (repositoryPath: LocalPath): Ref seq =
         readRefs repositoryPath
         |> Seq.filter (fun item -> item.CommitObjectId.Equals commitHash)
 
-    let updateHead (oldCommit: string) (newCommit: string) (pathDotGit: string): unit =
-        let pathToHead = Path.Combine(pathDotGit, "HEAD")
-        match (File.ReadAllText pathToHead).StartsWith oldCommit with
-        | true -> File.WriteAllText(pathToHead, newCommit)
+    let updateHead (oldCommit: string) (newCommit: string) (pathDotGit: LocalPath): unit =
+        let pathToHead = pathDotGit / "HEAD"
+        match (File.ReadAllText pathToHead.Value).StartsWith oldCommit with
+        | true -> File.WriteAllText(pathToHead.Value, newCommit)
         | false -> ()
 
     let updateRef (newCommit: string) (pathDotGit: string) (ref: Ref) : unit =
@@ -139,5 +139,5 @@ module Refs =
         let pathToRef = Path.Combine(pathDotGit::splitName |> Array.ofList)
         File.WriteAllText(pathToRef, newCommit)
 
-    let updateAllRefs (oldCommit: string) (newCommit: string) (pathDotGit: string): unit =
-        identifyRefs oldCommit pathDotGit |> Seq.iter (updateRef newCommit pathDotGit)
+    let updateAllRefs (oldCommit: string) (newCommit: string) (pathDotGit: LocalPath): unit =
+        identifyRefs oldCommit pathDotGit |> Seq.iter (updateRef newCommit pathDotGit.Value)

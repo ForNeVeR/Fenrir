@@ -43,23 +43,25 @@ let PrintAllCommits(gitDir: LocalPath): Task<int> =
     }
 
 let updateCommitOp (commitHash: string)
-                   (pathToRepo: string)
+                   (pathToRepo: LocalPath)
                    (filePath: string)
                    (detachedAllowed: bool): Task<int> = task {
-    let pathToDotGit = Path.Combine(pathToRepo, ".git")
+    let pathToDotGit = pathToRepo / ".git"
     if not detachedAllowed && Refs.isHeadDetached pathToDotGit then
         printfn "You are in the detached head mode. Any repository modifications may turn it FUBAR.
 If you are ready to spend a fair chunk of your time on Stack Overflow or aware of what you're doing, provide the --force key.
 If at any moment your repository has turned FUBAR, consider revising the results of 'git log --reflog' to locate any commits missing."
     else
-        let fullPathToFile = Path.Combine(pathToRepo, filePath)
-        let! oldCommit = Commits.ReadCommit(LocalPath pathToDotGit, commitHash)
+        let fullPathToFile = pathToRepo / filePath
+        let index = PackIndex pathToDotGit
+        let! oldCommit = Commits.ReadCommit(index, pathToDotGit, commitHash)
         let oldRootTreeHash = oldCommit.Body.Tree
-        use inputBlob = new FileStream(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use inputBlob = new FileStream(fullPathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headedBlob = new MemoryStream()
         let blobHash = Commands.headifyStream GitObjectType.GitBlob inputBlob headedBlob
         Commands.writeStreamToFile pathToRepo headedBlob blobHash
-        use treeStreams = Commands.updateObjectInTree oldRootTreeHash pathToDotGit filePath blobHash
+        let! treeStreams = Commands.updateObjectInTree index oldRootTreeHash pathToDotGit filePath blobHash
+        use _ = treeStreams
         let newRootTreeHash = treeStreams.Hashes[0]
         let newCommit = Commands.changeHashInCommit oldCommit.Body (newRootTreeHash |> Tools.stringToByte)
         use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
