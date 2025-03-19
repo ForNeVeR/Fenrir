@@ -12,14 +12,16 @@ open System.Text
 open System.Globalization
 open System.IO
 
+open System.Threading.Tasks
 open Fenrir.Git.Metadata
 open Fenrir.Git.Packing
 open Fenrir.Git.PackVerification
 open Fenrir.Git.Tools
 open Fenrir.Git.Zlib
+open TruePath
 
-let getRawObjectPath (gitDirectoryPath: string) (objectHash: string): string =
-    Path.Combine(gitDirectoryPath, "objects", objectHash.Substring(0, 2), objectHash.Substring(2, 38))
+let getRawObjectPath (gitDirectoryPath: LocalPath) (objectHash: string): LocalPath =
+    gitDirectoryPath / "objects" / objectHash.Substring(0, 2) / objectHash.Substring(2, 38)
 
 let readHeader(input: Stream): ObjectHeader =
     let bF = new BinaryReader(input, Encoding.ASCII)
@@ -40,19 +42,25 @@ let readHeader(input: Stream): ObjectHeader =
     {Type = tp; Size = sz}
 
 /// <summary>Reads the header of any object in the Git storage.</summary>
+/// <param name="index">Git pack index to search the objects in.</param>
 /// <param name="gitDirectoryPath">Path to the repository's <c>.git</c> directory.</param>
 /// <param name="objectHash">Hash of the object.</param>
-let readObjectHeader (gitDirectoryPath: string) (objectHash: string): ObjectHeader =
+let ReadObjectHeader index (gitDirectoryPath: LocalPath) (objectHash: string): Task<ObjectHeader> =
     let rawObjectPath = getRawObjectPath gitDirectoryPath objectHash
-    if File.Exists rawObjectPath
+    if File.Exists rawObjectPath.Value
     then
-        use input = new FileStream(rawObjectPath, FileMode.Open, FileAccess.Read, FileShare.Read)
+        use input = new FileStream(rawObjectPath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
         use decodedInput = input |> getDecodedStream
-        readHeader decodedInput
-    else
-        use packedObject = getPackedObject gitDirectoryPath objectHash
-        { Type = packedObject.ObjectType
-          Size = Checked.uint64 packedObject.Stream.Length }
+        Task.FromResult <| readHeader decodedInput
+    else task {
+        let! packedObject = ReadPackedObject(index, objectHash)
+        use po = nonNull packedObject
+
+        return {
+            Type = po.ObjectType
+            Size = Checked.uint64 po.Stream.Length
+        }
+    }
 
 let guillotineObject (input: Stream) (output: Stream): int =
     readHeader input |> ignore
@@ -66,11 +74,11 @@ let guillotineObject (input: Stream) (output: Stream): int =
             | :? EndOfStreamException -> n
     rewrite 0
 
-let refsCommand(path: string): unit =
+let refsCommand(path: LocalPath): unit =
     Refs.readRefs path
     |> Seq.iter(fun ref -> printfn "%s: %s" ref.Name ref.CommitObjectId)
 
-let getHeadlessTreeBody (size: uint64) (decodedInput: MemoryStream): TreeBody =
+let getHeadlessTreeBody (size: uint64) (decodedInput: Stream): TreeBody =
     let bF = new BinaryReader(decodedInput, Encoding.ASCII)
     let rec makeList (n:int): TreeAtom list =
         try
@@ -90,18 +98,21 @@ let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
         | x -> failwithf $"Unknown Git object type: {x}."
 
 /// <summary>Parses a tree object information.</summary>
+/// <param name="index">Git pack index to search the objects in.</param>
 /// <param name="path">Path to a repository's <c>.git</c> folder.</param>
 /// <param name="hash">Hash of the tree object.</param>
-let parseTreeBody (path : String) (hash : String) : TreeBody =
+let ParseTreeBody (index: PackIndex) (path: LocalPath) (hash: string): Task<TreeBody> =
     let pathToFile = getRawObjectPath path hash
-    match File.Exists(pathToFile) with
+    match File.Exists pathToFile.Value with
         | true ->
-            use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use input = new FileStream(pathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
             use decodedInput = input |> getDecodedStream
-            decodedInput |> streamToTreeBody
-        | false ->
-            use packedObject = getPackedObject path hash
-            packedObject.Stream |> getHeadlessTreeBody (uint64 packedObject.Stream.Length)
+            Task.FromResult(decodedInput |> streamToTreeBody)
+        | false -> task {
+            let! packedObject = ReadPackedObject(index, hash)
+            use po = nonNull packedObject
+            return po.Stream |> getHeadlessTreeBody (uint64 po.Stream.Length)
+        }
 
 let writeObjectHeader (tp: GitObjectType) (input: Stream) (output: Stream): unit =
     match tp with
@@ -177,7 +188,11 @@ type TreeStreams(length: int) =
         member this.Dispose() =
             Array.iter (fun (s: MemoryStream) -> s.Dispose()) this.Streams
 
-let updateObjectInTree (rootTreeHash: string) (pathToRepo: String) (filePath: string) (blobHash: string): TreeStreams =
+let updateObjectInTree (packIndex: PackIndex)
+                       (rootTreeHash: string)
+                       (pathToRepo: LocalPath)
+                       (filePath: string)
+                       (blobHash: string): Task<TreeStreams> =
     let filePathList = filePath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries) |> List.ofArray
     let treeStreams = new TreeStreams (filePathList.Length)
     let treeToStream (newTree: TreeBody) (index: int): String =
@@ -187,38 +202,41 @@ let updateObjectInTree (rootTreeHash: string) (pathToRepo: String) (filePath: st
         let hash = headifyStream GitObjectType.GitTree input treeStreams.Streams.[index]
         treeStreams.Hashes.[index] <- hash
         hash
-    let rec updateFileHashInTree (tree: TreeBody) (filePaths: String list): String =
+    let rec updateFileHashInTree (tree: TreeBody) (filePaths: String list) = task {
         let index = treeStreams.Streams.Length - filePaths.Length
         match filePaths with
-        | [] -> failwithf "Empty path to file"
+        | [] -> return failwithf "Empty path to file"
         | [fileName] ->
             let newTree = changeHashInTree tree (stringToByte blobHash) fileName
-            treeToStream newTree index
+            return treeToStream newTree index
         | directoryName :: restPathSegments ->
             let directoryHash = hashOfObjectInTree tree directoryName |> byteToString
-            let subTree = parseTreeBody pathToRepo directoryHash
-            let newHash = updateFileHashInTree subTree restPathSegments
+            let! subTree = ParseTreeBody packIndex pathToRepo directoryHash
+            let! newHash = updateFileHashInTree subTree restPathSegments
             let newTree = changeHashInTree tree (stringToByte newHash) directoryName
-            treeToStream newTree index
+            return treeToStream newTree index
+    }
 
-    let parentTree = parseTreeBody pathToRepo rootTreeHash
-    updateFileHashInTree parentTree filePathList |> ignore
-    treeStreams.Streams |> Array.iter (fun s -> s.Position <- 0L)
-    treeStreams
+    task {
+        let! parentTree = ParseTreeBody packIndex pathToRepo rootTreeHash
+        updateFileHashInTree parentTree filePathList |> ignore
+        treeStreams.Streams |> Array.iter (fun s -> s.Position <- 0L)
+        return treeStreams
+    }
 
-let writeStreamToFile (pathToRepo: string) (stream: MemoryStream) (hash: String) : unit =
-    let pathToDirectory = Path.Combine(pathToRepo, ".git", "objects", hash.Substring(0, 2))
-    let pathToFile = getRawObjectPath (Path.Combine(pathToRepo, ".git")) hash
-    match Directory.Exists(pathToDirectory) with
+let writeStreamToFile (pathToRepo: LocalPath) (stream: MemoryStream) (hash: String) : unit =
+    let pathToDirectory = pathToRepo / ".git" / "objects" / hash.Substring(0, 2)
+    let pathToFile = getRawObjectPath (pathToRepo / ".git") hash
+    match Directory.Exists pathToDirectory.Value with
         | true -> ()
-        | false -> Directory.CreateDirectory(pathToDirectory) |> ignore
-    match File.Exists(pathToFile) with
+        | false -> Directory.CreateDirectory pathToDirectory.Value |> ignore
+    match File.Exists pathToFile.Value with
         | true -> ()
         | false ->
-            use output = new FileStream(pathToFile, FileMode.CreateNew, FileAccess.Write)
+            use output = new FileStream(pathToFile.Value, FileMode.CreateNew, FileAccess.Write)
             packObject stream output
 
-let writeTreeObjects (pathToRepo: string) (streams: TreeStreams): unit =
+let writeTreeObjects (pathToRepo: LocalPath) (streams: TreeStreams): unit =
     Array.iter2 (writeStreamToFile pathToRepo) streams.Streams streams.Hashes
 
 let createEmptyRepo (pathWhereInit : string) :unit =

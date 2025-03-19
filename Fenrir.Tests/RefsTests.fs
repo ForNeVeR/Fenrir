@@ -14,16 +14,16 @@ open Fenrir.Tests.TestUtils
 
 [<Fact>]
 let ``Attached head should be recognized properly``(): unit =
-    Assert.False(Refs.isHeadDetached("Data"))
+    Assert.False(Refs.isHeadDetached(LocalPath "Data"))
 
 [<Fact>]
 let ``Detached head should be recognized properly``(): unit =
-    Assert.True(Refs.isHeadDetached("Data2"))
+    Assert.True(Refs.isHeadDetached(LocalPath "Data2"))
 
 
 [<Fact>]
 let ``Ref list should be read properly``():unit =
-    let refs = Refs.readRefs TestDataRoot.Value
+    let refs = Refs.readRefs TestDataRoot
     let expectedRefs = [|
         { Name = "refs/heads/feature/feature-name"; CommitObjectId = "cc07136d669554cf46ca4e9ef1eab7361336e1c8" }
         { Name = "refs/heads/master"; CommitObjectId = "cc07136d669554cf46ca4e9ef1eab7361336e1c8" }
@@ -40,7 +40,7 @@ let ``Ref list should be read properly``():unit =
 [<Fact>]
 let ``Refs should be identified properly``(): unit =
     let commitHash = "8871e454a771b34cd83feda3efd5ab4bf2e35783"
-    let refs = Refs.identifyRefs commitHash testMoreDateRoot
+    let refs = Refs.identifyRefs commitHash TestMoreDateRoot
     Assert.Equal(2, Seq.length refs)
     refs |> Seq.iter (fun item -> Assert.Equal<string>(item.CommitObjectId, commitHash))
 

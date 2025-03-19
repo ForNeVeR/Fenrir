@@ -23,6 +23,7 @@ SPDX-License-Identifier: MIT
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="AssemblyInfo.fs" />
         <Compile Include="UbcCheck.fs" />
         <Compile Include="Sha1.fs" />
         <Compile Include="Refs.fs" />
@@ -30,6 +31,7 @@ SPDX-License-Identifier: MIT
         <Compile Include="Zlib.fs" />
         <Compile Include="PackDeltaMethods.fs" />
         <Compile Include="Metadata.fs" />
+        <Compile Include="PackIndex.fs" />
         <Compile Include="Packing.fs" />
         <Compile Include="PackVerification.fs" />
         <Compile Include="Commands.fs" />

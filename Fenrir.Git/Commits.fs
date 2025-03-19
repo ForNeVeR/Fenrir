@@ -11,7 +11,7 @@ open Fenrir.Git.Packing
 open Fenrir.Git.Zlib
 open TruePath
 
-let private GetHeadlessCommitBody(decodedInput: MemoryStream): CommitBody =
+let private GetHeadlessCommitBody(decodedInput: Stream): CommitBody =
     let enc = Encoding.UTF8
     use sr = new StreamReader(decodedInput, enc)
     let tree = nonNull(sr.ReadLine()).Substring(5)
@@ -32,21 +32,24 @@ let private StreamToCommitBody(decodedInput: MemoryStream): CommitBody =
         | x -> failwithf $"Unknown Git object type: {x}."
 
 /// <summary>Reads a commit with specified <paramref name="hash"/>.</summary>
+/// <param name="index">Pack file index of the repository.</param>
 /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
 /// <param name="hash">Commit hash.</param>
-let ReadCommit(gitDirectory: LocalPath, hash: string): Task<Commit> =
-    let pathToFile = Commands.getRawObjectPath gitDirectory.Value hash
-    let body =
-        match File.Exists(pathToFile) with
+let ReadCommit(index: PackIndex, gitDirectory: LocalPath, hash: string): Task<Commit> = task {
+    let pathToFile = Commands.getRawObjectPath gitDirectory hash
+    let! body = task {
+        match File.Exists pathToFile.Value with
         | true ->
-            use input = new FileStream(pathToFile, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use input = new FileStream(pathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
             use decodedInput = input |> getDecodedStream
-            decodedInput |> StreamToCommitBody
+            return decodedInput |> StreamToCommitBody
         | false ->
-            use packedObject = getPackedObject gitDirectory.Value hash
-            packedObject.Stream |> GetHeadlessCommitBody
-    { Hash = hash; Body = body }
-    |> Task.FromResult
+            let! packedObject = ReadPackedObject(index, hash)
+            use po = nonNull packedObject
+            return po.Stream |> GetHeadlessCommitBody
+    }
+    return { Hash = hash; Body = body }
+}
 
 /// <summary>
 /// Starting with commit <paramref name="headCommitHash"/>, will enumerate all its parents. The enumeration order
@@ -56,13 +59,14 @@ let ReadCommit(gitDirectory: LocalPath, hash: string): Task<Commit> =
 /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
 /// <param name="headCommitHash">Hash of the starting commit.</param>
 let TraverseCommits(gitDirectory: LocalPath, headCommitHash: string): System.Collections.Generic.IAsyncEnumerable<Commit> =
+    let index = PackIndex gitDirectory
     asyncSeq {
         let visitedCommits = HashSet()
         let currentCommits = Stack [| headCommitHash |]
         while currentCommits.Count > 0 do
             let commitHash = currentCommits.Pop()
             if visitedCommits.Add commitHash then
-                let! commit = Async.AwaitTask <| ReadCommit(gitDirectory, commitHash)
+                let! commit = Async.AwaitTask <| ReadCommit(index, gitDirectory, commitHash)
                 yield commit
                 commit.Body.Parents |> Array.iter currentCommits.Push
     } |> AsyncSeq.toAsyncEnum
