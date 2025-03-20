@@ -8,6 +8,7 @@ open System.IO
 open System.Text
 
 open System.Threading.Tasks
+open JetBrains.Lifetimes
 open Xunit
 
 open Fenrir.Git
@@ -78,7 +79,8 @@ let ``Cutting off header should write file properly``(): unit =
 
 [<Fact>]
 let ``The program should parse trees properly``(): Task = task {
-    let index = PackIndex TestDataRoot
+    use ld = new LifetimeDefinition()
+    let index = PackIndex(ld.Lifetime, TestDataRoot)
     let! tr = Commands.ParseTreeBody index TestDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let hashFile = "e2af08e76b2408a88f13d2c64ca89f2d03c98385" |> Tools.stringToByte
     let hashTree = "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05" |> Tools.stringToByte
@@ -117,7 +119,8 @@ let ``Restoring head should work properly``(): unit =
 
 [<Fact>]
 let ``Program should change and find hash of file in tree properly``(): Task = task {
-    let index = PackIndex TestDataRoot
+    use ld = new LifetimeDefinition()
+    let index = PackIndex(ld.Lifetime, TestDataRoot)
     let! tr = Commands.ParseTreeBody index TestDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let newHash = "0000000000000000000000000000000000000000" |> Tools.stringToByte
     let newTr = Commands.changeHashInTree tr newHash "README"
@@ -126,7 +129,8 @@ let ``Program should change and find hash of file in tree properly``(): Task = t
 
 [<Fact>]
 let ``Printing of parsed tree should not change the content``(): Task = task {
-    let index = PackIndex TestDataRoot
+    use ld = new LifetimeDefinition()
+    let index = PackIndex(ld.Lifetime, TestDataRoot)
     let! tr = Commands.ParseTreeBody index TestDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     use outputPrinted = Commands.treeBodyToStream tr |> Commands.doAndRewind
 
@@ -147,7 +151,8 @@ let ``updateObjectInTree should not change the whole tree if blob wasn't changed
     let oldBlobHash = "b5c9fc36bc435a3addb76b0115e8763c75eedf2a"
     let readmeHash = "e2af08e76b2408a88f13d2c64ca89f2d03c98385"
 
-    let index = PackIndex TestDataRoot
+    use ld = new LifetimeDefinition()
+    let index = PackIndex(ld.Lifetime, TestDataRoot)
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
     let! treeStreams = Commands.updateObjectInTree index parentHash TestDataRoot pathToFile oldBlobHash
     use _ = treeStreams
@@ -181,7 +186,8 @@ let ``updateObjectInTree should change the whole tree properly``(): Task = task 
     let readmeHash = "e2af08e76b2408a88f13d2c64ca89f2d03c98385"
 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
-    let index = PackIndex TestDataRoot
+    use ld = new LifetimeDefinition()
+    let index = PackIndex(ld.Lifetime, TestDataRoot)
     let! treeStreams = Commands.updateObjectInTree index oldParentHash TestDataRoot pathToFile newBlobHash
     use _ = treeStreams
 
@@ -213,7 +219,8 @@ let ``Files should be written after updating of the whole tree``(): Task = task 
     let pathToSubTree = TestDataRoot / ".git" / "objects" / "b6" / "c6d6bca44755db41e85040189d86c0dbec691e"
 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
-    let index = PackIndex TestDataRoot
+    use ld = new LifetimeDefinition()
+    let index = PackIndex(ld.Lifetime, TestDataRoot)
     let! treeStreams = Commands.updateObjectInTree index oldParentHash TestDataRoot pathToFile newBlobHash
     use _ = treeStreams
     Commands.writeTreeObjects TestDataRoot treeStreams

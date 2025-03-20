@@ -12,6 +12,7 @@ open System.Threading.Tasks
 open Fenrir.Git
 open Fenrir.ArgumentCommands
 open Fenrir.Git.Metadata
+open JetBrains.Lifetimes
 open TruePath
 
 let private printVersion() =
@@ -209,8 +210,9 @@ let main (argv: string[]): int =
 
     | [|"read-commit"; repoPath; commitHash|] ->
         task {
+            use ld = new LifetimeDefinition()
             let repoPath = LocalPath repoPath
-            let index = PackIndex repoPath
+            let index = PackIndex(ld.Lifetime, repoPath)
             let! commit = Commits.ReadCommit(index, repoPath, commitHash)
             printfn $"%A{commit}"
             return ExitCodes.Success
@@ -254,7 +256,8 @@ let main (argv: string[]): int =
         Directory.CreateDirectory((pathToDotGit / "objects" / hashName.Substring(0, 2)).Value) |> ignore
         use output = new FileStream(pathToBlob.Value, FileMode.CreateNew, FileAccess.Write)
         Zlib.packObject headed output
-        let index = PackIndex pathToDotGit
+        use ld = new LifetimeDefinition()
+        let index = PackIndex(ld.Lifetime, pathToDotGit)
         let tree =
             Commands.updateObjectInTree index rootTreeHash pathToDotGit filePath hashName
             |> Task.RunSynchronously
@@ -275,7 +278,8 @@ let main (argv: string[]): int =
         use output = new FileStream(pathToBlob.Value, FileMode.CreateNew, FileAccess.Write)
         Zlib.packObject headed output
         let tree =
-            let index = PackIndex pathToDotGit
+            use ld = new LifetimeDefinition()
+            let index = PackIndex(ld.Lifetime, pathToDotGit)
             Commands.updateObjectInTree index rootTreeHash pathToDotGit filePath hashName
             |> Task.RunSynchronously
 

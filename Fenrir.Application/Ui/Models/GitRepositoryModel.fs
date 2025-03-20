@@ -11,11 +11,13 @@ open System.Threading.Tasks
 open Fenrir.Git
 open Fenrir.Git.Commands
 open Fenrir.Git.Metadata
+open JetBrains.Lifetimes
 open TruePath
 
 type GitRepositoryModel(gitDirectoryPath: LocalPath) =
     let rec readTreeRecursively(hash: string) = task {
-        let index = PackIndex gitDirectoryPath
+        use ld = new LifetimeDefinition()
+        let index = PackIndex(ld.Lifetime, gitDirectoryPath)
         let! body = ParseTreeBody index gitDirectoryPath hash
         let! models =
             body
@@ -43,7 +45,8 @@ type GitRepositoryModel(gitDirectoryPath: LocalPath) =
     member _.ReadCommitsAsync(ref: Ref): Async<IReadOnlyList<Commit>> = async {
         let commits = ResizeArray()
         let mutable currentCommitId = Some ref.CommitObjectId
-        let index = PackIndex gitDirectoryPath
+        use ld = new LifetimeDefinition()
+        let index = PackIndex(ld.Lifetime, gitDirectoryPath)
         while Option.isSome currentCommitId do
             let! commit = Async.AwaitTask <| Commits.ReadCommit(index, gitDirectoryPath, currentCommitId.Value)
             commits.Add commit

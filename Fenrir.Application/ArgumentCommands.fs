@@ -11,6 +11,7 @@ open System.Threading.Tasks
 open FSharp.Control
 open Fenrir.Git
 open Fenrir.Git.Metadata
+open JetBrains.Lifetimes
 open TruePath
 
 module ExitCodes =
@@ -53,7 +54,8 @@ If you are ready to spend a fair chunk of your time on Stack Overflow or aware o
 If at any moment your repository has turned FUBAR, consider revising the results of 'git log --reflog' to locate any commits missing."
     else
         let fullPathToFile = pathToRepo / filePath
-        let index = PackIndex pathToDotGit
+        use ld = new LifetimeDefinition()
+        let index = PackIndex(ld.Lifetime, pathToDotGit)
         let! oldCommit = Commits.ReadCommit(index, pathToDotGit, commitHash)
         let oldRootTreeHash = oldCommit.Body.Tree
         use inputBlob = new FileStream(fullPathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
