@@ -7,6 +7,7 @@ module Fenrir.Tests.PackTests
 open System.IO
 open System.Threading.Tasks
 open Fenrir.Git
+open JetBrains.Lifetimes
 open Xunit
 
 open Fenrir.Tests.TestUtils
@@ -17,7 +18,8 @@ let private packTest (bom: bool) (hash: string) (source: string): Task = task {
     // up.
     // Work around that by appending BOM if required.
     // If you ever update the test data objects, please drop the BOM from them altogether.
-    let index = PackIndex TestDataRoot
+    use ld = new LifetimeDefinition()
+    let index = PackIndex(ld.Lifetime, TestDataRoot)
     let! packedObject = ReadPackedObject(index, hash)
     use po = nonNull packedObject
     let expectedBytes = [|

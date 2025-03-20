@@ -9,6 +9,7 @@ open FSharp.Control
 open Fenrir.Git.Metadata
 open Fenrir.Git.Packing
 open Fenrir.Git.Zlib
+open JetBrains.Lifetimes
 open TruePath
 
 let private GetHeadlessCommitBody(decodedInput: Stream): CommitBody =
@@ -59,8 +60,9 @@ let ReadCommit(index: PackIndex, gitDirectory: LocalPath, hash: string): Task<Co
 /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
 /// <param name="headCommitHash">Hash of the starting commit.</param>
 let TraverseCommits(gitDirectory: LocalPath, headCommitHash: string): System.Collections.Generic.IAsyncEnumerable<Commit> =
-    let index = PackIndex gitDirectory
     asyncSeq {
+        use ld = new LifetimeDefinition()
+        let index = PackIndex(ld.Lifetime, gitDirectory)
         let visitedCommits = HashSet()
         let currentCommits = Stack [| headCommitHash |]
         while currentCommits.Count > 0 do
