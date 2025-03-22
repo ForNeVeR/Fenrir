@@ -46,7 +46,7 @@ let readHeader(input: Stream): ObjectHeader =
 /// <param name="index">Git pack index to search the objects in.</param>
 /// <param name="gitDirectoryPath">Path to the repository's <c>.git</c> directory.</param>
 /// <param name="objectHash">Hash of the object.</param>
-let ReadObjectHeader index (gitDirectoryPath: LocalPath) (objectHash: Sha1Hash): Task<ObjectHeader> =
+let ReadObjectHeader (index: PackIndex) (gitDirectoryPath: LocalPath) (objectHash: Sha1Hash): Task<ObjectHeader> =
     let rawObjectPath = getRawObjectPath gitDirectoryPath objectHash
     if File.Exists rawObjectPath.Value
     then
