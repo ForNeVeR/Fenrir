@@ -40,6 +40,12 @@ jobs:
       - name: Test
         run: dotnet test --configuration Release
 
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+
+      - name: Run docfx
+        run: dotnet docfx docs/docfx.json --warningsAsErrors
+
   licenses:
     runs-on: ubuntu-24.04
     steps:
