@@ -64,9 +64,7 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
         - `getObjectMeta`,
         - `getNegOffset`,
         - `parsePackInfo`;
-    - `Tools`' functions removed:
-        - `byteToString`,
-        - `stringToByte`.
+    - `Tools` module is removed from the public API.
 
 ### Added
 - A new `Commits` module, with several functions moved from the `Commands` module.
