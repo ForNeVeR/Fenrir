@@ -48,8 +48,9 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
     - `Refs.updateAllRefs` now requires `LocalPath` and `Sha1Hash`es as arguments;
     - `BinaryReader.ReadHash` extension method now returns a `Sha1Hash`.
 
-**Other changes:**
-- [#111](https://github.com/ForNeVeR/Fenrir/issues/111): added an API and implementation for faster commit enumeration.
+- **Other changes:**
+    - [#111](https://github.com/ForNeVeR/Fenrir/issues/111): added an API and implementation for faster commit enumeration.
+    - `Packing.PackedObject.Stream` is now a general `Stream` instead of a `MemoryStream`.
 
 ### Removed
 - **Breaking:**
