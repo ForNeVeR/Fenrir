@@ -121,3 +121,13 @@ The license indication in the project's sources is compliant with the [REUSE spe
 [reuse.spec]: https://reuse.software/spec-3.3/
 [semver]: https://semver.org/spec/v2.0.0.html
 [status-enfer]: https://img.shields.io/badge/status-enfer-orange.svg
+
+
+## Development
+
+```bash
+# Install dependencies
+npm install || pip install -r requirements.txt
+# Run tests
+npm test || pytest
+```
