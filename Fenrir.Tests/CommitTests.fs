@@ -33,7 +33,7 @@ let ``Printing of parsed commit should not change the content``(): Task = task {
     use ld = new LifetimeDefinition()
     let index = PackIndex(ld.Lifetime, TestDataRoot)
     let! cmt = Commits.ReadCommit(index, TestDataRoot, "3cb4a57f644f322c852201a68d2211026912a228" |> Sha1Hash.OfHexString)
-    use outputPrinted = Commands.commitBodyToStream cmt.Body |> Commands.doAndRewind
+    use outputPrinted = Commits.CommitBodyToStream cmt.Body |> Commands.doAndRewind
 
     let objectFilePath = TestDataRoot / "objects" / "3c" / "b4a57f644f322c852201a68d2211026912a228"
     use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
