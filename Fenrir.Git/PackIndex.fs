@@ -43,7 +43,8 @@ type private PackFile(
         let readEntries = lifetime.Execute(fun() ->
             use accessor = index.CreateViewAccessor(
                 int64 initialReadOffset,
-                int64 enumeratedEntryCount * int64 sizeof<Sha1Hash>
+                int64 enumeratedEntryCount * int64 sizeof<Sha1Hash>,
+                MemoryMappedFileAccess.Read
             )
             accessor.ReadArray(0, data, 0, Checked.int32 enumeratedEntryCount)
         )
@@ -59,7 +60,7 @@ type private PackFile(
             + objectCount * uint32 sizeof<uint32> // CRC32 table
             + offsetIndex * uint32 sizeof<uint32>
         lifetime.Execute(fun() ->
-            use accessor = index.CreateViewStream()
+            use accessor = index.CreateViewStream(0, 0, MemoryMappedFileAccess.Read)
             accessor.Position <- int64 readOffset
             let offset = accessor.ReadBigEndianUInt32()
             // TODO: work with 8-byte offsets
@@ -117,11 +118,17 @@ type PackIndex(lifetime: Lifetime, gitDir: LocalPath) =
         return fanoutTable
     }
 
-    let LoadPackFile(pack: LocalPath) = task {
+    let LoadPackFile(pack: LocalPath) =  lifetime.ExecuteAsync(fun() -> task {
         let index = LocalPath(nonNull <| Path.ChangeExtension(pack.Value, "idx"))
-        let indexMapping = MemoryMappedFile.CreateFromFile(index.Value, FileMode.Open)
+        let indexMapping = MemoryMappedFile.CreateFromFile(
+            index.Value,
+            FileMode.Open,
+            mapName = null,
+            capacity = 0,
+            access = MemoryMappedFileAccess.Read
+        )
         lifetime.AddDispose indexMapping |> ignore
-        use stream = indexMapping.CreateViewStream()
+        use stream = indexMapping.CreateViewStream(0L, 0L, MemoryMappedFileAccess.Read)
 
         let magic = Span<byte>(NativePtr.toVoidPtr <| NativePtr.stackalloc<byte> 4, 4)
         stream.ReadExactly magic
@@ -134,7 +141,7 @@ type PackIndex(lifetime: Lifetime, gitDir: LocalPath) =
 
         let! fanoutTable = ReadFanoutTable stream
         return PackFile(lifetime, pack, indexMapping, fanoutTable)
-    }
+    })
 
     let packs = lazy (
         let packFileDir = gitDir / "objects" / "pack"
