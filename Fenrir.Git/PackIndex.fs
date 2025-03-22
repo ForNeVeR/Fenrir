@@ -1,11 +1,16 @@
 namespace Fenrir.Git
 
 open System
+open System.Buffers.Binary
 open System.Collections.Generic
 open System.IO
+open System.IO.MemoryMappedFiles
+open System.Threading
 open System.Threading.Tasks
 open FSharp.Control
+open Fenrir.Git.Tools
 open JetBrains.Lifetimes
+open Microsoft.FSharp.NativeInterop
 open TruePath
 
 [<Struct>]
@@ -14,13 +19,74 @@ type PackedObjectLocation = {
     Offset: uint32
 }
 
-type private PackFile(path: LocalPath) =
+type private PackFile(
+    lifetime: Lifetime,
+    path: LocalPath,
+    index: MemoryMappedFile,
+    fanoutTable: uint32[]
+) =
+    let semaphore =
+        let s = new SemaphoreSlim(1)
+        lifetime.AddDispose s |> ignore
+        s
+
+    let objectNameTableOffset =
+            4u // magic
+            + 4u // version
+            + 256u * uint32 sizeof<uint32> // fanout table
+
+    let objectCount = fanoutTable[255]
+
+    let binarySearch (hash: Sha1Hash) (fanoutTableEntry: uint32) nextFanoutTableEntry =
+        let initialReadOffset = objectNameTableOffset + fanoutTableEntry * uint32 sizeof<Sha1Hash>
+        let enumeratedEntryCount = nextFanoutTableEntry - fanoutTableEntry + 1u
+        assert (enumeratedEntryCount >= 1u)
+
+        use accessor = index.CreateViewAccessor(int64 initialReadOffset, int64 enumeratedEntryCount * int64 sizeof<Sha1Hash>)
+        let data = Array.zeroCreate(Checked.int32 enumeratedEntryCount)
+        let readEntries = accessor.ReadArray(0, data, 0, Checked.int32 enumeratedEntryCount)
+        assert (uint32 readEntries = enumeratedEntryCount)
+
+        let index = Array.BinarySearch(data, hash)
+        if index = -1 then ValueNone else ValueSome(uint32 index)
+
+    let readOffsetForIndex offsetIndex =
+        let readOffset =
+            objectNameTableOffset
+            + objectCount * uint32 sizeof<uint32> // CRC32 table
+            + offsetIndex * uint32 sizeof<uint32>
+        use accessor = index.CreateViewStream()
+        accessor.Position <- int64 readOffset
+        let offset = accessor.ReadBigEndianUInt32()
+        // TODO: work with 8-byte offsets
+        //       https://git-scm.com/docs/pack-format — "A table of 8-byte offset entries […]"
+        offset
+
+    let tryFindNoLock(hash: Sha1Hash) =
+        let firstByte = hash.Byte0
+        let objectsWithFirstByteLessOrEqualCurrent = fanoutTable[int firstByte]
+        let objectsWithFirstByteLessThanCurrent = if firstByte = 0uy then 0u else fanoutTable[int firstByte - 1]
+
+        let hashIndex = binarySearch hash objectsWithFirstByteLessThanCurrent objectsWithFirstByteLessOrEqualCurrent
+        hashIndex |> ValueOption.map readOffsetForIndex
+
+
     member _.Path = path
-    member _.TryFindHashOffset(_hash: string): ValueOption<uint32> =
-        failwith "TODO TryFindHashOffset"
+    member _.TryFindHashOffset(hash: Sha1Hash): Task<ValueOption<uint32>> = task {
+        do! semaphore.WaitAsync()
+        try
+            return tryFindNoLock hash
+        finally
+            semaphore.Release() |> ignore
+    }
+
+#nowarn 9
 
 /// <summary>
-///     <para>Type to store, cache and access information about Git pack files.</para>
+///     <para>
+///         Type to store, cache and access information about
+///         <a href="https://git-scm.com/docs/pack-format">Git pack files</a>.
+///     </para>
 ///     <para>This type is thread-safe.</para>
 /// </summary>
 /// <param name="lifetime">
@@ -45,8 +111,33 @@ type private PackFile(path: LocalPath) =
 /// </remarks>
 type PackIndex(lifetime: Lifetime, gitDir: LocalPath) =
 
-    let loadPackFile path = task {
-        return PackFile path
+    let ReadFanoutTable(index: UnmanagedMemoryStream) = task {
+        let items = Array.zeroCreate(256 * sizeof<uint32>)
+        do! index.ReadExactlyAsync(items, 0, items.Length, lifetime.ToCancellationToken())
+        let fanoutTable = Array.zeroCreate 256
+        for i = 0 to items.Length - 1 do
+            let value = BinaryPrimitives.ReadUInt32BigEndian(ReadOnlySpan(items, i * sizeof<uint32>, sizeof<uint32>))
+            fanoutTable[i] <- value
+        return fanoutTable
+    }
+
+    let LoadPackFile(pack: LocalPath) = task {
+        let index = LocalPath(nonNull <| Path.ChangeExtension(pack.Value, "idx"))
+        let indexMapping = MemoryMappedFile.CreateFromFile(index.Value, FileMode.Open)
+        lifetime.AddDispose indexMapping |> ignore
+        use stream = indexMapping.CreateViewStream()
+
+        let magic = Span<byte>(NativePtr.toVoidPtr <| NativePtr.stackalloc<byte> 4, 4)
+        stream.ReadExactly magic
+        if not <| magic.SequenceEqual [| 0xFFuy; 0x74uy; 0x4Fuy; 0x63uy |] then
+            failwithf $"Unknown magic value in the index file \"{index}\": {Convert.ToHexString magic}."
+
+        let version = stream.ReadBigEndianUInt32()
+        if version <> 2u then
+            failwithf $"Unknown version value in the index file \"{index}\": {version}."
+
+        let! fanoutTable = ReadFanoutTable stream
+        return PackFile(lifetime, pack, indexMapping, fanoutTable)
     }
 
     let packs = lazy (
@@ -55,7 +146,7 @@ type PackIndex(lifetime: Lifetime, gitDir: LocalPath) =
             if Directory.Exists packFileDir.Value then
                 Directory.EnumerateFileSystemEntries(packFileDir.Value, "*.pack")
                 |> Seq.map LocalPath
-                |> Seq.map(fun packPath -> KeyValuePair(packPath, lazy (loadPackFile packPath)))
+                |> Seq.map(fun packPath -> KeyValuePair(packPath, lazy (LoadPackFile packPath)))
                 |> Dictionary
             else
                 Dictionary()
@@ -65,15 +156,16 @@ type PackIndex(lifetime: Lifetime, gitDir: LocalPath) =
     /// <summary>Searches an object with <paramref name="hash"/> among the pack files included in the index.</summary>
     /// <param name="hash">Hash of the searched object.</param>
     /// <returns>Path to a pack file containing the object.</returns>
-    member _.FindPackOfObject(hash: string): Task<Nullable<PackedObjectLocation>> =
-        task {
+    member _.FindPackOfObject(hash: Sha1Hash): Task<Nullable<PackedObjectLocation>> =
+        Async.StartAsTask(async {
             let! searchResult =
                 packs.Value.Values
                 |> AsyncSeq.ofSeq
                 |> AsyncSeq.tryPickAsync (fun packFileTask -> async {
                     let! packFile = Async.AwaitTask packFileTask.Value
+                    let! offset = Async.AwaitTask <| packFile.TryFindHashOffset hash
                     return
-                        match packFile.TryFindHashOffset hash with
+                        match offset with
                         | ValueNone -> None
                         | ValueSome offset -> Some(struct (packFile.Path, offset))
                 })
@@ -81,4 +173,4 @@ type PackIndex(lifetime: Lifetime, gitDir: LocalPath) =
                 match searchResult with
                 | Some(struct (path, offset)) -> Nullable({ PackFile = path; Offset = offset })
                 | None -> Nullable()
-        }
+        }, cancellationToken = lifetime.ToCancellationToken())

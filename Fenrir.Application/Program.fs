@@ -213,7 +213,7 @@ let main (argv: string[]): int =
             use ld = new LifetimeDefinition()
             let repoPath = LocalPath repoPath
             let index = PackIndex(ld.Lifetime, repoPath)
-            let! commit = Commits.ReadCommit(index, repoPath, commitHash)
+            let! commit = Commits.ReadCommit(index, repoPath, Sha1Hash.OfString commitHash)
             printfn $"%A{commit}"
             return ExitCodes.Success
         } |> Task.RunSynchronously
@@ -224,24 +224,25 @@ let main (argv: string[]): int =
 
     | [|"update-commit"; commitHash; filePath|] ->
         let pathToRepo = LocalPath AbsolutePath.CurrentWorkingDirectory
-        updateCommitOp commitHash pathToRepo filePath false
+        updateCommitOp (Sha1Hash.OfString commitHash) pathToRepo filePath false
         |> Task.RunSynchronously
 
     | [|"update-commit"; commitHash; filePath; repoOrForce|] ->
         match repoOrForce.Equals "--force" with
         | true ->
             let pathToRepo = LocalPath AbsolutePath.CurrentWorkingDirectory
-            updateCommitOp commitHash pathToRepo filePath true
+            updateCommitOp (Sha1Hash.OfString commitHash) pathToRepo filePath true
         | false ->
-            updateCommitOp commitHash (LocalPath repoOrForce) filePath false
+            updateCommitOp (Sha1Hash.OfString commitHash) (LocalPath repoOrForce) filePath false
         |> Task.RunSynchronously
 
     | [|"update-commit"; commitHash; filePath; pathToRepo; forceKey|] ->
         match forceKey.Equals "--force" with
-        | true -> updateCommitOp commitHash (LocalPath pathToRepo) filePath true |> Task.RunSynchronously
+        | true -> updateCommitOp (Sha1Hash.OfString commitHash) (LocalPath pathToRepo) filePath true |> Task.RunSynchronously
         | false -> unrecognizedArgs(argv)
 
     | [|"update-with-trees"; rootTreeHash; filePath|] ->
+        let rootTreeHash = Sha1Hash.OfString rootTreeHash
         let pathToRepo = LocalPath AbsolutePath.CurrentWorkingDirectory
         let pathToDotGit = pathToRepo / ".git"
         let fullPathToFile = pathToRepo / filePath
@@ -250,10 +251,10 @@ let main (argv: string[]): int =
         Commands.writeObjectHeader GitObjectType.GitBlob input headed
         input.CopyTo headed
         headed.Position <- 0L
-        let hashName = Commands.SHA1 headed |> Tools.byteToString
+        let hashName = Commands.SHA1 headed
         headed.Position <- 0L
         let pathToBlob = Commands.getRawObjectPath pathToDotGit hashName
-        Directory.CreateDirectory((pathToDotGit / "objects" / hashName.Substring(0, 2)).Value) |> ignore
+        Directory.CreateDirectory((pathToDotGit / "objects" / hashName.ToString().Substring(0, 2)).Value) |> ignore
         use output = new FileStream(pathToBlob.Value, FileMode.CreateNew, FileAccess.Write)
         Zlib.packObject headed output
         use ld = new LifetimeDefinition()
@@ -264,6 +265,7 @@ let main (argv: string[]): int =
         Commands.writeTreeObjects pathToRepo tree
         ExitCodes.Success
     | [|"update-with-trees"; rootTreeHash; pathToRepo; filePath|] ->
+        let rootTreeHash = Sha1Hash.OfString rootTreeHash
         let pathToDotGit = (LocalPath pathToRepo) / ".git"
         let fullPathToFile = (LocalPath pathToRepo) / filePath
         use input = new FileStream(fullPathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
@@ -271,10 +273,10 @@ let main (argv: string[]): int =
         Commands.writeObjectHeader GitObjectType.GitBlob input headed
         input.CopyTo headed
         headed.Position <- 0L
-        let hashName = Commands.SHA1 headed |> Tools.byteToString
+        let hashName = Commands.SHA1 headed
         headed.Position <- 0L
         let pathToBlob = Commands.getRawObjectPath pathToDotGit hashName
-        Directory.CreateDirectory((pathToDotGit / "objects" / hashName.Substring(0, 2)).Value) |> ignore
+        Directory.CreateDirectory((pathToDotGit / "objects" / hashName.ToString().Substring(0, 2)).Value) |> ignore
         use output = new FileStream(pathToBlob.Value, FileMode.CreateNew, FileAccess.Write)
         Zlib.packObject headed output
         let tree =

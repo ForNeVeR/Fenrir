@@ -26,6 +26,7 @@ SPDX-License-Identifier: MIT
         <Compile Include="AssemblyInfo.fs" />
         <Compile Include="UbcCheck.fs" />
         <Compile Include="Sha1.fs" />
+        <Compile Include="CommonTypes.fs" />
         <Compile Include="Refs.fs" />
         <Compile Include="Tools.fs" />
         <Compile Include="Zlib.fs" />

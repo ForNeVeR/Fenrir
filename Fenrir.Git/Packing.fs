@@ -127,7 +127,7 @@ let rec private parsePackInfo (index: PackIndex) (location: PackedObjectLocation
     | o -> return failwithf $"Cannot parse object type from a pack file: {o}."
 }
 
-and ReadPackedObject(index: PackIndex, hash: string): Task<PackedObject | null> = task {
+and ReadPackedObject(index: PackIndex, hash: Sha1Hash): Task<PackedObject | null> = task {
     let! location = index.FindPackOfObject hash
     let result: Task<PackedObject | null> =
         if location.HasValue then
