@@ -66,7 +66,7 @@ If at any moment your repository has turned FUBAR, consider revising the results
         use _ = treeStreams
         let newRootTreeHash = treeStreams.Hashes[0]
         let newCommit = Commands.changeHashInCommit oldCommit.Body newRootTreeHash
-        use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
+        use inputCommit = Commits.CommitBodyToStream newCommit |> Commands.doAndRewind
         use headedCommit = new MemoryStream()
         let newCommitHash = Commands.headifyStream GitObjectType.GitCommit inputCommit headedCommit
         Commands.writeStreamToFile pathToRepo headedCommit newCommitHash

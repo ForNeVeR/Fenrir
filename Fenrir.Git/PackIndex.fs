@@ -78,7 +78,7 @@ type private PackFile(
         let hashIndex = binarySearch hash objectsWithFirstByteLessThanCurrent objectsWithFirstByteLessOrEqualCurrent
         hashIndex |> ValueOption.map readOffsetForIndex
 
-#nowarn 9
+#nowarn 9 // stackalloc usage below makes an assembly "unverifiable"
 
 /// <summary>
 ///     <para>
@@ -87,27 +87,31 @@ type private PackFile(
 ///     </para>
 ///     <para>This type is thread-safe.</para>
 /// </summary>
-/// <param name="lifetime">
-/// Lifetime of the cache.
-/// No file access will be performed after the lifetime's termination.
-/// </param>
-/// <param name="gitDir">Path to the <c>.git</c> directory of a repository.</param>
 /// <remarks>
 /// This type is optimized for two scenarios:
 /// <list type="number">
 ///     <item>
-///         <b>One-time usage (read-and-forget)</b>, for scenarios involving reading one object only. To target these
-///         scenarios, we make sure to not read all the indices ahead of time if they might not be used for an
-///         operation.
+///         <b>One-time usage (read-and-forget)</b>, for scenarios involving reading one object only.
+///         To target these scenarios,
+///         we make sure to not read all the indices ahead of time if they might not be used for an operation.
 ///     </item>
 ///     <item>
-///         <b>Multi-read usage (cache)</b>, for a scenario involving prolonged use (e.g., indexing of the whole
-///         repository). To target such scenarios, we allow reading and storing the fanout tables of all the pack index
-///         files at once.
+///         <b>Multi-read usage (cache)</b>, for a scenario involving prolonged use
+///         (e.g., indexing of the whole repository).
+///         To target such scenarios, we allow reading and storing the fanout tables of all the pack index files at
+///         once.
 ///     </item>
 /// </list>
 /// </remarks>
-type PackIndex(lifetime: Lifetime, gitDir: LocalPath) =
+type PackIndex
+
+    /// <summary>Creates a pack index cached for the designated repository.</summary>
+    /// <param name="lifetime">
+    /// Lifetime of the cache.
+    /// No file access will be performed after the lifetime's termination.
+    /// </param>
+    /// <param name="gitDir">Path to the <c>.git</c> directory of a repository.</param>
+    (lifetime: Lifetime, gitDir: LocalPath) =
 
     let ReadFanoutTable(index: UnmanagedMemoryStream) = task {
         let items = Array.zeroCreate(256 * sizeof<uint32>)

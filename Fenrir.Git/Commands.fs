@@ -174,19 +174,6 @@ let changeHashInCommit (commit: CommitBody) (hash: Sha1Hash): CommitBody =  {
     Rest = commit.Rest
 }
 
-let commitBodyToStream (commit: CommitBody) (stream: Stream): unit =
-    let printParent(hash: Sha1Hash): unit =
-        stream.Write(ReadOnlySpan<byte>("parent "B))
-        stream.Write((hash.ToString() |> Encoding.UTF8.GetBytes).AsSpan())
-        stream.WriteByte('\n'B)
-
-    stream.Write(ReadOnlySpan<byte>("tree "B))
-    stream.Write(ReadOnlySpan<byte>(commit.Tree.ToString() |> Encoding.ASCII.GetBytes))
-    stream.WriteByte('\n'B)
-
-    Array.iter printParent commit.Parents
-    stream.Write(ReadOnlySpan<byte>(String.Join('\n', commit.Rest) |> Encoding.ASCII.GetBytes))
-
 type TreeStreams(length: int) =
     member val Streams = Array.init length (fun _ -> new MemoryStream())
     member val Hashes: Sha1Hash[] = Array.create length Sha1Hash.Zero

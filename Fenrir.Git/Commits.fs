@@ -1,6 +1,7 @@
 /// Functions to manipulate Git commits.
 module Fenrir.Git.Commits
 
+open System
 open System.Collections.Generic
 open System.IO
 open System.Text
@@ -31,6 +32,20 @@ let private StreamToCommitBody(decodedInput: MemoryStream): CommitBody =
         | GitObjectType.GitBlob   -> failwithf "Found blob file instead of commit file"
         | GitObjectType.GitCommit -> GetHeadlessCommitBody decodedInput
         | x -> failwithf $"Unknown Git object type: {x}."
+
+/// Writes the commit body's internal representation as a Git object to a passed stream.
+let CommitBodyToStream (commit: CommitBody) (stream: Stream): unit =
+    let printParent(hash: Sha1Hash): unit =
+        stream.Write(ReadOnlySpan<byte>("parent "B))
+        stream.Write((hash.ToString() |> Encoding.UTF8.GetBytes).AsSpan())
+        stream.WriteByte('\n'B)
+
+    stream.Write(ReadOnlySpan<byte>("tree "B))
+    stream.Write(ReadOnlySpan<byte>(commit.Tree.ToString() |> Encoding.ASCII.GetBytes))
+    stream.WriteByte('\n'B)
+
+    Array.iter printParent commit.Parents
+    stream.Write(ReadOnlySpan<byte>(String.Join('\n', commit.Rest) |> Encoding.ASCII.GetBytes))
 
 /// <summary>Reads a commit with specified <paramref name="hash"/>.</summary>
 /// <param name="index">Pack file index of the repository.</param>

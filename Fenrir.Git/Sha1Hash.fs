@@ -3,7 +3,7 @@ namespace Fenrir.Git
 open System
 open System.Runtime.InteropServices
 
-/// Structure to keep SHA-1 hash.
+/// Structure representing an SHA-1 hash.
 /// Guarantees the stored hash is valid, will normalize it to lowercase when converted to a string.
 [<Struct>]
 type Sha1Hash =
@@ -70,7 +70,7 @@ type Sha1Hash =
         if data.Length <> Sha1Hash.SizeInBytes * 2 then failwithf $"Invalid hash: \"{data}\"."
         data |> Convert.FromHexString |> Sha1Hash.OfBytes
 
-    /// <summary>Converts the hash object to a byte array of exactly <see cref="Sha1Hash.SizeInBytes"/> bytes.</summary>
+    /// <summary>Converts the hash object to a byte array of exactly <see cref="M:Fenrir.Git.Sha1Hash.SizeInBytes"/> bytes.</summary>
     member this.ToBytes(): byte[] =
         let span = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(&this, 1))
         span.ToArray()
