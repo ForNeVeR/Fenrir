@@ -104,7 +104,7 @@ type private PackFile(
 ///     </item>
 ///     <item>
 ///         <b>Multi-read usage (cache)</b>, for a scenario involving prolonged use (e.g., indexing of the whole
-///         repository). To target such scenarios, we allow reading and store the fanout tables of all the pack index
+///         repository). To target such scenarios, we allow reading and storing the fanout tables of all the pack index
 ///         files at once.
 ///     </item>
 /// </list>
