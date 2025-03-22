@@ -81,16 +81,16 @@ let ``Cutting off header should write file properly``(): unit =
 let ``The program should parse trees properly``(): Task = task {
     use ld = new LifetimeDefinition()
     let index = PackIndex(ld.Lifetime, TestDataRoot)
-    let! tr = Commands.ParseTreeBody index TestDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
-    let hashFile = "e2af08e76b2408a88f13d2c64ca89f2d03c98385" |> Tools.stringToByte
-    let hashTree = "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05" |> Tools.stringToByte
+    let! tr = Commands.ParseTreeBody index TestDataRoot (Sha1Hash.OfString "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
+    let hashFile = "e2af08e76b2408a88f13d2c64ca89f2d03c98385" |> Sha1Hash.OfString
+    let hashTree = "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05" |> Sha1Hash.OfString
     Assert.Equal(tr.Length, 2)
     Assert.Equal(tr[0].Mode, 100644UL)
     Assert.Equal(tr[0].Name, "README")
-    Assert.Equal<byte>(tr[0].Hash, hashFile)
+    Assert.Equal(tr[0].Hash, hashFile)
     Assert.Equal(tr[1].Mode, 40000UL)
     Assert.Equal(tr[1].Name, "ex")
-    Assert.Equal<byte>(tr[1].Hash, hashTree)
+    Assert.Equal(tr[1].Hash, hashTree)
 }
 
 [<Fact>]
@@ -99,12 +99,7 @@ let ``Hasher should calculate file name properly``(): unit =
     let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
 
     use input = new MemoryStream(actualObjectContents)
-    Assert.Equal(fileName, Commands.SHA1 input |> Tools.byteToString)
-
-[<Fact>]
-let ``Converting String to byte[] and backward should not change the String``(): unit =
-    let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
-    Assert.Equal(fileName, Tools.stringToByte fileName |> Tools.byteToString)
+    Assert.Equal(Sha1Hash.OfString fileName, Commands.SHA1 input)
 
 [<Fact>]
 let ``Restoring head should work properly``(): unit =
@@ -121,17 +116,17 @@ let ``Restoring head should work properly``(): unit =
 let ``Program should change and find hash of file in tree properly``(): Task = task {
     use ld = new LifetimeDefinition()
     let index = PackIndex(ld.Lifetime, TestDataRoot)
-    let! tr = Commands.ParseTreeBody index TestDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
-    let newHash = "0000000000000000000000000000000000000000" |> Tools.stringToByte
+    let! tr = Commands.ParseTreeBody index TestDataRoot (Sha1Hash.OfString "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
+    let newHash = "0000000000000000000000000000000000000000" |> Sha1Hash.OfString
     let newTr = Commands.changeHashInTree tr newHash "README"
-    Assert.Equal<byte>(Commands.hashOfObjectInTree newTr "README", newHash)
+    Assert.Equal(Commands.hashOfObjectInTree newTr "README", newHash)
 }
 
 [<Fact>]
 let ``Printing of parsed tree should not change the content``(): Task = task {
     use ld = new LifetimeDefinition()
     let index = PackIndex(ld.Lifetime, TestDataRoot)
-    let! tr = Commands.ParseTreeBody index TestDataRoot "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let! tr = Commands.ParseTreeBody index TestDataRoot (Sha1Hash.OfString "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
     use outputPrinted = Commands.treeBodyToStream tr |> Commands.doAndRewind
 
     let objectFilePath = TestDataRoot / "objects" / "0b" / "a2ef789f6245b6b6604f54706b1dce1d84907f"
@@ -146,9 +141,9 @@ let ``Printing of parsed tree should not change the content``(): Task = task {
 
 [<Fact>]
 let ``updateObjectInTree should not change the whole tree if blob wasn't changed``(): Task = task {
-    let parentHash = "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
-    let subTreeHash = "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05"
-    let oldBlobHash = "b5c9fc36bc435a3addb76b0115e8763c75eedf2a"
+    let parentHash = Sha1Hash.OfString "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let subTreeHash = Sha1Hash.OfString "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05"
+    let oldBlobHash = Sha1Hash.OfString "b5c9fc36bc435a3addb76b0115e8763c75eedf2a"
     let readmeHash = "e2af08e76b2408a88f13d2c64ca89f2d03c98385"
 
     use ld = new LifetimeDefinition()
@@ -166,23 +161,23 @@ let ``updateObjectInTree should not change the whole tree if blob wasn't changed
     Assert.Equal(tr.Length, 2)
     Assert.Equal(tr[0].Mode, 100644UL)
     Assert.Equal(tr[0].Name, "README")
-    Assert.Equal<byte>(tr[0].Hash, readmeHash |> Tools.stringToByte)
+    Assert.Equal(tr[0].Hash, readmeHash |> Sha1Hash.OfString)
     Assert.Equal(tr[1].Mode, 40000UL)
     Assert.Equal(tr[1].Name, "ex")
-    Assert.Equal<byte>(tr[1].Hash, subTreeHash |> Tools.stringToByte)
+    Assert.Equal(tr[1].Hash, subTreeHash)
 
     Assert.Equal(subTr.Length, 1)
     Assert.Equal(subTr[0].Mode, 100644UL)
     Assert.Equal(subTr[0].Name, "FIGHTTHEMACHINE")
-    Assert.Equal<byte>(subTr[0].Hash, oldBlobHash |> Tools.stringToByte)
+    Assert.Equal(subTr[0].Hash, oldBlobHash)
 }
 
 [<Fact>]
 let ``updateObjectInTree should change the whole tree properly``(): Task = task {
-    let oldParentHash = "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
-    let newParentHash = "a3ecc1b7fb40831db85596a4f6d2b5e0a1070292"
-    let newSubTreeHash = "b6c6d6bca44755db41e85040189d86c0dbec691e"
-    let newBlobHash = "724978a20d84133868886a8e580f59c6f8586733"
+    let oldParentHash = Sha1Hash.OfString "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let newParentHash = Sha1Hash.OfString "a3ecc1b7fb40831db85596a4f6d2b5e0a1070292"
+    let newSubTreeHash = Sha1Hash.OfString "b6c6d6bca44755db41e85040189d86c0dbec691e"
+    let newBlobHash = Sha1Hash.OfString "724978a20d84133868886a8e580f59c6f8586733"
     let readmeHash = "e2af08e76b2408a88f13d2c64ca89f2d03c98385"
 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
@@ -200,21 +195,21 @@ let ``updateObjectInTree should change the whole tree properly``(): Task = task 
     Assert.Equal(tr.Length, 2)
     Assert.Equal(tr[0].Mode, 100644UL)
     Assert.Equal(tr[0].Name, "README")
-    Assert.Equal<byte>(tr[0].Hash, readmeHash |> Tools.stringToByte)
+    Assert.Equal(tr[0].Hash, readmeHash |> Sha1Hash.OfString)
     Assert.Equal(tr[1].Mode, 40000UL)
     Assert.Equal(tr[1].Name, "ex")
-    Assert.Equal<byte>(tr[1].Hash, newSubTreeHash |> Tools.stringToByte)
+    Assert.Equal(tr[1].Hash, newSubTreeHash)
 
     Assert.Equal(subTr.Length, 1)
     Assert.Equal(subTr[0].Mode, 100644UL)
     Assert.Equal(subTr[0].Name, "FIGHTTHEMACHINE")
-    Assert.Equal<byte>(subTr[0].Hash, newBlobHash |> Tools.stringToByte)
+    Assert.Equal(subTr[0].Hash, newBlobHash)
 }
 
 [<Fact>]
 let ``Files should be written after updating of the whole tree``(): Task = task {
-    let oldParentHash = "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
-    let newBlobHash = "724978a20d84133868886a8e580f59c6f8586733"
+    let oldParentHash = Sha1Hash.OfString "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
+    let newBlobHash = Sha1Hash.OfString "724978a20d84133868886a8e580f59c6f8586733"
     let pathToParentTree = TestDataRoot / ".git" / "objects" / "a3" / "ecc1b7fb40831db85596a4f6d2b5e0a1070292"
     let pathToSubTree = TestDataRoot / ".git" / "objects" / "b6" / "c6d6bca44755db41e85040189d86c0dbec691e"
 

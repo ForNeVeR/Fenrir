@@ -43,7 +43,7 @@ let PrintAllCommits(gitDir: LocalPath): Task<int> =
         return ExitCodes.Success
     }
 
-let updateCommitOp (commitHash: string)
+let updateCommitOp (commitHash: Sha1Hash)
                    (pathToRepo: LocalPath)
                    (filePath: string)
                    (detachedAllowed: bool): Task<int> = task {
@@ -65,7 +65,7 @@ If at any moment your repository has turned FUBAR, consider revising the results
         let! treeStreams = Commands.updateObjectInTree index oldRootTreeHash pathToDotGit filePath blobHash
         use _ = treeStreams
         let newRootTreeHash = treeStreams.Hashes[0]
-        let newCommit = Commands.changeHashInCommit oldCommit.Body (newRootTreeHash |> Tools.stringToByte)
+        let newCommit = Commands.changeHashInCommit oldCommit.Body newRootTreeHash
         use inputCommit = Commands.commitBodyToStream newCommit |> Commands.doAndRewind
         use headedCommit = new MemoryStream()
         let newCommitHash = Commands.headifyStream GitObjectType.GitCommit inputCommit headedCommit

@@ -5,7 +5,6 @@
 module Fenrir.Git.PackVerification
 // https://git-scm.com/docs/pack-format
 
-open System
 open System.IO
 open System.Security.Cryptography
 open System.Text
@@ -29,7 +28,7 @@ let verifyPackHeader (reader: BinaryReader) : int =
 
 
 type BaseRef =
-    | Hash of string
+    | Hash of Sha1Hash
     | Offset of int64
     | NotRef
 
@@ -47,8 +46,8 @@ type VerifyPackObjectInfo = {
     PackedSize: int64
     Offset: int64
     Depth: int
-    Hash: string
-    BaseHash: string option
+    Hash: Sha1Hash
+    BaseHash: Sha1Hash option
 }
 
 let getTypeName (objectType: GitObjectType) =
@@ -81,8 +80,8 @@ let resolveDeltaChain (reader: BinaryReader) (root: PackObjectInfo) (refDeltas: 
 
         dataStream.Seek(0L, SeekOrigin.Begin) |> ignore
 
-        (bytes |> sha1.ComputeHash |> Convert.ToHexString)
-            .ToLowerInvariant()
+        // TODO: Use utilities from the hardened Sha1 module and not system SHA-1 implementation.
+        bytes |> sha1.ComputeHash |> Sha1Hash.OfBytes
 
     let rec resolveObject (object: PackObjectInfo) (baseObject: VerifyPackObjectInfo option) (baseObjectData: MemoryStream) (depth: int) =
         reader.BaseStream.Seek(object.Offset, SeekOrigin.Begin) |> ignore
@@ -221,15 +220,16 @@ let verifyPackHash (reader: BinaryReader) (lastObject: VerifyPackObjectInfo) =
     reader.BaseStream.Seek(0L, SeekOrigin.Begin)
     |> ignore
 
+    // TODO: Use the hardened Sha1 module and not the system SHA-1 implementation.
     use sha1 = SHA1.Create()
 
     let hash =
         reader.ReadBytes(int objectsEnd)
         |> sha1.ComputeHash
-        |> Convert.ToHexString
+        |> Sha1Hash.OfBytes
     let hashFromPack = reader.ReadHash()
 
-    if not (hash.Equals(hashFromPack, StringComparison.InvariantCultureIgnoreCase)) then
+    if hash <> hashFromPack then
         failwith "Packfile hash corrupted"
 
     if reader.BaseStream.Position <> reader.BaseStream.Length then

@@ -6,8 +6,8 @@ module Fenrir.Git.Tools
 
 open System
 open System.IO
-open System.Globalization
 open System.Collections
+open System.Runtime.InteropServices
 
 let sliceBitArray (bits: BitArray) (start: int) (finish: int): BitArray =
     [| for b in bits do yield b |][start..finish] |> BitArray
@@ -33,24 +33,18 @@ let readWhileLast (condition: byte -> bool) (maxSize: uint64) (stream: BinaryRea
             | false                -> [newByte]
     makeList(0UL) |> List.toArray
 
-let byteToString (b : byte[]): String =
-    BitConverter.ToString(b).Replace("-", "").ToLower()
-
-let stringToByte (s: String): byte[] =
-    match s.Length with
-    | even when even % 2 = 0 ->
-        let arrayLength = s.Length / 2
-        Array.init arrayLength (fun byteIndex ->
-            let charIndex = byteIndex * 2
-            Byte.Parse(s.AsSpan(charIndex, 2), NumberStyles.AllowHexSpecifier, provider = CultureInfo.InvariantCulture)
-        )
-    | n -> failwithf $"String of invalid length {string n}: {s}"
-
 type BinaryReader with
     member reader.ReadBigEndianInt() : int =
         reader.ReadInt32()
         |> Net.IPAddress.NetworkToHostOrder
 
-    member reader.ReadHash() : String =
+    member reader.ReadHash(): Sha1Hash =
         reader.ReadBytes 20
-        |> Convert.ToHexStringLower
+        |> Sha1Hash.OfBytes
+
+type UnmanagedMemoryStream with
+    member internal stream.ReadBigEndianUInt32(): uint32 =
+        let mutable result = 0
+        let span = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(&result, 1))
+        stream.ReadExactly(span)
+        result |> Net.IPAddress.NetworkToHostOrder |> uint32

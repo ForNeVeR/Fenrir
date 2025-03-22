@@ -13,7 +13,7 @@ type GitObjectType =
     | GitCommit = 0
     /// Tree object.
     | GitTree = 1
-    /// Blob object, e.g. a file in a repository.
+    /// Blob object, e.g., a file in a repository.
     | GitBlob = 2
 
 type ObjectHeader = {
@@ -22,20 +22,20 @@ type ObjectHeader = {
 }
 
 type CommitBody = {
-    Tree: string
-    Parents: string[]
+    Tree: Sha1Hash
+    Parents: Sha1Hash[]
     Rest: string[]
 }
 
 type Commit = {
-    Hash: string
+    Hash: Sha1Hash
     Body: CommitBody
 }
 
 type TreeAtom = {
     Mode: uint64
     Name: string
-    Hash: byte array
+    Hash: Sha1Hash
 }
 
 type TreeBody = TreeAtom[]

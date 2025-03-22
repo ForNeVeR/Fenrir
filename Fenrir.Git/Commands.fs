@@ -20,7 +20,8 @@ open Fenrir.Git.Tools
 open Fenrir.Git.Zlib
 open TruePath
 
-let getRawObjectPath (gitDirectoryPath: LocalPath) (objectHash: string): LocalPath =
+let getRawObjectPath (gitDirectoryPath: LocalPath) (objectHash: Sha1Hash): LocalPath =
+    let objectHash = objectHash.ToString()
     gitDirectoryPath / "objects" / objectHash.Substring(0, 2) / objectHash.Substring(2, 38)
 
 let readHeader(input: Stream): ObjectHeader =
@@ -45,7 +46,7 @@ let readHeader(input: Stream): ObjectHeader =
 /// <param name="index">Git pack index to search the objects in.</param>
 /// <param name="gitDirectoryPath">Path to the repository's <c>.git</c> directory.</param>
 /// <param name="objectHash">Hash of the object.</param>
-let ReadObjectHeader index (gitDirectoryPath: LocalPath) (objectHash: string): Task<ObjectHeader> =
+let ReadObjectHeader index (gitDirectoryPath: LocalPath) (objectHash: Sha1Hash): Task<ObjectHeader> =
     let rawObjectPath = getRawObjectPath gitDirectoryPath objectHash
     if File.Exists rawObjectPath.Value
     then
@@ -76,15 +77,17 @@ let guillotineObject (input: Stream) (output: Stream): int =
 
 let refsCommand(path: LocalPath): unit =
     Refs.readRefs path
-    |> Seq.iter(fun ref -> printfn "%s: %s" ref.Name ref.CommitObjectId)
+    |> Seq.iter(fun ref -> printfn $"%s{ref.Name}: {ref.CommitObjectId}")
 
 let getHeadlessTreeBody (size: uint64) (decodedInput: Stream): TreeBody =
     let bF = new BinaryReader(decodedInput, Encoding.ASCII)
     let rec makeList (n:int): TreeAtom list =
         try
-            {Mode = readWhile (fun b -> b <> byte ' ') size bF |> Encoding.ASCII.GetString |> Convert.ToUInt64;
-            Name = readWhile (fun b -> b <> 0uy) size bF |> Encoding.ASCII.GetString;
-            Hash = bF.ReadBytes(20)} :: makeList (n + 1)
+            {
+                Mode = readWhile (fun b -> b <> byte ' ') size bF |> Encoding.ASCII.GetString |> Convert.ToUInt64;
+                Name = readWhile (fun b -> b <> 0uy) size bF |> Encoding.ASCII.GetString;
+                Hash = Sha1Hash.OfBytes <| bF.ReadBytes(20)
+            } :: makeList (n + 1)
         with
             | :? EndOfStreamException -> []
     makeList 0 |> Array.ofList
@@ -101,7 +104,7 @@ let streamToTreeBody (decodedInput: MemoryStream): TreeBody =
 /// <param name="index">Git pack index to search the objects in.</param>
 /// <param name="path">Path to a repository's <c>.git</c> folder.</param>
 /// <param name="hash">Hash of the tree object.</param>
-let ParseTreeBody (index: PackIndex) (path: LocalPath) (hash: string): Task<TreeBody> =
+let ParseTreeBody (index: PackIndex) (path: LocalPath) (hash: Sha1Hash): Task<TreeBody> =
     let pathToFile = getRawObjectPath path hash
     match File.Exists pathToFile.Value with
         | true ->
@@ -121,7 +124,7 @@ let writeObjectHeader (tp: GitObjectType) (input: Stream) (output: Stream): unit
     | GitObjectType.GitBlob   -> output.Write(ReadOnlySpan<byte>("blob "B))
     | _                       -> failwithf "Invalid type of Git object"
     output.Write(ReadOnlySpan<byte>(input.Length.ToString(CultureInfo.InvariantCulture)
-                                    |> System.Text.Encoding.ASCII.GetBytes))
+                                    |> Encoding.ASCII.GetBytes))
     output.WriteByte(00uy)
 
 let doAndRewind (action: Stream -> unit): MemoryStream =
@@ -130,24 +133,26 @@ let doAndRewind (action: Stream -> unit): MemoryStream =
     output.Position <- 0L
     output
 
-let rec SHA1 (input: Stream): byte[] =
+let rec SHA1 (input: Stream): Sha1Hash =
+    // TODO: Use the hardened Sha1 module and not the system implementation.
     use tempStream = input.CopyTo |> doAndRewind
     use sha = System.Security.Cryptography.SHA1.Create()
     sha.ComputeHash(tempStream.ToArray())
+    |> Sha1Hash.OfBytes
 
-let headifyStream (tp: GitObjectType) (input: Stream) (headed: MemoryStream): String =
+let headifyStream (tp: GitObjectType) (input: Stream) (headed: MemoryStream): Sha1Hash =
     writeObjectHeader tp input headed
     input.CopyTo headed
     headed.Position <- 0L
-    let hash = SHA1 headed |> byteToString
+    let hash = SHA1 headed
     headed.Position <- 0L
     hash
 
-let hashOfObjectInTree (tree: TreeBody) (name: String): byte[] =
+let hashOfObjectInTree (tree: TreeBody) (name: String): Sha1Hash =
     let atom = Array.find (fun a -> a.Name = name) tree
     atom.Hash
 
-let changeHashInTree (tree: TreeBody) (hash: byte[]) (name: String): TreeBody =
+let changeHashInTree (tree: TreeBody) (hash: Sha1Hash) (name: String): TreeBody =
     let changer (a: TreeAtom) : TreeAtom =
         match (a.Name = name) with
             | true -> {Mode = a.Mode; Name = a.Name; Hash = hash}
@@ -160,22 +165,23 @@ let treeBodyToStream (tree: TreeBody) (stream: Stream): unit =
         stream.WriteByte(' 'B)
         stream.Write(ReadOnlySpan<byte>(a.Name |> Encoding.ASCII.GetBytes))
         stream.WriteByte(00uy)
-        stream.Write(ReadOnlySpan<byte>(a.Hash))
+        stream.Write(a.Hash.ToBytes())
     Array.iter printAtom tree
 
-let changeHashInCommit (commit: CommitBody) (hash: byte[]): CommitBody =
-    {Tree = hash |> byteToString;
-     Parents = commit.Parents;
-     Rest = commit.Rest}
+let changeHashInCommit (commit: CommitBody) (hash: Sha1Hash): CommitBody =  {
+    Tree = hash
+    Parents = commit.Parents
+    Rest = commit.Rest
+}
 
 let commitBodyToStream (commit: CommitBody) (stream: Stream): unit =
-    let printParent (a: String): unit =
+    let printParent(hash: Sha1Hash): unit =
         stream.Write(ReadOnlySpan<byte>("parent "B))
-        stream.Write(ReadOnlySpan<byte>(a |> Encoding.ASCII.GetBytes))
+        stream.Write((hash.ToString() |> Encoding.UTF8.GetBytes).AsSpan())
         stream.WriteByte('\n'B)
 
     stream.Write(ReadOnlySpan<byte>("tree "B))
-    stream.Write(ReadOnlySpan<byte>(commit.Tree |> Encoding.ASCII.GetBytes))
+    stream.Write(ReadOnlySpan<byte>(commit.Tree.ToString() |> Encoding.ASCII.GetBytes))
     stream.WriteByte('\n'B)
 
     Array.iter printParent commit.Parents
@@ -183,19 +189,19 @@ let commitBodyToStream (commit: CommitBody) (stream: Stream): unit =
 
 type TreeStreams(length: int) =
     member val Streams = Array.init length (fun _ -> new MemoryStream())
-    member val Hashes = Array.create length ""
-    interface System.IDisposable with
+    member val Hashes: Sha1Hash[] = Array.create length Sha1Hash.Zero
+    interface IDisposable with
         member this.Dispose() =
             Array.iter (fun (s: MemoryStream) -> s.Dispose()) this.Streams
 
 let updateObjectInTree (packIndex: PackIndex)
-                       (rootTreeHash: string)
+                       (rootTreeHash: Sha1Hash)
                        (pathToRepo: LocalPath)
                        (filePath: string)
-                       (blobHash: string): Task<TreeStreams> =
+                       (blobHash: Sha1Hash): Task<TreeStreams> =
     let filePathList = filePath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries) |> List.ofArray
     let treeStreams = new TreeStreams (filePathList.Length)
-    let treeToStream (newTree: TreeBody) (index: int): String =
+    let treeToStream (newTree: TreeBody) (index: int): Sha1Hash =
         use input = new MemoryStream()
         treeBodyToStream newTree input
         input.Position <- 0L
@@ -207,13 +213,13 @@ let updateObjectInTree (packIndex: PackIndex)
         match filePaths with
         | [] -> return failwithf "Empty path to file"
         | [fileName] ->
-            let newTree = changeHashInTree tree (stringToByte blobHash) fileName
+            let newTree = changeHashInTree tree blobHash fileName
             return treeToStream newTree index
         | directoryName :: restPathSegments ->
-            let directoryHash = hashOfObjectInTree tree directoryName |> byteToString
+            let directoryHash = hashOfObjectInTree tree directoryName
             let! subTree = ParseTreeBody packIndex pathToRepo directoryHash
             let! newHash = updateFileHashInTree subTree restPathSegments
-            let newTree = changeHashInTree tree (stringToByte newHash) directoryName
+            let newTree = changeHashInTree tree newHash directoryName
             return treeToStream newTree index
     }
 
@@ -224,8 +230,8 @@ let updateObjectInTree (packIndex: PackIndex)
         return treeStreams
     }
 
-let writeStreamToFile (pathToRepo: LocalPath) (stream: MemoryStream) (hash: String) : unit =
-    let pathToDirectory = pathToRepo / ".git" / "objects" / hash.Substring(0, 2)
+let writeStreamToFile (pathToRepo: LocalPath) (stream: MemoryStream) (hash: Sha1Hash) : unit =
+    let pathToDirectory = pathToRepo / ".git" / "objects" / hash.ToString().Substring(0, 2)
     let pathToFile = getRawObjectPath (pathToRepo / ".git") hash
     match Directory.Exists pathToDirectory.Value with
         | true -> ()

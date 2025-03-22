@@ -6,6 +6,7 @@ module Fenrir.Tests.VerifyPackTests
 
 open System
 open System.IO
+open Fenrir.Git
 open Fenrir.Git.PackVerification
 open TruePath
 open Xunit
@@ -52,8 +53,7 @@ let ``Verify pack header should return object count`` () : unit =
 
 [<Fact>]
 let ``Packed commit should be in pack`` () : unit =
-    let commitHash =
-        "99cc0056090374b2de8da965f58d5197b0b0f259"
+    let commitHash = "99cc0056090374b2de8da965f58d5197b0b0f259" |> Sha1Hash.OfString
 
     use reader = Path packPath |> getReader
 

@@ -12,7 +12,7 @@ open TruePath
 type Ref = {
     /// <summary>Reference name. Might be <c>null</c> in case of detached commit.</summary>
     Name: string | null
-    CommitObjectId: string
+    CommitObjectId: Sha1Hash
 }
 
 /// <summary>
@@ -74,6 +74,7 @@ module Refs =
                     ParseSymbolicRef commitOrRef
                     |> ValueOption.map(resolveSymbolicReference repositoryPath)
                     |> ValueOption.defaultValue commitOrRef
+                    |> Sha1Hash.OfString
 
                 Seq.singleton { Name = name; CommitObjectId = commitId }
         )
@@ -87,7 +88,10 @@ module Refs =
             Array.filter (fun (str : string) -> not(str.StartsWith('#') || str.StartsWith('^'))) packedRefsLines
             |> Seq.collect (fun entryString ->
             let commitAndName = entryString.Split(' ')
-            Seq.singleton {Name = commitAndName[1]; CommitObjectId = commitAndName[0]}
+            Seq.singleton {
+                Name = commitAndName[1]
+                CommitObjectId = commitAndName[0]  |> Sha1Hash.OfString
+            }
             )
         else
             Seq.empty
@@ -117,27 +121,30 @@ module Refs =
         return
             ParseSymbolicRef headFileContent
             |> ValueOption.map(fun ref ->
-                let commitHash = resolveSymbolicReference gitDirectory ref
+                let commitHash = resolveSymbolicReference gitDirectory ref |> Sha1Hash.OfString
                 { Name = ref; CommitObjectId = commitHash }
             )
-            |> ValueOption.defaultWith(fun() -> { Name = null; CommitObjectId = headFileContent.TrimEnd() })
+            |> ValueOption.defaultWith(fun() ->
+                { Name = null; CommitObjectId = headFileContent.TrimEnd() |> Sha1Hash.OfString }
+            )
     }
 
-    let identifyRefs (commitHash: string) (repositoryPath: LocalPath): Ref seq =
+    let identifyRefs (commitHash: Sha1Hash) (repositoryPath: LocalPath): Ref seq =
         readRefs repositoryPath
-        |> Seq.filter (fun item -> item.CommitObjectId.Equals commitHash)
+        |> Seq.filter(fun item -> item.CommitObjectId = commitHash)
 
-    let updateHead (oldCommit: string) (newCommit: string) (pathDotGit: LocalPath): unit =
+    let updateHead (oldCommit: Sha1Hash) (newCommit: Sha1Hash) (pathDotGit: LocalPath): unit =
         let pathToHead = pathDotGit / "HEAD"
-        match (File.ReadAllText pathToHead.Value).StartsWith oldCommit with
-        | true -> File.WriteAllText(pathToHead.Value, newCommit)
+        // TODO: Check case here                             ↓
+        match (File.ReadAllText pathToHead.Value).StartsWith(oldCommit.ToString()) with
+        | true -> File.WriteAllText(pathToHead.Value, newCommit.ToString())
         | false -> ()
 
-    let updateRef (newCommit: string) (pathDotGit: string) (ref: Ref) : unit =
+    let updateRef (newCommit: Sha1Hash) (pathDotGit: string) (ref: Ref) : unit =
         let splitName = (nonNull ref.Name).Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries)
                             |> List.ofArray
         let pathToRef = Path.Combine(pathDotGit::splitName |> Array.ofList)
-        File.WriteAllText(pathToRef, newCommit)
+        File.WriteAllText(pathToRef, newCommit.ToString())
 
-    let updateAllRefs (oldCommit: string) (newCommit: string) (pathDotGit: LocalPath): unit =
+    let updateAllRefs (oldCommit: Sha1Hash) (newCommit: Sha1Hash) (pathDotGit: LocalPath): unit =
         identifyRefs oldCommit pathDotGit |> Seq.iter (updateRef newCommit pathDotGit.Value)

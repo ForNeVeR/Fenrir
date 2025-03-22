@@ -15,11 +15,11 @@ open TruePath
 let private GetHeadlessCommitBody(decodedInput: Stream): CommitBody =
     let enc = Encoding.UTF8
     use sr = new StreamReader(decodedInput, enc)
-    let tree = nonNull(sr.ReadLine()).Substring(5)
-    let rec parseParents (s : StreamReader) (P : string list) : string list * string[] =
+    let tree = nonNull(sr.ReadLine()).Substring(5) |> Sha1Hash.OfString
+    let rec parseParents (s : StreamReader) (P : Sha1Hash list) : Sha1Hash list * string[] =
         let str = nonNull <| s.ReadLine()
         match str.Substring(0, 7) with
-            | "parent " -> parseParents s (List.append P [str.Substring(7, 40)])
+            | "parent " -> parseParents s (List.append P [Sha1Hash.OfString <| str.Substring(7, 40)])
             | _         -> (P, [|str|])
     let p, r = parseParents sr []
     let rr = sr.ReadToEnd().Split "\n" |> Array.append r
@@ -36,7 +36,7 @@ let private StreamToCommitBody(decodedInput: MemoryStream): CommitBody =
 /// <param name="index">Pack file index of the repository.</param>
 /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
 /// <param name="hash">Commit hash.</param>
-let ReadCommit(index: PackIndex, gitDirectory: LocalPath, hash: string): Task<Commit> = task {
+let ReadCommit(index: PackIndex, gitDirectory: LocalPath, hash: Sha1Hash): Task<Commit> = task {
     let pathToFile = Commands.getRawObjectPath gitDirectory hash
     let! body = task {
         match File.Exists pathToFile.Value with
@@ -59,7 +59,7 @@ let ReadCommit(index: PackIndex, gitDirectory: LocalPath, hash: string): Task<Co
 /// </summary>
 /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
 /// <param name="headCommitHash">Hash of the starting commit.</param>
-let TraverseCommits(gitDirectory: LocalPath, headCommitHash: string): System.Collections.Generic.IAsyncEnumerable<Commit> =
+let TraverseCommits(gitDirectory: LocalPath, headCommitHash: Sha1Hash): System.Collections.Generic.IAsyncEnumerable<Commit> =
     asyncSeq {
         use ld = new LifetimeDefinition()
         let index = PackIndex(ld.Lifetime, gitDirectory)

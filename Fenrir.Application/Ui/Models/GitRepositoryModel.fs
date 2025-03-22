@@ -15,20 +15,19 @@ open JetBrains.Lifetimes
 open TruePath
 
 type GitRepositoryModel(gitDirectoryPath: LocalPath) =
-    let rec readTreeRecursively(hash: string) = task {
+    let rec readTreeRecursively(hash: Sha1Hash) = task {
         use ld = new LifetimeDefinition()
         let index = PackIndex(ld.Lifetime, gitDirectoryPath)
         let! body = ParseTreeBody index gitDirectoryPath hash
         let! models =
             body
             |> Array.map (fun item -> task {
-                let objectHash = Tools.byteToString item.Hash
-                let! header = ReadObjectHeader index gitDirectoryPath objectHash
+                let! header = ReadObjectHeader index gitDirectoryPath hash
 
                 if header.Type = GitObjectType.GitBlob
                 then return Array.singleton { RootedPath = item.Name }
                 else
-                    let! items = readTreeRecursively objectHash
+                    let! items = readTreeRecursively hash
                     return items |> Array.map (fun subItem ->
                         { RootedPath = String.Format("{0}/{1}", item.Name, subItem.RootedPath) }
                     )
