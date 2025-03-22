@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
 
 - **Breaking changes:**
     - `Commands.getRawObjectPath` now requires `LocalPath` and `Sha1Hash` as arguments;
-    - `Commands.readObjectHeader` has been renamed to `ReadObjectHeader`, requires `LocalPath` and `Sha1Hash` as arguments, returns a `Task` (i.e., made asynchronous);
+    - `Commands.readObjectHeader` has been renamed to `ReadObjectHeader`, requires `PackIndex` (see below), `LocalPath` and `Sha1Hash` as arguments, returns a `Task` (i.e., made asynchronous);
     - `Commands.refsCommand` now requires a `LocalPath` argument;
     - `Commands.parseCommitBody` has been moved to `Commits.ReadCommit`, requires `PackIndex`, `LocalPath` and `Sha1Hash` as arguments (non-curried anymore), returns a `Task` now;
     - `Commands.parseTreeBody` has been renamed to `Commands.ParseTreeBody`, requires `PackIndex`, `LocalPath` and `Sha1Hash` as arguments, and returns a `Task` now;
