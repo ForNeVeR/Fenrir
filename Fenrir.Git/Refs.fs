@@ -135,10 +135,8 @@ module Refs =
 
     let updateHead (oldCommit: Sha1Hash) (newCommit: Sha1Hash) (pathDotGit: LocalPath): unit =
         let pathToHead = pathDotGit / "HEAD"
-        // TODO: Check case here                             ↓
-        match (File.ReadAllText pathToHead.Value).StartsWith(oldCommit.ToString()) with
-        | true -> File.WriteAllText(pathToHead.Value, newCommit.ToString())
-        | false -> ()
+        if File.ReadAllText(pathToHead.Value).StartsWith(oldCommit.ToString(), StringComparison.OrdinalIgnoreCase) then
+            File.WriteAllText(pathToHead.Value, newCommit.ToString())
 
     let updateRef (newCommit: Sha1Hash) (pathDotGit: string) (ref: Ref) : unit =
         let splitName = (nonNull ref.Name).Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries)
