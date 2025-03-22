@@ -5,7 +5,6 @@ open System.Buffers.Binary
 open System.Collections.Generic
 open System.IO
 open System.IO.MemoryMappedFiles
-open System.Threading
 open System.Threading.Tasks
 open FSharp.Control
 open Fenrir.Git.Tools
@@ -25,11 +24,6 @@ type private PackFile(
     index: MemoryMappedFile,
     fanoutTable: uint32[]
 ) =
-    let semaphore =
-        let s = new SemaphoreSlim(1)
-        lifetime.AddDispose s |> ignore
-        s
-
     let objectNameTableOffset =
             4u // magic
             + 4u // version
@@ -37,48 +31,51 @@ type private PackFile(
 
     let objectCount = fanoutTable[255]
 
-    let binarySearch (hash: Sha1Hash) (fanoutTableEntry: uint32) nextFanoutTableEntry =
-        let initialReadOffset = objectNameTableOffset + fanoutTableEntry * uint32 sizeof<Sha1Hash>
-        let enumeratedEntryCount = nextFanoutTableEntry - fanoutTableEntry + 1u
-        assert (enumeratedEntryCount >= 1u)
+    let binarySearch (hash: Sha1Hash) (offsetFrom: uint32) offsetTo =
+        let initialReadOffset = objectNameTableOffset + offsetFrom * uint32 sizeof<Sha1Hash>
+        let enumeratedEntryCount = offsetTo - offsetFrom
+        assert (enumeratedEntryCount >= 0u)
 
-        use accessor = index.CreateViewAccessor(int64 initialReadOffset, int64 enumeratedEntryCount * int64 sizeof<Sha1Hash>)
+        if enumeratedEntryCount = 0u then ValueNone
+        else
+
         let data = Array.zeroCreate(Checked.int32 enumeratedEntryCount)
-        let readEntries = accessor.ReadArray(0, data, 0, Checked.int32 enumeratedEntryCount)
+        let readEntries = lifetime.Execute(fun() ->
+            use accessor = index.CreateViewAccessor(
+                int64 initialReadOffset,
+                int64 enumeratedEntryCount * int64 sizeof<Sha1Hash>
+            )
+            accessor.ReadArray(0, data, 0, Checked.int32 enumeratedEntryCount)
+        )
         assert (uint32 readEntries = enumeratedEntryCount)
 
         let index = Array.BinarySearch(data, hash)
-        if index = -1 then ValueNone else ValueSome(uint32 index)
+        if index = -1 then ValueNone else ValueSome(uint32 index + offsetFrom)
 
     let readOffsetForIndex offsetIndex =
         let readOffset =
             objectNameTableOffset
+            + objectCount * uint32 Sha1Hash.SizeInBytes
             + objectCount * uint32 sizeof<uint32> // CRC32 table
             + offsetIndex * uint32 sizeof<uint32>
-        use accessor = index.CreateViewStream()
-        accessor.Position <- int64 readOffset
-        let offset = accessor.ReadBigEndianUInt32()
-        // TODO: work with 8-byte offsets
-        //       https://git-scm.com/docs/pack-format — "A table of 8-byte offset entries […]"
-        offset
+        lifetime.Execute(fun() ->
+            use accessor = index.CreateViewStream()
+            accessor.Position <- int64 readOffset
+            let offset = accessor.ReadBigEndianUInt32()
+            // TODO: work with 8-byte offsets
+            //       https://git-scm.com/docs/pack-format — "A table of 8-byte offset entries […]"
+            offset
+        )
 
-    let tryFindNoLock(hash: Sha1Hash) =
+    member _.Path = path
+
+    member _.TryFindHashOffset(hash: Sha1Hash): ValueOption<uint32> =
         let firstByte = hash.Byte0
         let objectsWithFirstByteLessOrEqualCurrent = fanoutTable[int firstByte]
         let objectsWithFirstByteLessThanCurrent = if firstByte = 0uy then 0u else fanoutTable[int firstByte - 1]
 
         let hashIndex = binarySearch hash objectsWithFirstByteLessThanCurrent objectsWithFirstByteLessOrEqualCurrent
         hashIndex |> ValueOption.map readOffsetForIndex
-
-
-    member _.Path = path
-    member _.TryFindHashOffset(hash: Sha1Hash): Task<ValueOption<uint32>> = task {
-        do! semaphore.WaitAsync()
-        try
-            return tryFindNoLock hash
-        finally
-            semaphore.Release() |> ignore
-    }
 
 #nowarn 9
 
@@ -162,7 +159,7 @@ type PackIndex(lifetime: Lifetime, gitDir: LocalPath) =
                 |> AsyncSeq.ofSeq
                 |> AsyncSeq.tryPickAsync (fun packFileTask -> async {
                     let! packFile = Async.AwaitTask packFileTask.Value
-                    let! offset = Async.AwaitTask <| packFile.TryFindHashOffset hash
+                    let offset = packFile.TryFindHashOffset hash
                     return
                         match offset with
                         | ValueNone -> None
