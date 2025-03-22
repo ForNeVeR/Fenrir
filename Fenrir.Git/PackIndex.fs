@@ -63,7 +63,7 @@ type private PackFile(
             use accessor = index.CreateViewStream(0, 0, MemoryMappedFileAccess.Read)
             accessor.Position <- int64 readOffset
             let offset = accessor.ReadBigEndianUInt32()
-            // TODO: work with 8-byte offsets
+            // TODO[#116]: work with 8-byte offsets
             //       https://git-scm.com/docs/pack-format — "A table of 8-byte offset entries […]"
             offset
         )
