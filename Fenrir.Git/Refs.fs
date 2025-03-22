@@ -74,7 +74,7 @@ module Refs =
                     ParseSymbolicRef commitOrRef
                     |> ValueOption.map(resolveSymbolicReference repositoryPath)
                     |> ValueOption.defaultValue commitOrRef
-                    |> Sha1Hash.OfString
+                    |> Sha1Hash.OfHexString
 
                 Seq.singleton { Name = name; CommitObjectId = commitId }
         )
@@ -90,7 +90,7 @@ module Refs =
             let commitAndName = entryString.Split(' ')
             Seq.singleton {
                 Name = commitAndName[1]
-                CommitObjectId = commitAndName[0]  |> Sha1Hash.OfString
+                CommitObjectId = commitAndName[0]  |> Sha1Hash.OfHexString
             }
             )
         else
@@ -121,11 +121,11 @@ module Refs =
         return
             ParseSymbolicRef headFileContent
             |> ValueOption.map(fun ref ->
-                let commitHash = resolveSymbolicReference gitDirectory ref |> Sha1Hash.OfString
+                let commitHash = resolveSymbolicReference gitDirectory ref |> Sha1Hash.OfHexString
                 { Name = ref; CommitObjectId = commitHash }
             )
             |> ValueOption.defaultWith(fun() ->
-                { Name = null; CommitObjectId = headFileContent.TrimEnd() |> Sha1Hash.OfString }
+                { Name = null; CommitObjectId = headFileContent.TrimEnd() |> Sha1Hash.OfHexString }
             )
     }
 

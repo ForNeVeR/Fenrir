@@ -3,8 +3,8 @@ namespace Fenrir.Git
 open System
 open System.Runtime.InteropServices
 
-// TODO: Tests for all the methods in this type.
-// TODO: Documentation
+/// Structure to keep SHA-1 hash.
+/// Guarantees the stored hash is valid, will normalize it to lowercase when converted to a string.
 [<Struct>]
 type Sha1Hash =
     {
@@ -30,10 +30,14 @@ type Sha1Hash =
         ByteJ: byte
     }
 
+    /// <summary>Size of the SHA-1 hash in bytes.</summary>
+    /// <remarks>Note that this is not the length of the string representation.</remarks>
     static member SizeInBytes = 20
 
+    /// A hash object filled with zeros.
     static member Zero = Sha1Hash.OfBytes <| Array.zeroCreate Sha1Hash.SizeInBytes
 
+    /// Converts a byte array to a SHA-1 hash object. Will verify the array length.
     static member OfBytes(bytes: byte[]): Sha1Hash =
         if bytes.Length <> Sha1Hash.SizeInBytes then
             failwithf $"Invalid hash array length: {bytes.Length} ({Convert.ToHexString bytes})."
@@ -60,14 +64,18 @@ type Sha1Hash =
             ByteJ = bytes[19]
         }
 
-    static member OfString(data: string): Sha1Hash =
+    /// Converts a hexadecimal string representation (possibly in a mixed case) into a hash object. Will verify the
+    /// input data.
+    static member OfHexString(data: string): Sha1Hash =
         if data.Length <> Sha1Hash.SizeInBytes * 2 then failwithf $"Invalid hash: \"{data}\"."
         data |> Convert.FromHexString |> Sha1Hash.OfBytes
 
+    /// <summary>Converts the hash object to a byte array of exactly <see cref="Sha1Hash.SizeInBytes"/> bytes.</summary>
     member this.ToBytes(): byte[] =
         let span = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(&this, 1))
         span.ToArray()
 
+    /// Converts the hash object to a hexadecimal lowercase string representation.
     override this.ToString() =
         let span = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(&this, 1))
         Convert.ToHexStringLower span

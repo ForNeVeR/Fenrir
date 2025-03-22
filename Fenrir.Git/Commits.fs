@@ -15,11 +15,11 @@ open TruePath
 let private GetHeadlessCommitBody(decodedInput: Stream): CommitBody =
     let enc = Encoding.UTF8
     use sr = new StreamReader(decodedInput, enc)
-    let tree = nonNull(sr.ReadLine()).Substring(5) |> Sha1Hash.OfString
+    let tree = nonNull(sr.ReadLine()).Substring(5) |> Sha1Hash.OfHexString
     let rec parseParents (s : StreamReader) (P : Sha1Hash list) : Sha1Hash list * string[] =
         let str = nonNull <| s.ReadLine()
         match str.Substring(0, 7) with
-            | "parent " -> parseParents s (List.append P [Sha1Hash.OfString <| str.Substring(7, 40)])
+            | "parent " -> parseParents s (List.append P [Sha1Hash.OfHexString <| str.Substring(7, 40)])
             | _         -> (P, [|str|])
     let p, r = parseParents sr []
     let rr = sr.ReadToEnd().Split "\n" |> Array.append r

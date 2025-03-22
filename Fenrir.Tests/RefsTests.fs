@@ -24,7 +24,7 @@ let ``Detached head should be recognized properly``(): unit =
 [<Fact>]
 let ``Ref list should be read properly``():unit =
     let refs = Refs.readRefs TestDataRoot
-    let sha1 = Sha1Hash.OfString
+    let sha1 = Sha1Hash.OfHexString
     let expectedRefs = [|
         { Name = "refs/heads/feature/feature-name"
           CommitObjectId = "cc07136d669554cf46ca4e9ef1eab7361336e1c8" |> sha1 }
@@ -41,7 +41,7 @@ let ``Ref list should be read properly``():unit =
 
 [<Fact>]
 let ``Refs should be identified properly``(): unit =
-    let commitHash = "8871e454a771b34cd83feda3efd5ab4bf2e35783" |> Sha1Hash.OfString
+    let commitHash = "8871e454a771b34cd83feda3efd5ab4bf2e35783" |> Sha1Hash.OfHexString
     let refs = Refs.identifyRefs commitHash TestMoreDateRoot
     Assert.Equal(2, Seq.length refs)
     refs |> Seq.iter (fun item -> Assert.Equal(item.CommitObjectId, commitHash))
@@ -75,7 +75,7 @@ let ``Normal branch HEAD is read correctly``(): Task =
             let! ref = Refs.ReadHeadRef(LocalPath gitDir)
             Assert.Equal(
                 { Name = "refs/heads/main"
-                  CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" |> Sha1Hash.OfString },
+                  CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" |> Sha1Hash.OfHexString },
                 nonNull ref
             )
         })
@@ -85,7 +85,7 @@ let ``Detached HEAD is read correctly``(): Task =
     DoWithTestRepo("7c650bc240cbeccbb347a7338e3dd83f3e2a0c62", null, null) (fun gitDir -> task {
         let! ref = Refs.ReadHeadRef(LocalPath gitDir)
         Assert.Equal(
-            { Name = null; CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" |> Sha1Hash.OfString },
+            { Name = null; CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" |> Sha1Hash.OfHexString },
             nonNull ref
         )
     })
@@ -98,7 +98,7 @@ let ``Abnormal HEAD (extra spaces) is read correctly``(): Task =
             let! ref = Refs.ReadHeadRef(LocalPath gitDir)
             Assert.Equal(
                 { Name = "refs/heads/main"
-                  CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" |> Sha1Hash.OfString },
+                  CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" |> Sha1Hash.OfHexString },
                 nonNull ref
             )
         })
