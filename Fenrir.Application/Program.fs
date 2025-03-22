@@ -213,7 +213,7 @@ let main (argv: string[]): int =
             use ld = new LifetimeDefinition()
             let repoPath = LocalPath repoPath
             let index = PackIndex(ld.Lifetime, repoPath)
-            let! commit = Commits.ReadCommit(index, repoPath, Sha1Hash.OfString commitHash)
+            let! commit = Commits.ReadCommit(index, repoPath, Sha1Hash.OfHexString commitHash)
             printfn $"%A{commit}"
             return ExitCodes.Success
         } |> Task.RunSynchronously
@@ -224,25 +224,25 @@ let main (argv: string[]): int =
 
     | [|"update-commit"; commitHash; filePath|] ->
         let pathToRepo = LocalPath AbsolutePath.CurrentWorkingDirectory
-        updateCommitOp (Sha1Hash.OfString commitHash) pathToRepo filePath false
+        updateCommitOp (Sha1Hash.OfHexString commitHash) pathToRepo filePath false
         |> Task.RunSynchronously
 
     | [|"update-commit"; commitHash; filePath; repoOrForce|] ->
         match repoOrForce.Equals "--force" with
         | true ->
             let pathToRepo = LocalPath AbsolutePath.CurrentWorkingDirectory
-            updateCommitOp (Sha1Hash.OfString commitHash) pathToRepo filePath true
+            updateCommitOp (Sha1Hash.OfHexString commitHash) pathToRepo filePath true
         | false ->
-            updateCommitOp (Sha1Hash.OfString commitHash) (LocalPath repoOrForce) filePath false
+            updateCommitOp (Sha1Hash.OfHexString commitHash) (LocalPath repoOrForce) filePath false
         |> Task.RunSynchronously
 
     | [|"update-commit"; commitHash; filePath; pathToRepo; forceKey|] ->
         match forceKey.Equals "--force" with
-        | true -> updateCommitOp (Sha1Hash.OfString commitHash) (LocalPath pathToRepo) filePath true |> Task.RunSynchronously
+        | true -> updateCommitOp (Sha1Hash.OfHexString commitHash) (LocalPath pathToRepo) filePath true |> Task.RunSynchronously
         | false -> unrecognizedArgs(argv)
 
     | [|"update-with-trees"; rootTreeHash; filePath|] ->
-        let rootTreeHash = Sha1Hash.OfString rootTreeHash
+        let rootTreeHash = Sha1Hash.OfHexString rootTreeHash
         let pathToRepo = LocalPath AbsolutePath.CurrentWorkingDirectory
         let pathToDotGit = pathToRepo / ".git"
         let fullPathToFile = pathToRepo / filePath
@@ -265,7 +265,7 @@ let main (argv: string[]): int =
         Commands.writeTreeObjects pathToRepo tree
         ExitCodes.Success
     | [|"update-with-trees"; rootTreeHash; pathToRepo; filePath|] ->
-        let rootTreeHash = Sha1Hash.OfString rootTreeHash
+        let rootTreeHash = Sha1Hash.OfHexString rootTreeHash
         let pathToDotGit = (LocalPath pathToRepo) / ".git"
         let fullPathToFile = (LocalPath pathToRepo) / filePath
         use input = new FileStream(fullPathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)

@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Sha1HashTests.fs" />
         <Content Include="Data\**\*" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Data2\**\*" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Sha1CollisionData\**\*" CopyToOutputDirectory="PreserveNewest" />
