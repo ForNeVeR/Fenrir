@@ -36,6 +36,7 @@ SPDX-License-Identifier: MIT
         <Compile Include="Packing.fs" />
         <Compile Include="PackVerification.fs" />
         <Compile Include="Commands.fs" />
+        <Compile Include="Commits.fs" />
     </ItemGroup>
 
     <ItemGroup>
@@ -49,7 +50,6 @@ SPDX-License-Identifier: MIT
     <ItemGroup Label="Packaging">
         <None Include="..\CHANGELOG.md" Pack="true" PackagePath="\" />
         <None Include="..\README.md" Pack="true" PackagePath="\" />
-        <Compile Include="Commits.fs" />
     </ItemGroup>
 
 </Project>
