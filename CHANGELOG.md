@@ -48,6 +48,9 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
     - `Refs.updateAllRefs` now requires `LocalPath` and `Sha1Hash`es as arguments;
     - `BinaryReader.ReadHash` extension method now returns a `Sha1Hash`.
 
+**Other changes:**
+- [#111](https://github.com/ForNeVeR/Fenrir/issues/111): added an API and implementation for faster commit enumeration.
+
 ### Removed
 - **Breaking:**
     - `Commands` functions removed from the public API:
@@ -69,7 +72,7 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
 - `Commits.TraverseCommits` for listing all the parent commits of a certain commit.
 - A new type, `Metadata.Commit` — for keeping a `CommitBody` together with its `Hash`.
 - A new type, `PackIndex` — to preserve and efficiently use the pack index data between different commands — for example, for faster commit traversal ([#111](https://github.com/ForNeVeR/Fenrir/issues/111)).
-- A new type, `Sha1Hash`, as a quick wrapper over a SHA-1 hash value (represented as raw bytes).
+- A new type, `Sha1Hash`, as a quick wrapper over an SHA-1 hash value (represented as raw bytes).
 
 ## [0.2.0] - 2025-03-17
 ### Added
