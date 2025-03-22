@@ -49,7 +49,7 @@ If the CI asks you to update the file licenses, follow one of these:
    // SPDX-License-Identifier: MIT
    ```
    (accommodate to the file's comment style if required).
-2. Alternately, use [REUSE][reuse] tool:
+2. Alternately, use the [REUSE][reuse] tool:
    ```console
    $ reuse annotate --license MIT --copyright '%your name% <%your contact info, e.g. email%>' %file names to annotate%
    ```
