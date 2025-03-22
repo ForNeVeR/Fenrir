@@ -114,10 +114,9 @@ type PackIndex(lifetime: Lifetime, gitDir: LocalPath) =
     let ReadFanoutTable(index: UnmanagedMemoryStream) = task {
         let items = Array.zeroCreate(256 * sizeof<uint32>)
         do! index.ReadExactlyAsync(items, 0, items.Length, lifetime.ToCancellationToken())
-        let fanoutTable = Array.zeroCreate 256
-        for i = 0 to items.Length - 1 do
-            let value = BinaryPrimitives.ReadUInt32BigEndian(ReadOnlySpan(items, i * sizeof<uint32>, sizeof<uint32>))
-            fanoutTable[i] <- value
+        let fanoutTable = Array.init 256 (fun i ->
+            BinaryPrimitives.ReadUInt32BigEndian(ReadOnlySpan(items, i * sizeof<uint32>, sizeof<uint32>))
+        )
         return fanoutTable
     }
 
