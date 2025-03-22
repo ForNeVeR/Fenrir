@@ -134,7 +134,7 @@ let doAndRewind (action: Stream -> unit): MemoryStream =
     output
 
 let rec SHA1 (input: Stream): Sha1Hash =
-    // TODO: Use the hardened Sha1 module and not the system implementation.
+    // TODO[#115]: Use the hardened Sha1 module and not the system implementation.
     use tempStream = input.CopyTo |> doAndRewind
     use sha = System.Security.Cryptography.SHA1.Create()
     sha.ComputeHash(tempStream.ToArray())

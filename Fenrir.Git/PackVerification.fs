@@ -80,7 +80,7 @@ let resolveDeltaChain (reader: BinaryReader) (root: PackObjectInfo) (refDeltas: 
 
         dataStream.Seek(0L, SeekOrigin.Begin) |> ignore
 
-        // TODO: Use utilities from the hardened Sha1 module and not system SHA-1 implementation.
+        // TODO[#115]: Use utilities from the hardened Sha1 module and not system SHA-1 implementation.
         bytes |> sha1.ComputeHash |> Sha1Hash.OfBytes
 
     let rec resolveObject (object: PackObjectInfo) (baseObject: VerifyPackObjectInfo option) (baseObjectData: MemoryStream) (depth: int) =
@@ -220,7 +220,7 @@ let verifyPackHash (reader: BinaryReader) (lastObject: VerifyPackObjectInfo) =
     reader.BaseStream.Seek(0L, SeekOrigin.Begin)
     |> ignore
 
-    // TODO: Use the hardened Sha1 module and not the system SHA-1 implementation.
+    // TODO[#115]: Use the hardened Sha1 module and not the system SHA-1 implementation.
     use sha1 = SHA1.Create()
 
     let hash =
