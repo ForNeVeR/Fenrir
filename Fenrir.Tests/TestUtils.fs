@@ -8,16 +8,15 @@ open System
 open System.IO
 open System.Text
 open System.Reflection
+open TruePath
 
-let executingAssemblyDirectory: string =
+let ExecutingAssemblyDirectory: LocalPath =
     let location = Assembly.GetExecutingAssembly().Location
-    Path.GetDirectoryName(location) |> nonNull
+    (LocalPath location).Parent.Value
 
-let testDataRoot: string =
-    Path.Combine(executingAssemblyDirectory, "Data")
+let TestDataRoot: LocalPath = ExecutingAssemblyDirectory / "Data"
 
-let testMoreDateRoot: string =
-    Path.Combine(executingAssemblyDirectory, "Data2")
+let TestMoreDateRoot: LocalPath = ExecutingAssemblyDirectory / "Data2"
 
 let toString (arr: byte array) =
     (arr |> Encoding.UTF8.GetString).Replace(Environment.NewLine, "\n")

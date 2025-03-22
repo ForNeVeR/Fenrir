@@ -23,13 +23,16 @@ SPDX-License-Identifier: MIT
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="AssemblyInfo.fs" />
         <Compile Include="UbcCheck.fs" />
         <Compile Include="Sha1.fs" />
+        <Compile Include="CommonTypes.fs" />
         <Compile Include="Refs.fs" />
         <Compile Include="Tools.fs" />
         <Compile Include="Zlib.fs" />
         <Compile Include="PackDeltaMethods.fs" />
         <Compile Include="Metadata.fs" />
+        <Compile Include="PackIndex.fs" />
         <Compile Include="Packing.fs" />
         <Compile Include="PackVerification.fs" />
         <Compile Include="Commands.fs" />
@@ -37,6 +40,8 @@ SPDX-License-Identifier: MIT
 
     <ItemGroup>
         <PackageReference Include="ChangelogAutomation.MSBuild" Version="2.0.0" />
+        <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
+        <PackageReference Include="JetBrains.Lifetimes" Version="2025.1.1" />
         <PackageReference Include="SharpZipLib" Version="1.4.2" />
         <PackageReference Include="TruePath" Version="1.6.0" />
     </ItemGroup>
@@ -44,6 +49,7 @@ SPDX-License-Identifier: MIT
     <ItemGroup Label="Packaging">
         <None Include="..\CHANGELOG.md" Pack="true" PackagePath="\" />
         <None Include="..\README.md" Pack="true" PackagePath="\" />
+        <Compile Include="Commits.fs" />
     </ItemGroup>
 
 </Project>

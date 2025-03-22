@@ -70,6 +70,9 @@ Usage:
   read-commit <path to .git/ directory> <commit-hash>
     Read a commit from a repository and print its metadata.
 
+  print-commits <path to .git/ directory>
+    Print all the commits in the repository.
+
   update-commit <id of commit> [<path to repository>] <path of file>
     Read updated text file from <path to repository>/<path of file> and save it as new object file to repository.
     Moreover, save new trees based on <id of commit> parent tree, its subtrees to repository and commit file.

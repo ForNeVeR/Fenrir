@@ -17,14 +17,14 @@ open Fenrir.Ui.Models
 type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
     inherit LoadableViewModelBase()
 
-    let formatCommit (commit: CommitBody) =
-        commit.Rest
-            |> Seq.tryItem (commit.Rest.Length - 2)
+    let formatCommit (commit: Commit) =
+        commit.Body.Rest
+            |> Seq.tryItem (commit.Body.Rest.Length - 2)
             |> Option.filter (not << String.IsNullOrWhiteSpace)
             |> Option.defaultValue "[NO MESSAGE]"
         // TODO[#88]: Properly gather commit messages
 
-    let mutable commits: IReadOnlyList<CommitBody> = upcast Array.empty
+    let mutable commits: IReadOnlyList<Commit> = upcast Array.empty
     let mutable selectedCommitIndex: Nullable<int32> = Unchecked.defaultof<_>
 
     member val CommitMessages = ObservableList<string>(ResizeArray())
@@ -35,12 +35,12 @@ type CommitsViewModel(repository: GitRepositoryModel, refs: RefsViewModel) =
         this.OnPropertyChanged()
         this.OnPropertyChanged(nameof this.SelectedCommit)
 
-    member _.SelectedCommit: CommitBody option =
+    member _.SelectedCommit: Commit option =
         if not selectedCommitIndex.HasValue
             || selectedCommitIndex.Value < 0
             || selectedCommitIndex.Value > commits.Count
         then None
-        else Some commits.[selectedCommitIndex.Value]
+        else Some commits[selectedCommitIndex.Value]
 
     override this.Initialize() =
         PropertyUtil.onPropertyChange refs (nameof refs.SelectedRef) (fun () ->

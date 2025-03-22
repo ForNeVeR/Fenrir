@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
         <TargetFramework>net9.0</TargetFramework>
 
         <IsPackable>false</IsPackable>
-        <GenerateProgramFile>false</GenerateProgramFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,11 +18,11 @@ SPDX-License-Identifier: MIT
         <Content Include="Sha1CollisionData\**\*" CopyToOutputDirectory="PreserveNewest" />
         <Compile Include="TestUtils.fs" />
         <Compile Include="CommandTests.fs" />
+        <Compile Include="CommitTests.fs" />
         <Compile Include="RefsTests.fs" />
         <Compile Include="PackTests.fs" />
         <Compile Include="VerifyPackTests.fs" />
         <Compile Include="Sha1Tests.fs" />
-        <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>
