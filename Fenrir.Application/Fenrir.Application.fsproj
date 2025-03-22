@@ -36,8 +36,4 @@ SPDX-License-Identifier: MIT
         <Content Include="..\CHANGELOG.md" Link="CHANGELOG.md" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
-    </ItemGroup>
-
 </Project>
