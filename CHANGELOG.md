@@ -18,34 +18,39 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
     - a lot of synchronous functions performing blocking I/O have been converted to asynchronous.
 
 - **Breaking changes:**
-    - `Commands.getRawObjectPath` now requires `LocalPath` and `Sha1Hash` as arguments;
-    - `Commands.readObjectHeader` has been renamed to `ReadObjectHeader`, requires `PackIndex` (see below), `LocalPath` and `Sha1Hash` as arguments, returns a `Task` (i.e., made asynchronous);
-    - `Commands.refsCommand` now requires a `LocalPath` argument;
-    - `Commands.parseCommitBody` has been moved to `Commits.ReadCommit`, requires `PackIndex`, `LocalPath` and `Sha1Hash` as arguments (non-curried anymore), returns a `Task` now;
-    - `Commands.parseTreeBody` has been renamed to `Commands.ParseTreeBody`, requires `PackIndex`, `LocalPath` and `Sha1Hash` as arguments, and returns a `Task` now;
     - `Commands.SHA1` returns a `Sha1Hash` now;
-    - `Commands.headifyStream` returns a `Sha1Hash` now;
-    - `Commands.hashOfObjectInTree` returns a `Sha1Hash` now;
-    - `Commands.changeHashInTree` requires a `Sha1Hash` for the `hash` argument now;
-    - `Commands.changeHashInCommit` requires a `Sha1Hash` for the `hash` argument now;
-    - `Commands.commitBodyToStream` has been moved to `Commits.CommitBodyToStream`;
     - `Commands.TreeStreams.Hashes` is now an array of `Sha1Hash` objects;
-    - `Commands.updateObjectInTree` now requires a `PackIndex`, `Sha1Hash`es and `LocalPath` as arguments, and returns a `Task`;
-    - `Commands.writeStreamToFile` now requires `LocalPath` and `Sha1Hash` as arguments;
-    - `Commands.writeTreeObjects` now requires `LocalPath` as an argument;
-    - `Metadata.CommitBody.Tree` is now a `Sha1Hash`;
+    - `Commands.changeHashInCommit` requires a `Sha1Hash` for the `hash` argument now;
+    - `Commands.commitBodyToStream` has been moved to `Commits.WriteCommitBody`, and now now requires non-curried arguments;
+    - `Commands.createEmptyRepo` has been renamed to `InitializeRepository`, and now requires a `LocalPath` as an argument;
+    - `Commands.getRawObjectPath` has been renamed to `Objects.GetRawObjectPath`, now requires `LocalPath` and `Sha1Hash` as arguments;
+    - `Commands.guillotineObject` has been moved to `Objects.Guillotine`, and now requires non-curried arguments;
+    - `Commands.headifyStream` has been moved to `Objects.WriteObject`, and now requires non-curries arguments and returns a `Sha1Hash`;
+    - `Commands.parseCommitBody` has been moved to `Commits.ReadCommit`, now requires `PackIndex`, `LocalPath` and `Sha1Hash` as arguments (non-curried anymore), and returns a `Task` (i.e., made asynchronous);
+    - `Commands.parseTreeBody` has been moved to `Trees.ParseTreeBody`, now requires `PackIndex`, `LocalPath` and `Sha1Hash` as arguments, and returns a `Task`;
+    - `Commands.readHeader` has been renamed to `Objects.ReadHeaderFromStream`;
+    - `Commands.readObjectHeader` has been moved to `Objects.ReadHeader`, now requires `PackIndex` (see below), `LocalPath` and `Sha1Hash` as arguments, returns a `Task`;
+    - `Commands.streamToCommitBody` has been moved to `Commits.ReadCommitBody`;
+    - `Commands.treeBodyToStream` has been moved to `Trees.WriteTreeBody`, and now requires non-curried arguments;
+    - `Commands.updateObjectInTree` now requires a `PackIndex`, `Sha1Hash`es and `LocalPath` as arguments (non-curried), and returns a `Task`;
+    - `Commands.verifyPack` has been renamed to `VerifyPackFile`, now requires a `LocalPath` as an argument, and requires the arguments in non-curried form;
+    - `Commands.writeObjectHeader` has been moved to `Objects.WriteHeader`, and now requires non-curried arguments;
+    - `Commands.writeStreamToFile` has been moved to `Objects.WriteToFile`, and now requires `LocalPath` and `Sha1Hash` as arguments (non-curried);
+    - `Commands.writeTreeObjects` has been renamed to `WriteTreeObjects`, now requires `LocalPath` as an argument, and requires non-curried arguments;
     - `Metadata.CommitBody.Parents` is now an array of `Sha1Hash`es;
+    - `Metadata.CommitBody.Tree` is now a `Sha1Hash`;
     - `Metadata.TreeAtom.Hash` is now a `Sha1Hash`;
-    - `PackVerification.BaseRef.Hash` is now a wrapper over a `Sha1Hash`;
-    - `PackVerification.VerifyPackObjectInfo.Hash` and `BaseHash` are now `Sha1Hash`es;
-    - `PackVerification.PackedObjectInfo` has been renamed to `PackedObject`;
-    - `PackVerification.getPackedObject` has been renamed to `ReadPackedObject`, now requires `PackIndex` and `Sha1Hash` as arguments, and returns a `Task`;
+    - `Metadata` is no longer a module but now a namespace, meaning all the nested types are now top-level types in the namespace;
     - `Ref.CommitObjectId` is now a `Sha1Hash`;
-    - `Refs.isHeadDetached` now requires a `LocalPath` as an argument;
-    - `Refs.readRefs` now requires a `LocalPath` as an argument;
-    - `Refs.identifyRefs` now requires `LocalPath` and `Sha1Hash` as arguments;
-    - `Refs.updateRef` now requires a `Sha1Hash` as an argument;
-    - `Refs.updateAllRefs` now requires `LocalPath` and `Sha1Hash`es as arguments.
+    - `Refs.ReadHeadRef` has been renamed to `ReadHead`;
+    - `Refs.isHeadDetached` has been renamed to `IsHeadDetached`, and now requires a `LocalPath` as an argument;
+    - `Refs.readRefs` has been renamed to `ReadRefs`, and now requires a `LocalPath` as an argument;
+    - `Refs.updateAllRefs` has been renamed to `UpdateAllRefs`, now requires `LocalPath` and `Sha1Hash`es as arguments;
+    - `Refs.updateHead` has been renamed to `UpdateHead`, now requires `Sha1Hash` and `LocalPath` as arguments (non-curried form);
+    - `Sha1.calcSHA1Hash` has been renamed to `CalculateHardened`, and now returns a `Sha1Hash`;
+    - `Zlib.packObject` has been renamed to `PackObject`, and now requires the arguments in the non-curried form;
+    - `Zlib.unpackObjectAndReturnPackedLength` has been renamed to `UnpackObjectAndReturnPackedLength`, and now requires the arguments in the non-curried form;
+    - `Zlib.unpackObject` has been renamed to `UnpackObject`, and now requires the arguments in the non-curried form.
 
 - **Other changes:**
     - [#111](https://github.com/ForNeVeR/Fenrir/issues/111): added an API and implementation for faster commit enumeration.
@@ -53,23 +58,34 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
 
 ### Removed
 - **Breaking:**
-    - `Commands` functions removed from the public API:
+    - `Commands` functions have been removed from the public API:
+        - `SHA1`,
+        - `changeHashInTree`,
+        - `doAndRewind`,
         - `getHeadlessCommitBody`,
-        - `streamToCommitBody`;
-    - `PackVeritication` functions removed from the public API:
-        - `getPackPath`,
-        - `parseIndexOffset`,
-        - `getObjectKind`,
-        - `getObjectMeta`,
-        - `getNegOffset`,
-        - `parsePackInfo`;
-    - `Tools` module is removed from the public API
-        - (this includes all the extension methods for `BinaryReader` provided by the package).
+        - `getHeadlessTreeBody`,
+        - `hashOfObjectInTree`,
+        - `refsCommand`,
+        - `streamToTreeBody`;
+    - `DeltaCommands` module has been removed from the public API;
+    - `PackVeritication` module has been removed from the public API;
+    - `Refs` functions have been removed from the public API:
+        - `identifyRefs`,
+        - `updateRef`;
+    - everything from `Sha1` module except for the `CalculateHardened` function (see above) has been removed from the public API;
+    - `Tools` module has been removed from the public API
+        - (this includes all the extension methods for `BinaryReader` provided by the package);
+    - `UbcCheck` module has been removed from the public API;
+    - `Zlib.getDecodedStream` has been removed from the public API.
 
 ### Added
-- Documentation for the whole public API.
-- A new `Commits` module, with several functions moved from the `Commands` module.
+- The whole public API has been covered by documentation.
+
+- A new `Commits` module, with several functions moved from the `Commands` module (see above).
 - `Commits.TraverseCommits` for listing all the parent commits of a certain commit.
+- A new `Objects` module, with several functions moved from the `Commands` module (see above).
+- A new `Trees` module, with several functions moved from the `Commands` module (see above).
+
 - A new type, `Metadata.Commit` — for keeping a `CommitBody` together with its `Hash`.
 - A new type, `PackIndex` — to preserve and efficiently use the pack index data between different commands — for example, for faster commit traversal ([#111](https://github.com/ForNeVeR/Fenrir/issues/111)).
 - A new type, `Sha1Hash`, as a quick wrapper over an SHA-1 hash value (represented as raw bytes).
