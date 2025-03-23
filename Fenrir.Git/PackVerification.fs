@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-module Fenrir.Git.PackVerification
+module internal Fenrir.Git.PackVerification
 // https://git-scm.com/docs/pack-format
 
 open System.IO
@@ -257,7 +257,7 @@ let printHistogram (depths: Map<int, int>) : seq<string> =
             else
                 $"chain length = {depth}: {count} {pluralise count}")
 
-let internal Verify (reader: BinaryReader) (verbose: bool) : seq<string> =
+let Verify (reader: BinaryReader) (verbose: bool): seq<string> =
     let objectsCount = verifyPackHeader reader
     let objects = parseObjects reader objectsCount
     let depths = calcDepthDistribution objects
