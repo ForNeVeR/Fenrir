@@ -16,7 +16,7 @@ let ``Deflate decompression should read the file properly``(): unit =
     let actualObjectContents = "blob 10\x00Test file\n"
     use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
     use output = new MemoryStream()
-    Zlib.unpackObject input output
+    Zlib.UnpackObject(input, output)
 
     Assert.Equal(actualObjectContents, Encoding.UTF8.GetString(output.ToArray()))
 
@@ -25,7 +25,7 @@ let ``Deflate compression should write the file properly``(): unit =
     let actualObjectContents = "blob 10\x00Test file\n"B
 
     use input = new MemoryStream(actualObjectContents)
-    use compressedOutput = Zlib.packObject input |> Tools.doAndRewind
-    use unCompressedOutput = Zlib.unpackObject compressedOutput |> Tools.doAndRewind
+    use compressedOutput = Tools.doAndRewind(fun out -> Zlib.PackObject(input, out))
+    use unCompressedOutput = Tools.doAndRewind(fun out -> Zlib.UnpackObject(compressedOutput, out))
 
     Assert.Equal<byte>(actualObjectContents, unCompressedOutput.ToArray())

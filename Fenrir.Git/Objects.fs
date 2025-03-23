@@ -129,4 +129,4 @@ let WriteToFile(gitDirectory: LocalPath, object: MemoryStream, hash: Sha1Hash): 
         | true -> ()
         | false ->
             use output = new FileStream(pathToFile.Value, FileMode.CreateNew, FileAccess.Write)
-            packObject object output
+            PackObject(object, output)

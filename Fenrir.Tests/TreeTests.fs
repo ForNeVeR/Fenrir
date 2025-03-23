@@ -46,7 +46,7 @@ let ``Printing of parsed tree should not change the content``(): Task = task {
 
     let objectFilePath = TestDataRoot / "objects" / "0b" / "a2ef789f6245b6b6604f54706b1dce1d84907f"
     use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use tempStream = Zlib.unpackObject input |> Tools.doAndRewind
+    use tempStream = Tools.doAndRewind(fun out -> Zlib.UnpackObject(input, out))
     use outputActual = new MemoryStream()
     Objects.Guillotine(tempStream, outputActual) |> ignore
     outputActual.Position <- 0L

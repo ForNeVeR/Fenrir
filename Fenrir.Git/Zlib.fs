@@ -2,28 +2,32 @@
 //
 // SPDX-License-Identifier: MIT
 
+/// Functions to work with Deflate compression.
 module Fenrir.Git.Zlib
 
 open System.IO
 open ICSharpCode.SharpZipLib.Zip.Compression
 open ICSharpCode.SharpZipLib.Zip.Compression.Streams
 
-let unpackObject (input: Stream) (output: Stream): unit =
+/// Unpacks a deflate stream.
+let UnpackObject(input: Stream, output: Stream): unit =
     use deflate = new InflaterInputStream(input, IsStreamOwner = false)
     deflate.CopyTo output
 
-let unpackObjectAndReturnPackedLength (input: Stream) (output: Stream): int64 =
+/// Unpacks a deflate stream and returns the packed (processed, input) data size.
+let UnpackObjectAndReturnPackedLength(input: Stream, output: Stream): int64 =
     let inflater = Inflater()
     use deflate = new InflaterInputStream(input, inflater, IsStreamOwner = false)
     deflate.CopyTo output
     inflater.TotalIn
 
-let packObject (input: Stream) (output: Stream): unit =
+/// Packs the input into a deflate stream.
+let PackObject(input: Stream, output: Stream): unit =
     use deflate = new DeflaterOutputStream(output, IsStreamOwner = false)
     input.CopyTo deflate
 
-let getDecodedStream (input : Stream) : MemoryStream =
+let internal getDecodedStream (input : Stream) : MemoryStream =
     let decodedInput = new MemoryStream()
-    unpackObject input decodedInput
+    UnpackObject(input, decodedInput)
     decodedInput.Position <- 0L
     decodedInput

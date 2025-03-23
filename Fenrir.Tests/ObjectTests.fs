@@ -15,7 +15,7 @@ open Xunit
 let ``Blob object header should be read``(): unit =
     let objectFilePath = TestDataRoot / "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
     use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = Zlib.unpackObject input |> Tools.doAndRewind
+    use output = Tools.doAndRewind(fun out -> Zlib.UnpackObject(input, out))
 
     let header = Objects.ReadHeaderFromStream output
     let actualHeader = { Type = GitObjectType.GitBlob; Size = 10UL }
@@ -25,7 +25,7 @@ let ``Blob object header should be read``(): unit =
 let ``Tree object header should be read``(): unit =
     let objectFilePath = TestDataRoot / "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = Zlib.unpackObject input |> Tools.doAndRewind
+    use output = Tools.doAndRewind(fun out -> Zlib.UnpackObject(input, out))
 
     let header = Objects.ReadHeaderFromStream output
     let actualHeader = { Type = GitObjectType.GitTree; Size = 63UL }
@@ -35,7 +35,7 @@ let ``Tree object header should be read``(): unit =
 let ``Commit object header should be read``(): unit =
     let objectFilePath = TestDataRoot / "cc07136d669554cf46ca4e9ef1eab7361336e1c8"
     use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = Zlib.unpackObject input |> Tools.doAndRewind
+    use output = Tools.doAndRewind(fun out -> Zlib.UnpackObject(input, out))
 
     let header = Objects.ReadHeaderFromStream output
     let actualHeader = { Type = GitObjectType.GitCommit; Size = 242UL }
@@ -46,7 +46,7 @@ let ``Cutting off header should write file properly``(): unit =
     let objectFilePath = TestDataRoot / "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
     let actualObjectContents = "Test file\n"
     use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use decodedInput = Zlib.unpackObject input |> Tools.doAndRewind
+    use decodedInput = Tools.doAndRewind(fun out -> Zlib.UnpackObject(input, out))
     use output = new MemoryStream()
     let n = Objects.Guillotine(decodedInput, output)
 

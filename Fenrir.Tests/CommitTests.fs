@@ -41,7 +41,7 @@ let ``Printing of parsed commit should not change the content``(): Task = task {
 
     let objectFilePath = TestDataRoot / "objects" / "3c" / "b4a57f644f322c852201a68d2211026912a228"
     use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use tempStream = Zlib.unpackObject input |> Tools.doAndRewind
+    use tempStream = Tools.doAndRewind(fun out -> Zlib.UnpackObject(input, out))
     use outputActual = new MemoryStream()
     Objects.Guillotine(tempStream, outputActual) |> ignore
     outputActual.Position <- 0L

@@ -64,7 +64,7 @@ let unpack (reader: BinaryReader) (size: int) =
     let unpackedStream = new MemoryStream()
 
     let packedSize =
-        Zlib.unpackObjectAndReturnPackedLength packedStream unpackedStream
+        Zlib.UnpackObjectAndReturnPackedLength(packedStream, unpackedStream)
 
     (packedSize, unpackedStream)
 

@@ -101,7 +101,7 @@ let main (argv: string[]): int =
         use input = Console.OpenStandardInput()
         use output = Console.OpenStandardOutput()
         use decodedInput = new MemoryStream()
-        Zlib.unpackObject input decodedInput
+        Zlib.UnpackObject(input, decodedInput)
         decodedInput.Position <- 0L
         let n = Objects.Guillotine(decodedInput, output)
         printfn $"{string n} bytes have been written"
@@ -109,7 +109,7 @@ let main (argv: string[]): int =
     | [|"guillotine"; inputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use decodedInput = new MemoryStream()
-        Zlib.unpackObject input decodedInput
+        Zlib.UnpackObject(input, decodedInput)
         decodedInput.Position <- 0L
         use output = Console.OpenStandardOutput()
         let n = Objects.Guillotine(decodedInput, output)
@@ -118,7 +118,7 @@ let main (argv: string[]): int =
     | [|"guillotine"; inputPath; outputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use decodedInput = new MemoryStream()
-        Zlib.unpackObject input decodedInput
+        Zlib.UnpackObject(input, decodedInput)
         decodedInput.Position <- 0L
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
         let n = Objects.Guillotine(decodedInput, output)
@@ -143,17 +143,17 @@ let main (argv: string[]): int =
     | [|"pack"|] ->
         use input = Console.OpenStandardInput()
         use output = Console.OpenStandardOutput()
-        Zlib.packObject input output
+        Zlib.PackObject(input, output)
         ExitCodes.Success
     | [|"pack"; inputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = Console.OpenStandardOutput()
-        Zlib.packObject input output
+        Zlib.PackObject(input, output)
         ExitCodes.Success
     | [|"pack"; inputPath; outputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
-        Zlib.packObject input output
+        Zlib.PackObject(input, output)
         ExitCodes.Success
 
     | [|"refs"|] ->
@@ -195,17 +195,17 @@ let main (argv: string[]): int =
     | [|"unpack"|] ->
         use input = Console.OpenStandardInput()
         use output = Console.OpenStandardOutput()
-        Zlib.unpackObject input output
+        Zlib.UnpackObject(input, output)
         ExitCodes.Success
     | [|"unpack"; inputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = Console.OpenStandardOutput()
-        Zlib.unpackObject input output
+        Zlib.UnpackObject(input, output)
         ExitCodes.Success
     | [|"unpack"; inputPath; outputPath|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
-        Zlib.unpackObject input output
+        Zlib.UnpackObject(input, output)
         ExitCodes.Success
 
     | [|"read-commit"; repoPath; commitHash|] ->
@@ -253,7 +253,7 @@ let main (argv: string[]): int =
         let pathToBlob = Objects.GetRawObjectPath(pathToDotGit, hashName)
         Directory.CreateDirectory((pathToDotGit / "objects" / hashName.ToString().Substring(0, 2)).Value) |> ignore
         use output = new FileStream(pathToBlob.Value, FileMode.CreateNew, FileAccess.Write)
-        Zlib.packObject headed output
+        Zlib.PackObject(headed, output)
         use ld = new LifetimeDefinition()
         let index = PackIndex(ld.Lifetime, pathToDotGit)
         let tree =
@@ -272,7 +272,7 @@ let main (argv: string[]): int =
         let pathToBlob = Objects.GetRawObjectPath(pathToDotGit, hashName)
         Directory.CreateDirectory((pathToDotGit / "objects" / hashName.ToString().Substring(0, 2)).Value) |> ignore
         use output = new FileStream(pathToBlob.Value, FileMode.CreateNew, FileAccess.Write)
-        Zlib.packObject headed output
+        Zlib.PackObject(headed, output)
         let tree =
             use ld = new LifetimeDefinition()
             let index = PackIndex(ld.Lifetime, pathToDotGit)
