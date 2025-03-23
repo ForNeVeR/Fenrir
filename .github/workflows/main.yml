@@ -42,9 +42,10 @@ jobs:
 
       - name: Restore dotnet tools
         run: dotnet tool restore
-
+      - name: Publish the project
+        run: dotnet publish Fenrir.Git
       - name: Run docfx
-        run: dotnet docfx docs/docfx.json
+        run: dotnet docfx docs/docfx.json --warningsAsErrors
 
   licenses:
     runs-on: ubuntu-24.04

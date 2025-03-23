@@ -45,8 +45,8 @@ jobs:
       - name: Restore dotnet tools
         run: dotnet tool restore
 
-      - name: Build the solution
-        run: dotnet build
+      - name: Publish the project
+        run: dotnet publish Fenrir.Git
 
       - name: Run docfx
         run: dotnet docfx docs/docfx.json

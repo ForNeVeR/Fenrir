@@ -32,7 +32,7 @@ Documentation Generator
 To open the generated project documentation site locally, use the following shell commands:
 ```console
 $ dotnet tool restore
-$ dotnet build
+$ dotnet publish Fenrir.Git
 $ dotnet docfx docs/docfx.json --serve
 ```
 

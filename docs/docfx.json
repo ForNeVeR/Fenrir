@@ -5,7 +5,7 @@
         {
           "src": "..",
           "files": [
-            "Fenrir.Git/bin/**/Fenrir.Git.dll"
+            "Fenrir.Git/bin/Release/*/publish/Fenrir.Git.dll"
           ]
         }
       ],
