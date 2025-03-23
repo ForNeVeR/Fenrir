@@ -71,7 +71,7 @@ If at any moment your repository has turned FUBAR, consider revising the results
         let newRootTreeHash = treeStreams.Hashes[0]
         let newCommit = { oldCommit.Body with Tree = newRootTreeHash }
         use inputCommit = new MemoryStream()
-        Commits.CommitBodyToStream newCommit inputCommit
+        Commits.WriteCommitBody(newCommit, inputCommit)
         inputCommit.Position <- 0L
         use headedCommit = new MemoryStream()
         let newCommitHash = Objects.WriteObject(GitObjectType.GitCommit, inputCommit, headedCommit)

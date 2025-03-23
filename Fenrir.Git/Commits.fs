@@ -30,7 +30,8 @@ let private GetHeadlessCommitBody(decodedInput: Stream): CommitBody =
     let rr = sr.ReadToEnd().Split "\n" |> Array.append r
     { Tree = tree; Parents = (Array.ofList p); Rest = rr }
 
-let private StreamToCommitBody(decodedInput: MemoryStream): CommitBody =
+/// Reads the commit body from a stream.
+let ReadCommitBody(decodedInput: Stream): CommitBody =
     match (Objects.ReadHeaderFromStream decodedInput).Type with
         | GitObjectType.GitTree   -> failwithf "Found tree file instead of commit file"
         | GitObjectType.GitBlob   -> failwithf "Found blob file instead of commit file"
@@ -38,7 +39,7 @@ let private StreamToCommitBody(decodedInput: MemoryStream): CommitBody =
         | x -> failwithf $"Unknown Git object type: {x}."
 
 /// Writes the commit body's internal representation as a Git object to a passed stream.
-let CommitBodyToStream (commit: CommitBody) (stream: Stream): unit =
+let WriteCommitBody(commit: CommitBody, stream: Stream): unit =
     let printParent(hash: Sha1Hash): unit =
         stream.Write(ReadOnlySpan<byte>("parent "B))
         stream.Write((hash.ToString() |> Encoding.UTF8.GetBytes).AsSpan())
@@ -62,7 +63,7 @@ let ReadCommit(index: PackIndex, gitDirectory: LocalPath, hash: Sha1Hash): Task<
         | true ->
             use input = new FileStream(pathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
             use decodedInput = input |> getDecodedStream
-            return decodedInput |> StreamToCommitBody
+            return decodedInput |> ReadCommitBody
         | false ->
             let! packedObject = ReadPackedObject(index, hash)
             use po = nonNull packedObject
