@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog][keep-a-changelog]. See [the README file][docs.readme] for more details on how the project is versioned.
 
-## [Unreleased]
+## [Unreleased] (1.0.0)
 ### Changed
 - **Breaking change summary:**
     - most of the APIs that accept any file system paths now require them wrapped in `TruePath.LocalPath`,
