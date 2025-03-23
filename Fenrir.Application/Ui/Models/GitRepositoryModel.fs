@@ -9,20 +9,19 @@ open System.Collections.Generic
 
 open System.Threading.Tasks
 open Fenrir.Git
-open Fenrir.Git.Commands
 open Fenrir.Git.Metadata
 open JetBrains.Lifetimes
 open TruePath
 
-type GitRepositoryModel(gitDirectoryPath: LocalPath) =
+type GitRepositoryModel(gitDirectory: LocalPath) =
     let rec readTreeRecursively(hash: Sha1Hash) = task {
         use ld = new LifetimeDefinition()
-        let index = PackIndex(ld.Lifetime, gitDirectoryPath)
-        let! body = ParseTreeBody index gitDirectoryPath hash
+        let index = PackIndex(ld.Lifetime, gitDirectory)
+        let! body = Trees.ReadTreeBody(index, gitDirectory, hash)
         let! models =
             body
             |> Array.map (fun item -> task {
-                let! header = ReadObjectHeader index gitDirectoryPath hash
+                let! header = Objects.ReadHeader(index, gitDirectory, hash)
 
                 if header.Type = GitObjectType.GitBlob
                 then return Array.singleton { RootedPath = item.Name }
@@ -37,7 +36,7 @@ type GitRepositoryModel(gitDirectoryPath: LocalPath) =
     }
 
     member _.ReadRefsAsync(): Async<IReadOnlyList<Ref>> = async {
-        return upcast (Refs.readRefs gitDirectoryPath
+        return upcast (Refs.readRefs gitDirectory
                        |> Seq.toArray)
     }
 
@@ -45,9 +44,9 @@ type GitRepositoryModel(gitDirectoryPath: LocalPath) =
         let commits = ResizeArray()
         let mutable currentCommitId = Some ref.CommitObjectId
         use ld = new LifetimeDefinition()
-        let index = PackIndex(ld.Lifetime, gitDirectoryPath)
+        let index = PackIndex(ld.Lifetime, gitDirectory)
         while Option.isSome currentCommitId do
-            let! commit = Async.AwaitTask <| Commits.ReadCommit(index, gitDirectoryPath, currentCommitId.Value)
+            let! commit = Async.AwaitTask <| Commits.ReadCommit(index, gitDirectory, currentCommitId.Value)
             commits.Add commit
             currentCommitId <- Array.tryHead commit.Body.Parents
         return commits

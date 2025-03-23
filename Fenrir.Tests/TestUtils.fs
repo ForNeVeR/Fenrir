@@ -21,12 +21,9 @@ let TestMoreDateRoot: LocalPath = ExecutingAssemblyDirectory / "Data2"
 let toString (arr: byte array) =
     (arr |> Encoding.UTF8.GetString).Replace(Environment.NewLine, "\n")
 
-let doInTempDirectory<'a>(action: string -> 'a): 'a =
-    let tempDirectory = Path.GetTempFileName()
-    File.Delete tempDirectory
-    Directory.CreateDirectory tempDirectory |> ignore
-
+let DoInTempDirectory<'a>(action: LocalPath -> 'a): 'a =
+    let tempDirectory = Temporary.CreateTempFolder()
     try
-        action tempDirectory
+        action(LocalPath tempDirectory)
     finally
-        Directory.Delete(tempDirectory, recursive = true)
+        Directory.Delete(tempDirectory.Value, recursive = true)

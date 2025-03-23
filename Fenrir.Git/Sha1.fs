@@ -252,7 +252,7 @@ let processTail (context: CalcHashContext) (bytesCount: int64) (tail: Span<byte>
         setSizeToSpan tail bytesCount
         calcChunkWithCollisionCheck tail context
 
-let calcSHA1Hash (data: Stream): byte array =
+let calcSHA1Hash (data: Stream): Sha1Hash =
     let mutable context: CalcHashContext = {
         HashValue = initialValue ()
         HashValue1 = emptyValue ()
@@ -277,4 +277,4 @@ let calcSHA1Hash (data: Stream): byte array =
     let hash = [| context.HashValue.A; context.HashValue.B; context.HashValue.C; context.HashValue.D; context.HashValue.E |]
                |> Array.map BinaryPrimitives.ReverseEndianness
     Buffer.BlockCopy(hash, 0, res, 0, 20)
-    res
+    res |> Sha1Hash.OfBytes

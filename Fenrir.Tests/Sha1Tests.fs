@@ -7,17 +7,18 @@ module Fenrir.Tests.Sha1Tests
 open System
 open System.IO
 open System.Security.Cryptography
+open Fenrir.Git
 open Xunit
 open Fenrir.Git.Sha1
 open Fenrir.Tests.TestUtils
 
 let calcHashByImplementation (data: byte array) =
     use ms = new MemoryStream(data)
-    calcSHA1Hash ms |> Convert.ToHexString
+    (calcSHA1Hash ms).ToString()
 
 let calcBuiltinHash (data: byte array) =
     use sha1 = SHA1.Create()
-    sha1.ComputeHash(data) |> Convert.ToHexString
+    sha1.ComputeHash(data) |> Convert.ToHexStringLower
 
 [<Fact>]
 let ``Sha1 impl returns same hash as builtin`` () : unit =
@@ -55,3 +56,11 @@ let ``Run shattered with collision fix`` () : unit =
     Assert.NotEqual<string>(hash1, hash2)
     Assert.Equal("16e96b70000dd1e7c85b8368ee197754400e58ec", hash1, true, false, false)
     Assert.Equal("e1761773e6a35916d99f891b77663e6405313587", hash2, true, false, false)
+
+[<Fact>]
+let ``Hasher should calculate file name properly``(): unit =
+    let actualObjectContents = "blob 10\x00Test file\n"B
+    let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
+
+    use input = new MemoryStream(actualObjectContents)
+    Assert.Equal(Sha1Hash.OfHexString fileName, calcSHA1Hash input)

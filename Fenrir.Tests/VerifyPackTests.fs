@@ -79,7 +79,7 @@ let ``Count depth histogram should be correct`` () : unit =
 let ``Verbose output equals get verify-pack -v out`` () : unit =
     use reader = Path packPath |> getReader
 
-    let strings = verifyPack reader true |> Seq.toArray
+    let strings = Verify reader true |> Seq.toArray
     let actual = String.Join("\n", strings)
 
     let expected = File.ReadAllText((TestDataRoot / "verify-pack-v_output.txt").Value)

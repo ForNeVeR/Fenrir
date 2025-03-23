@@ -5,7 +5,6 @@
 module Fenrir.Tests.CommandTests
 
 open System.IO
-open System.Text
 
 open System.Threading.Tasks
 open JetBrains.Lifetimes
@@ -16,131 +15,7 @@ open Fenrir.Git.Metadata
 open Fenrir.Tests.TestUtils
 
 [<Fact>]
-let ``Deflate decompression should read the file properly``(): unit =
-    let objectFilePath = TestDataRoot / "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
-    let actualObjectContents = "blob 10\x00Test file\n"
-    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = new MemoryStream()
-    Zlib.unpackObject input output
-
-    Assert.Equal(actualObjectContents, Encoding.UTF8.GetString(output.ToArray()))
-
-[<Fact>]
-let ``Deflate compression should write the file properly``(): unit =
-    let actualObjectContents = "blob 10\x00Test file\n"B
-
-    use input = new MemoryStream(actualObjectContents)
-    use compressedOutput = Zlib.packObject input |> Commands.doAndRewind
-    use unCompressedOutput = Zlib.unpackObject compressedOutput |> Commands.doAndRewind
-
-    Assert.Equal<byte>(actualObjectContents, unCompressedOutput.ToArray())
-
-[<Fact>]
-let ``Blob object header should be read``(): unit =
-    let objectFilePath = TestDataRoot / "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
-    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = Zlib.unpackObject input |> Commands.doAndRewind
-
-    let header = Commands.readHeader output
-    let actualHeader = { Type = GitObjectType.GitBlob; Size = 10UL }
-    Assert.Equal(actualHeader, header)
-
-[<Fact>]
-let ``Tree object header should be read``(): unit =
-    let objectFilePath = TestDataRoot / "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
-    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = Zlib.unpackObject input |> Commands.doAndRewind
-
-    let header = Commands.readHeader output
-    let actualHeader = { Type = GitObjectType.GitTree; Size = 63UL }
-    Assert.Equal(actualHeader, header)
-
-[<Fact>]
-let ``Commit object header should be read``(): unit =
-    let objectFilePath = TestDataRoot / "cc07136d669554cf46ca4e9ef1eab7361336e1c8"
-    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use output = Zlib.unpackObject input |> Commands.doAndRewind
-
-    let header = Commands.readHeader output
-    let actualHeader = { Type = GitObjectType.GitCommit; Size = 242UL }
-    Assert.Equal(actualHeader, header)
-
-[<Fact>]
-let ``Cutting off header should write file properly``(): unit =
-    let objectFilePath = TestDataRoot / "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
-    let actualObjectContents = "Test file\n"
-    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use decodedInput = Zlib.unpackObject input |> Commands.doAndRewind
-    use output = new MemoryStream()
-    let n = Commands.guillotineObject decodedInput output
-
-    Assert.Equal(actualObjectContents, Encoding.UTF8.GetString(output.ToArray()))
-    Assert.Equal(n, actualObjectContents.Length)
-
-[<Fact>]
-let ``The program should parse trees properly``(): Task = task {
-    use ld = new LifetimeDefinition()
-    let index = PackIndex(ld.Lifetime, TestDataRoot)
-    let! tr = Commands.ParseTreeBody index TestDataRoot (Sha1Hash.OfHexString "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
-    let hashFile = "e2af08e76b2408a88f13d2c64ca89f2d03c98385" |> Sha1Hash.OfHexString
-    let hashTree = "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05" |> Sha1Hash.OfHexString
-    Assert.Equal(tr.Length, 2)
-    Assert.Equal(tr[0].Mode, 100644UL)
-    Assert.Equal(tr[0].Name, "README")
-    Assert.Equal(tr[0].Hash, hashFile)
-    Assert.Equal(tr[1].Mode, 40000UL)
-    Assert.Equal(tr[1].Name, "ex")
-    Assert.Equal(tr[1].Hash, hashTree)
-}
-
-[<Fact>]
-let ``Hasher should calculate file name properly``(): unit =
-    let actualObjectContents = "blob 10\x00Test file\n"B
-    let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
-
-    use input = new MemoryStream(actualObjectContents)
-    Assert.Equal(Sha1Hash.OfHexString fileName, Commands.SHA1 input)
-
-[<Fact>]
-let ``Restoring head should work properly``(): unit =
-    let actualObjectContents = "blob 10\x00Test file\n"B
-    use input = new MemoryStream(actualObjectContents)
-    use cuttedInput = new MemoryStream()
-    Commands.guillotineObject input cuttedInput |> ignore
-    cuttedInput.Position <- 0L
-    use output = new MemoryStream()
-    Commands.headifyStream GitObjectType.GitBlob cuttedInput output |> ignore
-    Assert.Equal<byte>(actualObjectContents, output.ToArray())
-
-[<Fact>]
-let ``Program should change and find hash of file in tree properly``(): Task = task {
-    use ld = new LifetimeDefinition()
-    let index = PackIndex(ld.Lifetime, TestDataRoot)
-    let! tr = Commands.ParseTreeBody index TestDataRoot (Sha1Hash.OfHexString "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
-    let newHash = "0000000000000000000000000000000000000000" |> Sha1Hash.OfHexString
-    let newTr = Commands.changeHashInTree tr newHash "README"
-    Assert.Equal(Commands.hashOfObjectInTree newTr "README", newHash)
-}
-
-[<Fact>]
-let ``Printing of parsed tree should not change the content``(): Task = task {
-    use ld = new LifetimeDefinition()
-    let index = PackIndex(ld.Lifetime, TestDataRoot)
-    let! tr = Commands.ParseTreeBody index TestDataRoot (Sha1Hash.OfHexString "0ba2ef789f6245b6b6604f54706b1dce1d84907f")
-    use outputPrinted = Commands.treeBodyToStream tr |> Commands.doAndRewind
-
-    let objectFilePath = TestDataRoot / "objects" / "0b" / "a2ef789f6245b6b6604f54706b1dce1d84907f"
-    use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use tempStream = Zlib.unpackObject input |> Commands.doAndRewind
-    use outputActual = new MemoryStream()
-    Commands.guillotineObject tempStream outputActual |> ignore
-    outputActual.Position <- 0L
-
-    Assert.Equal<byte>(outputPrinted.ToArray(), outputActual.ToArray())
-}
-
-[<Fact>]
-let ``updateObjectInTree should not change the whole tree if blob wasn't changed``(): Task = task {
+let ``UpdateObjectInTree should not change the whole tree if blob wasn't changed``(): Task = task {
     let parentHash = Sha1Hash.OfHexString "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let subTreeHash = Sha1Hash.OfHexString "184b3cc0e467ff9ef8f8ad2fb0565ab06dfc2f05"
     let oldBlobHash = Sha1Hash.OfHexString "b5c9fc36bc435a3addb76b0115e8763c75eedf2a"
@@ -149,14 +24,14 @@ let ``updateObjectInTree should not change the whole tree if blob wasn't changed
     use ld = new LifetimeDefinition()
     let index = PackIndex(ld.Lifetime, TestDataRoot)
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
-    let! treeStreams = Commands.updateObjectInTree index parentHash TestDataRoot pathToFile oldBlobHash
+    let! treeStreams = Commands.UpdateObjectInTree(index, parentHash, TestDataRoot, pathToFile, oldBlobHash)
     use _ = treeStreams
 
     Assert.Equal(treeStreams.Hashes[0], parentHash)
     Assert.Equal(treeStreams.Hashes[1], subTreeHash)
 
-    let tr = Commands.streamToTreeBody treeStreams.Streams[0]
-    let subTr = Commands.streamToTreeBody treeStreams.Streams[1]
+    let tr = Trees.ParseTreeBody treeStreams.Streams[0]
+    let subTr = Trees.ParseTreeBody treeStreams.Streams[1]
 
     Assert.Equal(tr.Length, 2)
     Assert.Equal(tr[0].Mode, 100644UL)
@@ -173,7 +48,7 @@ let ``updateObjectInTree should not change the whole tree if blob wasn't changed
 }
 
 [<Fact>]
-let ``updateObjectInTree should change the whole tree properly``(): Task = task {
+let ``UpdateObjectInTree should change the whole tree properly``(): Task = task {
     let oldParentHash = Sha1Hash.OfHexString "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let newParentHash = Sha1Hash.OfHexString "a3ecc1b7fb40831db85596a4f6d2b5e0a1070292"
     let newSubTreeHash = Sha1Hash.OfHexString "b6c6d6bca44755db41e85040189d86c0dbec691e"
@@ -183,14 +58,14 @@ let ``updateObjectInTree should change the whole tree properly``(): Task = task 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
     use ld = new LifetimeDefinition()
     let index = PackIndex(ld.Lifetime, TestDataRoot)
-    let! treeStreams = Commands.updateObjectInTree index oldParentHash TestDataRoot pathToFile newBlobHash
+    let! treeStreams = Commands.UpdateObjectInTree(index, oldParentHash, TestDataRoot, pathToFile, newBlobHash)
     use _ = treeStreams
 
     Assert.Equal(treeStreams.Hashes[0], newParentHash)
     Assert.Equal(treeStreams.Hashes[1], newSubTreeHash)
 
-    let tr = Commands.streamToTreeBody treeStreams.Streams[0]
-    let subTr = Commands.streamToTreeBody treeStreams.Streams[1]
+    let tr = Trees.ParseTreeBody treeStreams.Streams[0]
+    let subTr = Trees.ParseTreeBody treeStreams.Streams[1]
 
     Assert.Equal(tr.Length, 2)
     Assert.Equal(tr[0].Mode, 100644UL)
@@ -210,15 +85,16 @@ let ``updateObjectInTree should change the whole tree properly``(): Task = task 
 let ``Files should be written after updating of the whole tree``(): Task = task {
     let oldParentHash = Sha1Hash.OfHexString "0ba2ef789f6245b6b6604f54706b1dce1d84907f"
     let newBlobHash = Sha1Hash.OfHexString "724978a20d84133868886a8e580f59c6f8586733"
-    let pathToParentTree = TestDataRoot / ".git" / "objects" / "a3" / "ecc1b7fb40831db85596a4f6d2b5e0a1070292"
-    let pathToSubTree = TestDataRoot / ".git" / "objects" / "b6" / "c6d6bca44755db41e85040189d86c0dbec691e"
+    let gitDirectory = TestDataRoot / ".git"
+    let pathToParentTree = gitDirectory / "objects" / "a3" / "ecc1b7fb40831db85596a4f6d2b5e0a1070292"
+    let pathToSubTree = gitDirectory / "objects" / "b6" / "c6d6bca44755db41e85040189d86c0dbec691e"
 
     let pathToFile = Path.Combine("ex", "FIGHTTHEMACHINE")
     use ld = new LifetimeDefinition()
     let index = PackIndex(ld.Lifetime, TestDataRoot)
-    let! treeStreams = Commands.updateObjectInTree index oldParentHash TestDataRoot pathToFile newBlobHash
+    let! treeStreams = Commands.UpdateObjectInTree(index, oldParentHash, TestDataRoot, pathToFile, newBlobHash)
     use _ = treeStreams
-    Commands.writeTreeObjects TestDataRoot treeStreams
+    Commands.WriteTreeObjects(gitDirectory, treeStreams)
     Assert.True(File.Exists(pathToParentTree.Value))
     Assert.True(File.Exists(pathToSubTree.Value))
     File.Delete(pathToParentTree.Value)
@@ -227,22 +103,22 @@ let ``Files should be written after updating of the whole tree``(): Task = task 
 
 [<Fact>]
 let ``Init command should create empty git repository``(): unit =
-    doInTempDirectory (fun tempFolderForTest ->
-        Commands.createEmptyRepo tempFolderForTest
-        let gitRepoPath = Path.Combine(tempFolderForTest, ".git")
-        gitRepoPath |> Directory.Exists |> Assert.True
+    DoInTempDirectory (fun tempFolderForTest ->
+        Commands.InitializeRepository tempFolderForTest
+        let gitRepoPath = tempFolderForTest / ".git"
+        gitRepoPath.Value |> Directory.Exists |> Assert.True
 
-        Path.Combine(gitRepoPath, "HEAD") |> File.Exists |> Assert.True
-        Path.Combine(gitRepoPath, "description") |> File.Exists |> Assert.True
-        Path.Combine(gitRepoPath, "config") |> File.Exists |> Assert.True
+        (gitRepoPath / "HEAD").Value |> File.Exists |> Assert.True
+        (gitRepoPath / "description").Value |> File.Exists |> Assert.True
+        (gitRepoPath / "config").Value |> File.Exists |> Assert.True
 
-        let headContent = Path.Combine(gitRepoPath, "HEAD") |> File.ReadAllLines
+        let headContent = (gitRepoPath / "HEAD").Value |> File.ReadAllLines
         Assert.Equal<string>(headContent, [|"ref: refs/heads/master"|] )
 
-        let descriptionContent = Path.Combine(gitRepoPath, "description") |> File.ReadAllLines
+        let descriptionContent = (gitRepoPath / "description").Value |> File.ReadAllLines
         Assert.Equal<string>(descriptionContent, [|"Unnamed repository; edit this file 'description' to name the repository."|] )
 
-        let configContent = Path.Combine(gitRepoPath, "config") |> File.ReadAllLines
+        let configContent = (gitRepoPath / "config").Value |> File.ReadAllLines
         Assert.Equal<string>(configContent, [|
         "[core]"
         "\trepositoryformatversion = 0"
@@ -253,28 +129,27 @@ let ``Init command should create empty git repository``(): unit =
         "\tignorecase = true"
         |])
 
-        let hooksPath = Path.Combine(gitRepoPath, "hooks")
-        hooksPath |> Directory.Exists |> Assert.True
+        let hooksPath = gitRepoPath / "hooks"
+        hooksPath.Value |> Directory.Exists |> Assert.True
 
-        let refsPath = Path.Combine(gitRepoPath, "refs")
-        refsPath |> Directory.Exists |> Assert.True
+        let refsPath = gitRepoPath / "refs"
+        refsPath.Value |> Directory.Exists |> Assert.True
 
-        Path.Combine(refsPath,"heads") |> Directory.Exists |> Assert.True
-        Path.Combine(refsPath,"tags") |> Directory.Exists |> Assert.True
+        (refsPath / "heads").Value |> Directory.Exists |> Assert.True
+        (refsPath / "tags").Value |> Directory.Exists |> Assert.True
 
+        let objectsPath = gitRepoPath / "objects"
+        objectsPath.Value |> Directory.Exists |> Assert.True
 
-        let objectsPath = Path.Combine(gitRepoPath, "objects")
-        objectsPath |> Directory.Exists |> Assert.True
+        (objectsPath / "pack").Value |> Directory.Exists |> Assert.True
+        (objectsPath / "info").Value |> Directory.Exists |> Assert.True
 
-        Path.Combine(objectsPath,"pack") |> Directory.Exists |> Assert.True
-        Path.Combine(objectsPath,"info") |> Directory.Exists |> Assert.True
+        let infoPath = gitRepoPath / "info"
+        infoPath.Value |> Directory.Exists |> Assert.True
 
-        let infoPath = Path.Combine(gitRepoPath, "info")
-        infoPath |> Directory.Exists |> Assert.True
+        (infoPath / "exclude").Value |> File.Exists |> Assert.True
 
-        Path.Combine(infoPath, "exclude") |> File.Exists |> Assert.True
-
-        let excludeContent = Path.Combine(infoPath, "exclude") |> File.ReadAllLines
+        let excludeContent = (infoPath / "exclude").Value |> File.ReadAllLines
         Assert.Equal<string>(excludeContent, [|
         "# git ls-files --others --exclude-from=.git/info/exclude"
         "# Lines that start with '#' are comments."

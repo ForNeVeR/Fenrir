@@ -45,8 +45,7 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
     - `Refs.readRefs` now requires a `LocalPath` as an argument;
     - `Refs.identifyRefs` now requires `LocalPath` and `Sha1Hash` as arguments;
     - `Refs.updateRef` now requires a `Sha1Hash` as an argument;
-    - `Refs.updateAllRefs` now requires `LocalPath` and `Sha1Hash`es as arguments;
-    - `BinaryReader.ReadHash` extension method now returns a `Sha1Hash`.
+    - `Refs.updateAllRefs` now requires `LocalPath` and `Sha1Hash`es as arguments.
 
 - **Other changes:**
     - [#111](https://github.com/ForNeVeR/Fenrir/issues/111): added an API and implementation for faster commit enumeration.
@@ -64,9 +63,11 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
         - `getObjectMeta`,
         - `getNegOffset`,
         - `parsePackInfo`;
-    - `Tools` module is removed from the public API.
+    - `Tools` module is removed from the public API
+        - (this includes all the extension methods for `BinaryReader` provided by the package).
 
 ### Added
+- Documentation for the whole public API.
 - A new `Commits` module, with several functions moved from the `Commands` module.
 - `Commits.TraverseCommits` for listing all the parent commits of a certain commit.
 - A new type, `Metadata.Commit` — for keeping a `CommitBody` together with its `Hash`.

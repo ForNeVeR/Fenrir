@@ -257,7 +257,7 @@ let printHistogram (depths: Map<int, int>) : seq<string> =
             else
                 $"chain length = {depth}: {count} {pluralise count}")
 
-let verifyPack (reader: BinaryReader) (verbose: bool) : seq<string> =
+let internal Verify (reader: BinaryReader) (verbose: bool) : seq<string> =
     let objectsCount = verifyPackHeader reader
     let objects = parseObjects reader objectsCount
     let depths = calcDepthDistribution objects

@@ -31,7 +31,7 @@ let private GetHeadlessCommitBody(decodedInput: Stream): CommitBody =
     { Tree = tree; Parents = (Array.ofList p); Rest = rr }
 
 let private StreamToCommitBody(decodedInput: MemoryStream): CommitBody =
-    match (Commands.readHeader decodedInput).Type with
+    match (Objects.ReadHeaderFromStream decodedInput).Type with
         | GitObjectType.GitTree   -> failwithf "Found tree file instead of commit file"
         | GitObjectType.GitBlob   -> failwithf "Found blob file instead of commit file"
         | GitObjectType.GitCommit -> GetHeadlessCommitBody decodedInput
@@ -56,7 +56,7 @@ let CommitBodyToStream (commit: CommitBody) (stream: Stream): unit =
 /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
 /// <param name="hash">Commit hash.</param>
 let ReadCommit(index: PackIndex, gitDirectory: LocalPath, hash: Sha1Hash): Task<Commit> = task {
-    let pathToFile = Commands.getRawObjectPath gitDirectory hash
+    let pathToFile = Objects.GetRawObjectPath(gitDirectory, hash)
     let! body = task {
         match File.Exists pathToFile.Value with
         | true ->

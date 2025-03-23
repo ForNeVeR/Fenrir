@@ -48,3 +48,9 @@ type UnmanagedMemoryStream with
         let span = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(&result, 1))
         stream.ReadExactly(span)
         result |> Net.IPAddress.NetworkToHostOrder |> uint32
+
+let doAndRewind (action: Stream -> unit): MemoryStream =
+    let output = new MemoryStream()
+    action output
+    output.Position <- 0L
+    output

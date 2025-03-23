@@ -25,8 +25,8 @@ SPDX-License-Identifier: MIT
     <ItemGroup>
         <Compile Include="AssemblyInfo.fs" />
         <Compile Include="UbcCheck.fs" />
-        <Compile Include="Sha1.fs" />
         <Compile Include="Sha1Hash.fs" />
+        <Compile Include="Sha1.fs" />
         <Compile Include="Refs.fs" />
         <Compile Include="Tools.fs" />
         <Compile Include="Zlib.fs" />
@@ -35,7 +35,7 @@ SPDX-License-Identifier: MIT
         <Compile Include="PackIndex.fs" />
         <Compile Include="Packing.fs" />
         <Compile Include="PackVerification.fs" />
-        <Compile Include="Commands.fs" />
+        <Compile Include="Objects.fs" />
         <Compile Include="Commits.fs" />
     </ItemGroup>
 
@@ -48,6 +48,8 @@ SPDX-License-Identifier: MIT
     </ItemGroup>
 
     <ItemGroup Label="Packaging">
+        <Compile Include="Trees.fs" />
+        <Compile Include="Commands.fs" />
         <None Include="..\CHANGELOG.md" Pack="true" PackagePath="\" />
         <None Include="..\README.md" Pack="true" PackagePath="\" />
     </ItemGroup>

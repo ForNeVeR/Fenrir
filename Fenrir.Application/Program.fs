@@ -103,7 +103,7 @@ let main (argv: string[]): int =
         use decodedInput = new MemoryStream()
         Zlib.unpackObject input decodedInput
         decodedInput.Position <- 0L
-        let n = Commands.guillotineObject decodedInput output
+        let n = Objects.Guillotine(decodedInput, output)
         printfn $"{string n} bytes have been written"
         ExitCodes.Success
     | [|"guillotine"; inputPath|] ->
@@ -112,7 +112,7 @@ let main (argv: string[]): int =
         Zlib.unpackObject input decodedInput
         decodedInput.Position <- 0L
         use output = Console.OpenStandardOutput()
-        let n = Commands.guillotineObject decodedInput output
+        let n = Objects.Guillotine(decodedInput, output)
         printfn $"{string n} bytes have been written"
         ExitCodes.Success
     | [|"guillotine"; inputPath; outputPath|] ->
@@ -121,7 +121,7 @@ let main (argv: string[]): int =
         Zlib.unpackObject input decodedInput
         decodedInput.Position <- 0L
         use output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write)
-        let n = Commands.guillotineObject decodedInput output
+        let n = Objects.Guillotine(decodedInput, output)
         printfn $"{string n} bytes have been written"
         ExitCodes.Success
 
@@ -131,12 +131,12 @@ let main (argv: string[]): int =
 
     | [|"object-type"|] ->
         use input = Console.OpenStandardInput()
-        let header = Commands.readHeader input
+        let header = Objects.ReadHeaderFromStream input
         printfn $"{header}"
         ExitCodes.Success
     | [|"object-type"; inputFilePath|] ->
         use input = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-        let header = Commands.readHeader input
+        let header = Objects.ReadHeaderFromStream input
         printfn $"{header}"
         ExitCodes.Success
 
@@ -158,31 +158,31 @@ let main (argv: string[]): int =
 
     | [|"refs"|] ->
         let pathToRepo = AbsolutePath.CurrentWorkingDirectory / ".git"
-        Commands.refsCommand(LocalPath pathToRepo)
+        PrintAllRefs(LocalPath pathToRepo)
         ExitCodes.Success
     | [|"refs"; pathToRepo|] ->
-        Commands.refsCommand(LocalPath pathToRepo)
+        PrintAllRefs(LocalPath pathToRepo)
         ExitCodes.Success
 
     | [|"save"|] ->
         let pathToRepo = AbsolutePath.CurrentWorkingDirectory
         use input = Console.OpenStandardInput()
         use headed = new MemoryStream()
-        let hashName = Commands.headifyStream GitObjectType.GitBlob input headed
-        Commands.writeStreamToFile (LocalPath pathToRepo) headed hashName
+        let hashName = Objects.WriteObject(GitObjectType.GitBlob, input, headed)
+        Objects.WriteToFile(LocalPath pathToRepo / ".git", headed, hashName)
         ExitCodes.Success
     | [|"save"; inputPath|] ->
         let pathToRepo = AbsolutePath.CurrentWorkingDirectory
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        let hashName = Commands.headifyStream GitObjectType.GitBlob input headed
-        Commands.writeStreamToFile (LocalPath pathToRepo) headed hashName
+        let hashName = Objects.WriteObject(GitObjectType.GitBlob, input, headed)
+        Objects.WriteToFile(LocalPath pathToRepo / ".git", headed, hashName)
         ExitCodes.Success
     | [|"save"; inputPath; pathToRepo|] ->
         use input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        let hashName = Commands.headifyStream GitObjectType.GitBlob input headed
-        Commands.writeStreamToFile (LocalPath pathToRepo) headed hashName
+        let hashName = Objects.WriteObject(GitObjectType.GitBlob, input, headed)
+        Objects.WriteToFile(LocalPath pathToRepo / ".git", headed, hashName)
         ExitCodes.Success
 
     | [|"ui"; path|] ->
@@ -248,21 +248,18 @@ let main (argv: string[]): int =
         let fullPathToFile = pathToRepo / filePath
         use input = new FileStream(fullPathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        Commands.writeObjectHeader GitObjectType.GitBlob input headed
-        input.CopyTo headed
+        let hashName = Objects.WriteObject(GitObjectType.GitBlob, input, headed)
         headed.Position <- 0L
-        let hashName = Commands.SHA1 headed
-        headed.Position <- 0L
-        let pathToBlob = Commands.getRawObjectPath pathToDotGit hashName
+        let pathToBlob = Objects.GetRawObjectPath(pathToDotGit, hashName)
         Directory.CreateDirectory((pathToDotGit / "objects" / hashName.ToString().Substring(0, 2)).Value) |> ignore
         use output = new FileStream(pathToBlob.Value, FileMode.CreateNew, FileAccess.Write)
         Zlib.packObject headed output
         use ld = new LifetimeDefinition()
         let index = PackIndex(ld.Lifetime, pathToDotGit)
         let tree =
-            Commands.updateObjectInTree index rootTreeHash pathToDotGit filePath hashName
+            Commands.UpdateObjectInTree(index, rootTreeHash, pathToDotGit, filePath, hashName)
             |> Task.RunSynchronously
-        Commands.writeTreeObjects pathToRepo tree
+        Commands.WriteTreeObjects(pathToDotGit, tree)
         ExitCodes.Success
     | [|"update-with-trees"; rootTreeHash; pathToRepo; filePath|] ->
         let rootTreeHash = Sha1Hash.OfHexString rootTreeHash
@@ -270,22 +267,19 @@ let main (argv: string[]): int =
         let fullPathToFile = (LocalPath pathToRepo) / filePath
         use input = new FileStream(fullPathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headed = new MemoryStream()
-        Commands.writeObjectHeader GitObjectType.GitBlob input headed
-        input.CopyTo headed
+        let hashName = Objects.WriteObject(GitObjectType.GitBlob, input, headed)
         headed.Position <- 0L
-        let hashName = Commands.SHA1 headed
-        headed.Position <- 0L
-        let pathToBlob = Commands.getRawObjectPath pathToDotGit hashName
+        let pathToBlob = Objects.GetRawObjectPath(pathToDotGit, hashName)
         Directory.CreateDirectory((pathToDotGit / "objects" / hashName.ToString().Substring(0, 2)).Value) |> ignore
         use output = new FileStream(pathToBlob.Value, FileMode.CreateNew, FileAccess.Write)
         Zlib.packObject headed output
         let tree =
             use ld = new LifetimeDefinition()
             let index = PackIndex(ld.Lifetime, pathToDotGit)
-            Commands.updateObjectInTree index rootTreeHash pathToDotGit filePath hashName
+            Commands.UpdateObjectInTree(index, rootTreeHash, pathToDotGit, filePath, hashName)
             |> Task.RunSynchronously
 
-        Commands.writeTreeObjects(LocalPath pathToRepo) tree
+        Commands.WriteTreeObjects(pathToDotGit, tree)
         ExitCodes.Success
 
     | [|"verify-pack"; packPath|] ->
@@ -298,8 +292,8 @@ let main (argv: string[]): int =
         ExitCodes.Success
 
     | [|"init"|] ->
-        let currentDir = Directory.GetCurrentDirectory()
-        Commands.createEmptyRepo currentDir
+        let currentDir = LocalPath AbsolutePath.CurrentWorkingDirectory
+        Commands.InitializeRepository currentDir
         ExitCodes.Success
 
     | _ ->

@@ -28,7 +28,7 @@ let ``Program should change and find hash of parent tree in commit properly``():
     let index = PackIndex(ld.Lifetime, TestDataRoot)
     let! cmt = Commits.ReadCommit(index, TestDataRoot, "3cb4a57f644f322c852201a68d2211026912a228" |> Sha1Hash.OfHexString)
     let newHash = "0000000000000000000000000000000000000000" |> Sha1Hash.OfHexString
-    let newCmt = Commands.changeHashInCommit cmt.Body newHash
+    let newCmt = { cmt.Body with Tree = newHash }
     Assert.Equal(newCmt.Tree, newHash)
 }
 
@@ -37,13 +37,13 @@ let ``Printing of parsed commit should not change the content``(): Task = task {
     use ld = new LifetimeDefinition()
     let index = PackIndex(ld.Lifetime, TestDataRoot)
     let! cmt = Commits.ReadCommit(index, TestDataRoot, "3cb4a57f644f322c852201a68d2211026912a228" |> Sha1Hash.OfHexString)
-    use outputPrinted = Commits.CommitBodyToStream cmt.Body |> Commands.doAndRewind
+    use outputPrinted = Commits.CommitBodyToStream cmt.Body |> Tools.doAndRewind
 
     let objectFilePath = TestDataRoot / "objects" / "3c" / "b4a57f644f322c852201a68d2211026912a228"
     use input = new FileStream(objectFilePath.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
-    use tempStream = Zlib.unpackObject input |> Commands.doAndRewind
+    use tempStream = Zlib.unpackObject input |> Tools.doAndRewind
     use outputActual = new MemoryStream()
-    Commands.guillotineObject tempStream outputActual |> ignore
+    Objects.Guillotine(tempStream, outputActual) |> ignore
     outputActual.Position <- 0L
 
     Assert.Equal<byte>(outputPrinted.ToArray(), outputActual.ToArray())

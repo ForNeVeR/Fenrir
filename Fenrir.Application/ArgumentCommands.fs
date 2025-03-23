@@ -25,6 +25,10 @@ let unrecognizedArgs(argv: string[]): int =
     printUnrecognizedArguments argv
     ExitCodes.UnrecognizedArguments
 
+let PrintAllRefs(path: LocalPath): unit =
+    Refs.readRefs path
+    |> Seq.iter(fun ref -> printfn $"%s{ref.Name}: {ref.CommitObjectId}")
+
 let PrintAllCommits(gitDir: LocalPath): Task<int> =
     task {
         let! head = Refs.ReadHeadRef gitDir
@@ -60,17 +64,19 @@ If at any moment your repository has turned FUBAR, consider revising the results
         let oldRootTreeHash = oldCommit.Body.Tree
         use inputBlob = new FileStream(fullPathToFile.Value, FileMode.Open, FileAccess.Read, FileShare.Read)
         use headedBlob = new MemoryStream()
-        let blobHash = Commands.headifyStream GitObjectType.GitBlob inputBlob headedBlob
-        Commands.writeStreamToFile pathToRepo headedBlob blobHash
-        let! treeStreams = Commands.updateObjectInTree index oldRootTreeHash pathToDotGit filePath blobHash
+        let blobHash = Objects.WriteObject(GitObjectType.GitBlob, inputBlob, headedBlob)
+        Objects.WriteToFile(pathToRepo, headedBlob, blobHash)
+        let! treeStreams = Commands.UpdateObjectInTree(index, oldRootTreeHash, pathToDotGit, filePath, blobHash)
         use _ = treeStreams
         let newRootTreeHash = treeStreams.Hashes[0]
-        let newCommit = Commands.changeHashInCommit oldCommit.Body newRootTreeHash
-        use inputCommit = Commits.CommitBodyToStream newCommit |> Commands.doAndRewind
+        let newCommit = { oldCommit.Body with Tree = newRootTreeHash }
+        use inputCommit = new MemoryStream()
+        Commits.CommitBodyToStream newCommit inputCommit
+        inputCommit.Position <- 0L
         use headedCommit = new MemoryStream()
-        let newCommitHash = Commands.headifyStream GitObjectType.GitCommit inputCommit headedCommit
-        Commands.writeStreamToFile pathToRepo headedCommit newCommitHash
-        Commands.writeTreeObjects pathToRepo treeStreams
+        let newCommitHash = Objects.WriteObject(GitObjectType.GitCommit, inputCommit, headedCommit)
+        Objects.WriteToFile(pathToDotGit, headedCommit, newCommitHash)
+        Commands.WriteTreeObjects(pathToDotGit, treeStreams)
 
         if Refs.isHeadDetached pathToDotGit then
             Refs.updateHead commitHash newCommitHash pathToDotGit
@@ -84,6 +90,6 @@ let verifyPack (packPath: string) (modeKey: string | null) =
         printfn $"{packPath} file not found"
         ExitCodes.UnrecognizedArguments
     else
-        Commands.verifyPack packFileName (modeKey = "-v")
+        Commands.VerifyPackFile(LocalPath packFileName, modeKey = "-v")
         |> Seq.iter Console.WriteLine
         ExitCodes.Success
