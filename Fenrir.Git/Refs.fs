@@ -9,9 +9,11 @@ open System.Collections.Generic
 open System.Threading.Tasks
 open TruePath
 
+/// <summary>A Git <a href="https://git-scm.com/book/en/v2/Git-Internals-Git-References">reference</a>.</summary>
 type Ref = {
     /// <summary>Reference name. Might be <c>null</c> in case of detached commit.</summary>
     Name: string | null
+    /// Commit the reference points to.
     CommitObjectId: Sha1Hash
 }
 
@@ -21,8 +23,10 @@ type Ref = {
 module Refs =
     open System.IO
 
-    let isHeadDetached (pathDotGit: LocalPath): bool =
-        let pathToHead = pathDotGit / "HEAD"
+    /// <summary>Determines if the repository is in the detached head state.</summary>
+    /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
+    let IsHeadDetached(gitDirectory: LocalPath): bool =
+        let pathToHead = gitDirectory / "HEAD"
         not <| File.ReadAllText(pathToHead.Value).StartsWith("ref: refs/heads/")
 
     let private prependName (name: string) ref =
@@ -100,7 +104,7 @@ module Refs =
     /// <summary>Reads the list of references available in a repository.</summary>
     /// <param name="repositoryPath">Path to a repository's <c>.git</c> directory.</param>
     /// <remarks>This function supports both packed and unpacked refs.</remarks>
-    let rec readRefs(repositoryPath: LocalPath): Ref seq =
+    let rec ReadRefs(repositoryPath: LocalPath): Ref seq =
         let refsDirectory = repositoryPath / "refs"
         let packedRefs = readPackedRefs repositoryPath
 
@@ -112,7 +116,7 @@ module Refs =
     /// <summary>Reads a reference from the <c>HEAD</c> file in the repository.</summary>
     /// <param name="gitDirectory">Path to the repository's <c>.git</c> directory.</param>
     /// <returns>Reference if it's resolved, <c>null</c> if the <c>HEAD</c> file doesn't exist.</returns>
-    let ReadHeadRef(gitDirectory: LocalPath): Task<Ref | null> = task {
+    let ReadHead(gitDirectory: LocalPath): Task<Ref | null> = task {
         let headFile = gitDirectory / "HEAD"
         if not <| File.Exists headFile.Value then return null
         else
@@ -129,20 +133,30 @@ module Refs =
             )
     }
 
-    let identifyRefs (commitHash: Sha1Hash) (repositoryPath: LocalPath): Ref seq =
-        readRefs repositoryPath
+    let internal IdentifyRefs (commitHash: Sha1Hash) (repositoryPath: LocalPath): Ref seq =
+        ReadRefs repositoryPath
         |> Seq.filter(fun item -> item.CommitObjectId = commitHash)
 
-    let updateHead (oldCommit: Sha1Hash) (newCommit: Sha1Hash) (pathDotGit: LocalPath): unit =
-        let pathToHead = pathDotGit / "HEAD"
+    /// <summary>
+    /// Update the <c>HEAD</c>all reference to point to the new commit <b>if</b> it points to the old commit.
+    /// </summary>
+    /// <param name="oldCommit">Old commit to update from.</param>
+    /// <param name="newCommit">New commit to update to.</param>
+    /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
+    let UpdateHead(oldCommit: Sha1Hash, newCommit: Sha1Hash, gitDirectory: LocalPath): unit =
+        let pathToHead = gitDirectory / "HEAD"
         if File.ReadAllText(pathToHead.Value).StartsWith(oldCommit.ToString(), StringComparison.OrdinalIgnoreCase) then
             File.WriteAllText(pathToHead.Value, newCommit.ToString())
 
-    let updateRef (newCommit: Sha1Hash) (pathDotGit: string) (ref: Ref) : unit =
+    let private updateRef (newCommit: Sha1Hash) (gitDirectory: LocalPath) (ref: Ref) : unit =
         let splitName = (nonNull ref.Name).Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries)
                             |> List.ofArray
-        let pathToRef = Path.Combine(pathDotGit::splitName |> Array.ofList)
+        let pathToRef = Path.Combine(gitDirectory.Value::splitName |> Array.ofList)
         File.WriteAllText(pathToRef, newCommit.ToString())
 
-    let updateAllRefs (oldCommit: Sha1Hash) (newCommit: Sha1Hash) (pathDotGit: LocalPath): unit =
-        identifyRefs oldCommit pathDotGit |> Seq.iter (updateRef newCommit pathDotGit.Value)
+    /// <summary>Update all refs pointing to the specified commit to point to the new commit.</summary>
+    /// <param name="oldCommit">Old commit to update from.</param>
+    /// <param name="newCommit">New commit to update to.</param>
+    /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
+    let UpdateAllRefs(oldCommit: Sha1Hash, newCommit: Sha1Hash, gitDirectory: LocalPath): unit =
+        IdentifyRefs oldCommit gitDirectory |> Seq.iter (updateRef newCommit gitDirectory)

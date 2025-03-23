@@ -14,16 +14,16 @@ open Fenrir.Tests.TestUtils
 
 [<Fact>]
 let ``Attached head should be recognized properly``(): unit =
-    Assert.False(Refs.isHeadDetached(LocalPath "Data"))
+    Assert.False(Refs.IsHeadDetached(LocalPath "Data"))
 
 [<Fact>]
 let ``Detached head should be recognized properly``(): unit =
-    Assert.True(Refs.isHeadDetached(LocalPath "Data2"))
+    Assert.True(Refs.IsHeadDetached(LocalPath "Data2"))
 
 
 [<Fact>]
 let ``Ref list should be read properly``():unit =
-    let refs = Refs.readRefs TestDataRoot
+    let refs = Refs.ReadRefs TestDataRoot
     let sha1 = Sha1Hash.OfHexString
     let expectedRefs = [|
         { Name = "refs/heads/feature/feature-name"
@@ -42,7 +42,7 @@ let ``Ref list should be read properly``():unit =
 [<Fact>]
 let ``Refs should be identified properly``(): unit =
     let commitHash = "8871e454a771b34cd83feda3efd5ab4bf2e35783" |> Sha1Hash.OfHexString
-    let refs = Refs.identifyRefs commitHash TestMoreDateRoot
+    let refs = Refs.IdentifyRefs commitHash TestMoreDateRoot
     Assert.Equal(2, Seq.length refs)
     refs |> Seq.iter (fun item -> Assert.Equal(item.CommitObjectId, commitHash))
 
@@ -72,7 +72,7 @@ let ``Normal branch HEAD is read correctly``(): Task =
     DoWithTestRepo
         ("ref: refs/heads/main", "refs/heads/main", "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62")
         (fun gitDir -> task {
-            let! ref = Refs.ReadHeadRef(LocalPath gitDir)
+            let! ref = Refs.ReadHead(LocalPath gitDir)
             Assert.Equal(
                 { Name = "refs/heads/main"
                   CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" |> Sha1Hash.OfHexString },
@@ -83,7 +83,7 @@ let ``Normal branch HEAD is read correctly``(): Task =
 [<Fact>]
 let ``Detached HEAD is read correctly``(): Task =
     DoWithTestRepo("7c650bc240cbeccbb347a7338e3dd83f3e2a0c62", null, null) (fun gitDir -> task {
-        let! ref = Refs.ReadHeadRef(LocalPath gitDir)
+        let! ref = Refs.ReadHead(LocalPath gitDir)
         Assert.Equal(
             { Name = null; CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" |> Sha1Hash.OfHexString },
             nonNull ref
@@ -95,7 +95,7 @@ let ``Abnormal HEAD (extra spaces) is read correctly``(): Task =
     DoWithTestRepo
         ("ref:   refs/heads/main   ", "refs/heads/main", "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62")
         (fun gitDir -> task {
-            let! ref = Refs.ReadHeadRef(LocalPath gitDir)
+            let! ref = Refs.ReadHead(LocalPath gitDir)
             Assert.Equal(
                 { Name = "refs/heads/main"
                   CommitObjectId = "7c650bc240cbeccbb347a7338e3dd83f3e2a0c62" |> Sha1Hash.OfHexString },

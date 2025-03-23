@@ -26,12 +26,12 @@ let unrecognizedArgs(argv: string[]): int =
     ExitCodes.UnrecognizedArguments
 
 let PrintAllRefs(path: LocalPath): unit =
-    Refs.readRefs path
+    Refs.ReadRefs path
     |> Seq.iter(fun ref -> printfn $"%s{ref.Name}: {ref.CommitObjectId}")
 
 let PrintAllCommits(gitDir: LocalPath): Task<int> =
     task {
-        let! head = Refs.ReadHeadRef gitDir
+        let! head = Refs.ReadHead gitDir
         match head with
         | null -> ()
         | head ->
@@ -52,7 +52,7 @@ let updateCommitOp (commitHash: Sha1Hash)
                    (filePath: string)
                    (detachedAllowed: bool): Task<int> = task {
     let pathToDotGit = pathToRepo / ".git"
-    if not detachedAllowed && Refs.isHeadDetached pathToDotGit then
+    if not detachedAllowed && Refs.IsHeadDetached pathToDotGit then
         printfn "You are in the detached head mode. Any repository modifications may turn it FUBAR.
 If you are ready to spend a fair chunk of your time on Stack Overflow or aware of what you're doing, provide the --force key.
 If at any moment your repository has turned FUBAR, consider revising the results of 'git log --reflog' to locate any commits missing."
@@ -78,9 +78,9 @@ If at any moment your repository has turned FUBAR, consider revising the results
         Objects.WriteToFile(pathToDotGit, headedCommit, newCommitHash)
         Commands.WriteTreeObjects(pathToDotGit, treeStreams)
 
-        if Refs.isHeadDetached pathToDotGit then
-            Refs.updateHead commitHash newCommitHash pathToDotGit
-        Refs.updateAllRefs commitHash newCommitHash pathToDotGit
+        if Refs.IsHeadDetached pathToDotGit then
+            Refs.UpdateHead(commitHash, newCommitHash, pathToDotGit)
+        Refs.UpdateAllRefs(commitHash, newCommitHash, pathToDotGit)
     return ExitCodes.Success
 }
 

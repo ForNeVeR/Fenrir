@@ -36,7 +36,7 @@ type GitRepositoryModel(gitDirectory: LocalPath) =
     }
 
     member _.ReadRefsAsync(): Async<IReadOnlyList<Ref>> = async {
-        return upcast (Refs.readRefs gitDirectory
+        return upcast (Refs.ReadRefs gitDirectory
                        |> Seq.toArray)
     }
 
