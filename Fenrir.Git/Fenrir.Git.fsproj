@@ -30,7 +30,7 @@ SPDX-License-Identifier: MIT
         <Compile Include="Refs.fs" />
         <Compile Include="Tools.fs" />
         <Compile Include="Zlib.fs" />
-        <Compile Include="PackDeltaMethods.fs" />
+        <Compile Include="DeltaCommands.fs" />
         <Compile Include="Metadata.fs" />
         <Compile Include="PackIndex.fs" />
         <Compile Include="Packing.fs" />
