@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-module Fenrir.Git.DeltaCommands
+module internal Fenrir.Git.DeltaCommands
 
 open System.Collections
 open System.IO
