@@ -20,7 +20,6 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
 - **Breaking changes:**
     - `Commands.SHA1` returns a `Sha1Hash` now;
     - `Commands.TreeStreams.Hashes` is now an array of `Sha1Hash` objects;
-    - `Commands.changeHashInCommit` requires a `Sha1Hash` for the `hash` argument now;
     - `Commands.commitBodyToStream` has been moved to `Commits.WriteCommitBody`, and now now requires non-curried arguments;
     - `Commands.createEmptyRepo` has been renamed to `InitializeRepository`, and now requires a `LocalPath` as an argument;
     - `Commands.getRawObjectPath` has been renamed to `Objects.GetRawObjectPath`, now requires `LocalPath` and `Sha1Hash` as arguments;
@@ -60,6 +59,7 @@ The format is based on [Keep a Changelog][keep-a-changelog]. See [the README fil
 - **Breaking:**
     - `Commands` functions have been removed from the public API:
         - `SHA1`,
+        - `changeHashInCommit`,
         - `changeHashInTree`,
         - `doAndRewind`,
         - `getHeadlessCommitBody`,
