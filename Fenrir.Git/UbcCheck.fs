@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
 //
 // SPDX-License-Identifier: MIT
-module Fenrir.Git.UbcCheck
+module internal Fenrir.Git.UbcCheck
 
 //https://github.com/cr-marcstevens/sha1collisiondetection/blob/master/lib/ubc_check.c
 let DV_I_43_0_bit = 1u <<< 0
