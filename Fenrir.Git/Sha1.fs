@@ -11,7 +11,7 @@ open Microsoft.FSharp.Core
 open Fenrir.Git.UbcCheck
 #nowarn "3391" // implicit conversion from Span to ReadOnlySpan
 
-type HashValue = {
+type private HashValue = {
     mutable A: uint32
     mutable B: uint32
     mutable C: uint32
@@ -19,7 +19,7 @@ type HashValue = {
     mutable E: uint32
 }
 
-let inline sum (lhs: HashValue) (rhs: HashValue) = {
+let inline private sum (lhs: HashValue) (rhs: HashValue) = {
     A = lhs.A + rhs.A
     B = lhs.B + rhs.B
     C = lhs.C + rhs.C
@@ -27,7 +27,7 @@ let inline sum (lhs: HashValue) (rhs: HashValue) = {
     E = lhs.E + rhs.E
 }
 
-type CalcHashContext = {
+type private CalcHashContext = {
     W: uint32 array
     mutable W2: uint32 array | null
     // store only this states because it defined in https://github.com/cr-marcstevens/sha1collisiondetection/blob/master/lib/ubc_check.h#L39
@@ -39,15 +39,15 @@ type CalcHashContext = {
 }
 
 [<Literal>]
-let k1 = 0x5A827999u
+let private k1 = 0x5A827999u
 [<Literal>]
-let k2 = 0x6ED9EBA1u
+let private k2 = 0x6ED9EBA1u
 [<Literal>]
-let k3 = 0x8F1BBCDCu
+let private k3 = 0x8F1BBCDCu
 [<Literal>]
-let k4 = 0xCA62C1D6u
+let private k4 = 0xCA62C1D6u
 
-let initialValue (): HashValue = {
+let private initialValue (): HashValue = {
     A = 0x67452301u
     B = 0xEFCDAB89u
     C = 0x98BADCFEu
@@ -55,7 +55,7 @@ let initialValue (): HashValue = {
     E = 0xC3D2E1F0u
 }
 
-let emptyValue (): HashValue = {
+let private emptyValue (): HashValue = {
     A = 0u
     B = 0u
     C = 0u
@@ -63,25 +63,25 @@ let emptyValue (): HashValue = {
     E = 0u
 }
 
-let inline rotateLeft (num: uint32) (shift: int): uint32 =
+let inline private rotateLeft (num: uint32) (shift: int): uint32 =
     ((num <<< shift) ||| (num >>> (32 - shift)))
 
-let inline rotateRight (num: uint32) (shift: int): uint32 =
+let inline private rotateRight (num: uint32) (shift: int): uint32 =
     ((num >>> shift) ||| (num <<< (32 - shift)))
 
-let inline f1 (b: uint32) (c: uint32) (d: uint32) =
+let inline private f1 (b: uint32) (c: uint32) (d: uint32) =
     d ^^^ (b &&& (c ^^^ d))
 
-let inline f2 (b: uint32) (c: uint32) (d: uint32) =
+let inline private f2 (b: uint32) (c: uint32) (d: uint32) =
     b ^^^ c ^^^ d
 
-let inline f3 (b: uint32) (c: uint32) (d: uint32) =
+let inline private f3 (b: uint32) (c: uint32) (d: uint32) =
     (b &&& c) + (d &&& (b ^^^ c))
 
-let inline f4 (b: uint32) (c: uint32) (d: uint32) =
+let inline private f4 (b: uint32) (c: uint32) (d: uint32) =
     b ^^^ c ^^^ d
 
-let inline getCoefs (f: byref<uint32>) (k: byref<uint32>) (step: int) (b: uint32) (c: uint32) (d: uint32) =
+let inline private getCoefs (f: byref<uint32>) (k: byref<uint32>) (step: int) (b: uint32) (c: uint32) (d: uint32) =
     if (0 <= step && step <= 19) then
         f <- f1 b c d
         k <- k1
@@ -95,7 +95,7 @@ let inline getCoefs (f: byref<uint32>) (k: byref<uint32>) (step: int) (b: uint32
         f <- f4 b c d
         k <- k4
 
-let inline shiftToStep (hash: HashValue) (step: int): HashValue =
+let inline private shiftToStep (hash: HashValue) (step: int): HashValue =
     match step % 5 with
     | 0 -> hash
     | 1 ->
@@ -124,14 +124,14 @@ let inline shiftToStep (hash: HashValue) (step: int): HashValue =
           E = hash.A }
     | _ -> failwith "Incorrect reminder"
 
-let inline store (state: HashValue) (a: uint32) (b: uint32) (c: uint32) (d: uint32) (e: uint32) =
+let inline private store (state: HashValue) (a: uint32) (b: uint32) (c: uint32) (d: uint32) (e: uint32) =
     state.A <- a
     state.B <- b
     state.C <- c
     state.D <- d
     state.E <- e
 
-let inline runForward (fromStep: int) (w: uint32 array) (initialValue: HashValue) (doStoreState: bool) (context: CalcHashContext) : HashValue =
+let inline private runForward (fromStep: int) (w: uint32 array) (initialValue: HashValue) (doStoreState: bool) (context: CalcHashContext) : HashValue =
     let mutable { A = a; B = b; C = c; D = d; E = e } = shiftToStep initialValue fromStep
     let mutable f = 0u
     let mutable k = 0u
@@ -159,7 +159,7 @@ let inline runForward (fromStep: int) (w: uint32 array) (initialValue: HashValue
         E = e
     }
 
-let inline runBackward (fromStep: int) (w: uint32 array) (initialValue: HashValue): HashValue =
+let inline private runBackward (fromStep: int) (w: uint32 array) (initialValue: HashValue): HashValue =
     let mutable { A = a; B = b; C = c; D = d; E = e } = shiftToStep initialValue fromStep
     let mutable f = 0u
     let mutable k = 0u
@@ -182,7 +182,7 @@ let inline runBackward (fromStep: int) (w: uint32 array) (initialValue: HashValu
         E = d
     }
 
-let calcChunk (bytes: ReadOnlySpan<byte>) (context: CalcHashContext) =
+let private calcChunk (bytes: ReadOnlySpan<byte>) (context: CalcHashContext) =
     for i = 0 to 79 do
         context.W[i] <- 0u
 
@@ -195,13 +195,13 @@ let calcChunk (bytes: ReadOnlySpan<byte>) (context: CalcHashContext) =
 
     context.HashValue <- sum context.HashValue hash
 
-let recompress (fromStep: int) (context: CalcHashContext) (initialValue: HashValue): HashValue =
+let private recompress (fromStep: int) (context: CalcHashContext) (initialValue: HashValue): HashValue =
     let w2 = nullArgCheck (nameof context.W2) context.W2
     context.HashValue2 <- runBackward (fromStep - 1) w2 initialValue
     let hash = runForward fromStep w2 initialValue false context
     sum context.HashValue2 hash
 
-let calcChunkWithCollisionCheck (bytes: ReadOnlySpan<byte>) (context: CalcHashContext): unit =
+let private calcChunkWithCollisionCheck (bytes: ReadOnlySpan<byte>) (context: CalcHashContext): unit =
     context.HashValue1.A <- context.HashValue.A
     context.HashValue1.B <- context.HashValue.B
     context.HashValue1.C <- context.HashValue.C
@@ -231,12 +231,12 @@ let calcChunkWithCollisionCheck (bytes: ReadOnlySpan<byte>) (context: CalcHashCo
                 context.HashValue <- sum context.HashValue (runForward 0 context.W context.HashValue false context)
                 context.HashValue <- sum context.HashValue (runForward 0 context.W context.HashValue false context)
 
-let inline setSizeToSpan (span: Span<byte>) (size: int64) =
+let inline private setSizeToSpan (span: Span<byte>) (size: int64) =
     let sizeBytes = BitConverter.GetBytes(BinaryPrimitives.ReverseEndianness(size * 8L))
     for i = 0 to 7 do
         span[56 + i] <- sizeBytes[i]
 
-let processTail (context: CalcHashContext) (bytesCount: int64) (tail: Span<byte>) =
+let private processTail (context: CalcHashContext) (bytesCount: int64) (tail: Span<byte>) =
     let significantBytesLeft = int(bytesCount % 64L)
     tail[significantBytesLeft] <- 0b10000000uy
     if significantBytesLeft < 55 then
@@ -252,7 +252,12 @@ let processTail (context: CalcHashContext) (bytesCount: int64) (tail: Span<byte>
         setSizeToSpan tail bytesCount
         calcChunkWithCollisionCheck tail context
 
-let calcSHA1Hash (data: Stream): Sha1Hash =
+/// <summary>
+/// Calculates the hardened SHA-1 hash for the passed stream's content.
+/// See <a href="https://github.com/cr-marcstevens/sha1collisiondetection/">the documentation</a> for more details.
+/// </summary>
+/// <param name="data">Input data stream.</param>
+let CalculateHardened (data: Stream): Sha1Hash =
     let mutable context: CalcHashContext = {
         HashValue = initialValue ()
         HashValue1 = emptyValue ()

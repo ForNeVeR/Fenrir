@@ -111,7 +111,7 @@ let WriteObject(``type``: GitObjectType, input: Stream, headed: MemoryStream): S
     WriteHeader(``type``, input.Length, headed)
     input.CopyTo headed
     headed.Position <- 0L
-    let hash = Sha1.calcSHA1Hash headed
+    let hash = Sha1.CalculateHardened headed
     headed.Position <- 0L
     hash
 

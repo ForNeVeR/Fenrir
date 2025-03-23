@@ -14,7 +14,7 @@ open Fenrir.Tests.TestUtils
 
 let calcHashByImplementation (data: byte array) =
     use ms = new MemoryStream(data)
-    (calcSHA1Hash ms).ToString()
+    (CalculateHardened ms).ToString()
 
 let calcBuiltinHash (data: byte array) =
     use sha1 = SHA1.Create()
@@ -63,4 +63,4 @@ let ``Hasher should calculate file name properly``(): unit =
     let fileName = "524acfffa760fd0b8c1de7cf001f8dd348b399d8"
 
     use input = new MemoryStream(actualObjectContents)
-    Assert.Equal(Sha1Hash.OfHexString fileName, calcSHA1Hash input)
+    Assert.Equal(Sha1Hash.OfHexString fileName, CalculateHardened input)
