@@ -10,12 +10,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog][keep-a-changelog]. See [the README file][docs.readme] for more details on how the project is versioned.
 
-## [Unreleased] (1.0.0)
+## [1.0.0] - 2025-03-24
 ### Changed
 - **Breaking change summary:**
     - most of the APIs that accept any file system paths now require them wrapped in `TruePath.LocalPath`,
     - the newly introduced type `Fenrir.Git.Sha1Hash` is now thoroughly used in the public API,
-    - a lot of synchronous functions performing blocking I/O have been converted to asynchronous.
+    - a lot of synchronous functions performing blocking I/O have been converted to asynchronous,
+    - a lot of APIs have been removed from the public surface.
 
 - **Breaking changes:**
     - `Commands.SHA1` returns a `Sha1Hash` now;
@@ -108,4 +109,5 @@ This is the first library release. It includes various functions, mainly to be a
 
 [0.1.0]: https://github.com/ForNeVeR/Fenrir/releases/tag/v0.1.0
 [0.2.0]: https://github.com/ForNeVeR/Fenrir/compare/v0.1.0...v0.2.0
-[Unreleased]: https://github.com/ForNeVeR/Fenrir/compare/v0.2.0...HEAD
+[1.0.0]: https://github.com/ForNeVeR/Fenrir/compare/v0.2.0...v1.0.0
+[Unreleased]: https://github.com/ForNeVeR/Fenrir/compare/v1.0.0...HEAD

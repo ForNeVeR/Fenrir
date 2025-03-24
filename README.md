@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeV
 SPDX-License-Identifier: MIT
 -->
 
-Fenrir [![Status Enfer][status-enfer]][andivionian-status-classifier] [![NuGet package][nuget.badge]][nuget.page]
+Fenrir [![Status Ventis][status-ventis]][andivionian-status-classifier]
 ======
 Fenrir is a .NET library to work with Git repositories.
 It provides functions to read Git objects, traverse the commit graph,
@@ -44,7 +44,7 @@ The project is distributed under the terms of [the MIT license][docs.license].
 
 The license indication in the project's sources is compliant with the [REUSE specification v3.3][reuse.spec].
 
-[andivionian-status-classifier]: https://andivionian.fornever.me/v1/#status-enfer-
+[andivionian-status-classifier]: https://andivionian.fornever.me/v1/#status-ventis-
 [docs.api]: https://fornever.github.io/Fenrir/
 [docs.application]: docs/Application.md
 [docs.changelog]: CHANGELOG.md
@@ -58,4 +58,4 @@ The license indication in the project's sources is compliant with the [REUSE spe
 [releases]: https://github.com/ForNeVeR/Fenrir/releases
 [reuse.spec]: https://reuse.software/spec-3.3/
 [semver]: https://semver.org/spec/v2.0.0.html
-[status-enfer]: https://img.shields.io/badge/status-enfer-orange.svg
+[status-ventis]: https://img.shields.io/badge/status-ventis-yellow.svg
