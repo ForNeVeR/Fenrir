@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeV
 SPDX-License-Identifier: MIT
 -->
 
-Fenrir [![Status Ventis][status-ventis]][andivionian-status-classifier]
+Fenrir [![Status Ventis][status-ventis]][andivionian-status-classifier] [![NuGet package][nuget.badge]][nuget.page]
 ======
 Fenrir is a .NET library to work with Git repositories.
 It provides functions to read Git objects, traverse the commit graph,
