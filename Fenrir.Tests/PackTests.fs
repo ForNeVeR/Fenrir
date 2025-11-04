@@ -53,3 +53,12 @@ let ``Packed blob should be extracted properly``(): Task =
 let ``Delta objects should be parsed and extracted properly``(): Task =
     let deltaObj = "d36f4ae4294cc19e91d8c8fab1fb816630a6d79b" |> Sha1Hash.OfHexString
     packTest true deltaObj "deltaObj"
+
+[<Fact>]
+let ``Non-existent object should not be found``(): Task = task {
+    let nonExistent = "d36f4ae4294cc19e91d8c8fab1fb816630a6d79f" |> Sha1Hash.OfHexString
+    use ld = new LifetimeDefinition()
+    let index = PackIndex(ld.Lifetime, TestDataRoot)
+    let! packedObject = ReadPackedObject(index, nonExistent)
+    Assert.Null packedObject
+}
