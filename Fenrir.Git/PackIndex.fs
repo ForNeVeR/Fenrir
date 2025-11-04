@@ -55,7 +55,7 @@ type private PackFile(
         assert (uint32 readEntries = enumeratedEntryCount)
 
         let index = Array.BinarySearch(data, hash)
-        if index = -1 then ValueNone else ValueSome(uint32 index + offsetFrom)
+        if index < 0 then ValueNone else ValueSome(Checked.uint32 index + offsetFrom)
 
     let readOffsetForIndex offsetIndex =
         let readOffset =
