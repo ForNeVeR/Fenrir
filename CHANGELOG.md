@@ -10,6 +10,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog][keep-a-changelog]. See [the README file][docs.readme] for more details on how the project is versioned.
 
+## [1.1.0] - 2025-11-05
+### Fixed
+- [#162: "Invalid hash" when traversing a repository](https://github.com/ForNeVeR/Fenrir/issues/162). This issue happened with repositories where multiple pack files are present.
+
+### Changed
+- Updated the dependency versions.
+
 ## [1.0.0] - 2025-03-24
 ### Changed
 - **Breaking change summary:**
@@ -110,4 +117,5 @@ This is the first library release. It includes various functions, mainly to be a
 [0.1.0]: https://github.com/ForNeVeR/Fenrir/releases/tag/v0.1.0
 [0.2.0]: https://github.com/ForNeVeR/Fenrir/compare/v0.1.0...v0.2.0
 [1.0.0]: https://github.com/ForNeVeR/Fenrir/compare/v0.2.0...v1.0.0
-[Unreleased]: https://github.com/ForNeVeR/Fenrir/compare/v1.0.0...HEAD
+[1.1.0]: https://github.com/ForNeVeR/Fenrir/compare/v1.0.0...v1.1.0
+[Unreleased]: https://github.com/ForNeVeR/Fenrir/compare/v1.1.0...HEAD
