@@ -18,6 +18,6 @@ SPDX-License-Identifier = "MIT"
 [[annotations]]
 path = ["Fenrir.Tests/Sha1CollisionData/shattered-1.pdf", "Fenrir.Tests/Sha1CollisionData/shattered-2.pdf"]
 precedence = "override"
-SPDX-FileCopyrightText = "Copyright (c) 2017:\nMarc Stevens\nCryptology Group\nCentrum Wiskunde & Informatica\nP.O. Box 94079, 1090 GB Amsterdam, Netherlands\nmarc@marc-stevens.nl\n\nDan Shumow\nMicrosoft Research\ndanshu@microsoft.com"
+SPDX-FileCopyrightText = "Copyright (c) 2017: Marc Stevens, Cryptology Group, Centrum Wiskunde & Informatica <P.O. Box 94079, 1090 GB Amsterdam, Netherlands, marc@marc-stevens.nl>; Dan Shumow, Microsoft Research <danshu@microsoft.com>"
 SPDX-License-Identifier = "MIT"
 
