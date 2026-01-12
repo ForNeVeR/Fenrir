@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
+# SPDX-FileCopyrightText: 2020-2026 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
 #
 # SPDX-License-Identifier: MIT
 
@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - master
+      - renovate/**
   pull_request:
     branches:
       - master
