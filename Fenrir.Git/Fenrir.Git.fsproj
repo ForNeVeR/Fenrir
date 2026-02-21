@@ -43,7 +43,7 @@ SPDX-License-Identifier: MIT
 
     <ItemGroup>
         <PackageReference Include="ChangelogAutomation.MSBuild" Version="3.0.5" />
-        <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
+        <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.3.1" />
         <PackageReference Include="JetBrains.Lifetimes" Version="2026.1.2" />
         <PackageReference Include="SharpZipLib" Version="1.4.2" />
         <PackageReference Include="TruePath" Version="1.11.0" />
