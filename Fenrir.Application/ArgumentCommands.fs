@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
+// SPDX-FileCopyrightText: 2020-2026 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
 //
 // SPDX-License-Identifier: MIT
 
@@ -37,7 +37,6 @@ let PrintAllCommits(gitDir: LocalPath): Task<int> =
         | head ->
             do! (
                 Commits.TraverseCommits(gitDir, head.CommitObjectId)
-                |> AsyncSeq.ofAsyncEnum
                 |> AsyncSeq.iter (fun commit ->
                     // TODO[#88]: Properly gather commit messages
                     let message = Array.tryHead commit.Body.Rest |> Option.defaultValue ""

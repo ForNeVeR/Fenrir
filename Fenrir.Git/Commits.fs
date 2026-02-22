@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2020-2025 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
+// SPDX-FileCopyrightText: 2020-2026 Fenrir contributors <https://github.com/ForNeVeR/Fenrir>
 //
 // SPDX-License-Identifier: MIT
 
@@ -79,7 +79,7 @@ let ReadCommit(index: PackIndex, gitDirectory: LocalPath, hash: Sha1Hash): Task<
 /// </summary>
 /// <param name="gitDirectory">Path to the <c>.git</c> directory.</param>
 /// <param name="headCommitHash">Hash of the starting commit.</param>
-let TraverseCommits(gitDirectory: LocalPath, headCommitHash: Sha1Hash): System.Collections.Generic.IAsyncEnumerable<Commit> =
+let TraverseCommits(gitDirectory: LocalPath, headCommitHash: Sha1Hash): IAsyncEnumerable<Commit> =
     asyncSeq {
         use ld = new LifetimeDefinition()
         let index = PackIndex(ld.Lifetime, gitDirectory)
@@ -91,4 +91,4 @@ let TraverseCommits(gitDirectory: LocalPath, headCommitHash: Sha1Hash): System.C
                 let! commit = Async.AwaitTask <| ReadCommit(index, gitDirectory, commitHash)
                 yield commit
                 commit.Body.Parents |> Array.iter currentCommits.Push
-    } |> AsyncSeq.toAsyncEnum
+    }
