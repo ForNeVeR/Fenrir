@@ -26,7 +26,7 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       NUGET_PACKAGES: ${{ github.workspace }}/.github/nuget-packages
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - if: runner.os != 'macOS' # TODO[#168]: Restore after https://github.com/actions/runner-images/issues/13341 gets fixed.
         name: NuGet Cache
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out the sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: REUSE license check
         uses: fsfe/reuse-action@v6
 
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out the sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Verify encoding
         shell: pwsh
         run: scripts/Test-Encoding.ps1
