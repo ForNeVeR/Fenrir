@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.image }}
     strategy:
       matrix:
-        image: [macos-26, ubuntu-24.04, windows-2025]
+        image: [macos-26, ubuntu-26.04, windows-2025]
       fail-fast: false
     env:
       DOTNET_NOLOGO: 1
@@ -50,7 +50,7 @@ jobs:
         run: dotnet docfx docs/docfx.json --warningsAsErrors
 
   licenses:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Check out the sources
         uses: actions/checkout@v7
@@ -58,7 +58,7 @@ jobs:
         uses: fsfe/reuse-action@v6
 
   encoding:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Check out the sources
         uses: actions/checkout@v7
